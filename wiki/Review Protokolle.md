@@ -6,3 +6,4 @@
 - Für die User Stories im Backlog müssen wir nochmal eine Übergabesession machen @Marcus.
 - Wenn wir mit den ersten Sprints im Mailmodul durch sind, entscheiden wir, ob wir parallel noch Sprints mit User Stories für das Add-on machen.
 - Planning 1 für Mail Module ist kommenden Freitag, 11-12 Uhr > Gerold läd ein und bespricht mit Michael vorab die technische Anlage des Projektes.
+- Michael sendet den Link für den Geno-Wizzard (Demo) an Mona
