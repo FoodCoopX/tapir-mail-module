@@ -8,6 +8,7 @@ Run the following commands after cloning the repo:
 ```shell
 poetry install
 pre-commit install
+cp .env.dist .env
 ```
 
 Run the following command to run start the webserver:
