@@ -2,16 +2,15 @@
 name = "tapir-mail-module"
 version = "0.1.0"
 description = ""
-authors = ["Théophile Madet <theo.madet@posteo.net>"]
+authors = ["Théophile Madet <theo.madet@posteo.net>", "Michael Kleimann <dev@mkleimann.com>"]
 readme = "README.md"
-packages = [{include = "tapir_mail_module"}]
+packages = [{include = "tapir_mail"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
 django = "^4.2.4"
 django-bootstrap5 = "^23.3"
 django-environ = "^0.10.0"
-
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
