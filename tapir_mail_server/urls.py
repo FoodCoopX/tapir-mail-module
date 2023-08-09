@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    path("", include("tapir_mail.urls")),
     path("dummy_accounts/", include("tapir_mail_server.dummy_accounts.urls")),
-    path("", include("tapir_mail_server.dummy_accounts.urls")),
     path("admin/", admin.site.urls),
 ]

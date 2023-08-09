@@ -9,9 +9,26 @@ Run the following commands after cloning the repo:
 poetry install
 pre-commit install
 cp .env.dist .env
+./bundle.sh
 ```
 
 Run the following command to run start the webserver:
 ```shell
 poetry run python manage.py runserver
 ```
+
+### Run with docker
+Start the server:
+```shell
+docker compose up
+```
+
+Access it on [http://localhost:8000]
+
+## React UI
+The React UI src is located in /tapir_mail_ui.
+
+Run the `bundle.sh` script to build the react app and copy the static files to the django module.
+
+During development, you can just use `npm run` and have the React and Django dev servers side by side.
+Access the UI on [http://localhost:3000]
