@@ -17,18 +17,18 @@ Run the following command to run start the webserver:
 poetry run python manage.py runserver
 ```
 
-### Run with docker
-Start the server:
+### Run dev environment with docker
+Start the Django and React dev servers:
 ```shell
 docker compose up
 ```
 
-Access it on [http://localhost:8000]
+Access the UI dev server on [http://localhost:3000](http://localhost:3000)
+
+The bundled UI is also served by Django on [http://localhost:8000](http://localhost:8000)
+The API is served by Django as well.
 
 ## React UI
-The React UI src is located in /tapir_mail_ui.
+The React UI src is located in `/tapir_mail_ui`.
 
 Run the `bundle.sh` script to build the react app and copy the static files to the django module.
-
-During development, you can just use `npm run` and have the React and Django dev servers side by side.
-Access the UI on [http://localhost:3000]

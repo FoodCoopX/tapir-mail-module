@@ -2,12 +2,13 @@ version: "3.9"
 services:
   web:
     build: .
-    command: bash -c "./bundle.sh && poetry run python manage.py runserver 0.0.0.0:80"
+    command: bash -c "./bundle.sh && poetry run python manage.py runserver 0.0.0.0:80 & cd tapir_mail_ui && HOST=0.0.0.0 npm start"
     volumes:
       - .:/app
     environment:
       VIRTUAL_HOST: localhost
       DEBUG: 1
+    network_mode: "host"
 
   nginx-proxy:
     image: jwilder/nginx-proxy
@@ -27,5 +28,3 @@ services:
 
 volumes:
   nginx-certs-volume:
-
-

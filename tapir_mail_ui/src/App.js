@@ -1,23 +1,18 @@
-import logo from './logo.svg';
+import React from 'react'
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import './App.css';
+import Dashboard from './pages/dashboard';
+import Editor from './pages/editor';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="App"> {/* this should be replaced with a layout component */}
+      <Router>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/editor" element={<Editor />} />
+        </Routes>
+      </Router>
     </div>
   );
 }
