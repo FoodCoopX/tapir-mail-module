@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-wrap-multilines */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   EmailEditor,
@@ -14,10 +14,9 @@ import 'easy-email-editor/lib/style.css';
 import { ExtensionProps, StandardLayout } from 'easy-email-extensions';
 import 'easy-email-extensions/lib/style.css';
 import mjml from 'mjml-browser';
-import { Button } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useWindowSize } from 'react-use';
-import { Link } from 'react-router-dom';
-
 //import './CustomBlocks';
 
 const fontList = [
@@ -94,82 +93,130 @@ const categories: ExtensionProps['categories'] = [
   },
 ];
 
-const pageBlock = BlockManager.getBlockByType(BasicType.PAGE)!;
-
+const initialValues = {
+  subject: 'Welcome to Easy-email',
+  subTitle: 'Nice to meet you!',
+};
 
 export default function Editor() {
-  const [downloadFileName, setDownloadName] = useState('download.mjml');
-  const [template, setTemplate] = useState<IEmailTemplate['content']>(pageBlock.create({
-    data: {
-      value: {
-        "content-background-color": '#ffffff'
-      }
-    }
-  }));
+  const { templateName } = useParams();
+  const [showSaveGateModal, setShowSaveGateModal] = useState(false);
+  const [content, setContent] = useState(BlockManager.getBlockByType(BasicType.PAGE)!.create({}))
+  const navigate = useNavigate();
 
   const { width } = useWindowSize();
 
   const smallScene = width < 1400;
 
-  const postHtmlToServer = (values: IEmailTemplate) => {
-    const html = mjml(JsonToMjml({
+  useEffect(() => {
+    fetch(`http://localhost:8000/api/demo/templates/read/${templateName}`)
+      .then(res => res.json()).then(data => {
+        setContent(data)
+      }).catch(err => {
+        if (err.status === 404) {
+          // new Design
+        } else {
+          console.error(err)
+        }
+      })
+
+  }, [templateName])
+
+
+  const handleBack = (values: IEmailTemplate) => {
+    if (values.content != content) {
+      setShowSaveGateModal(true);
+    } else {
+      navigate('/')
+    }
+  }
+
+  const handleSave = (values: IEmailTemplate) => {
+    setContent(values.content)
+    const html: string = mjml(JsonToMjml({
       data: values.content,
       mode: 'production',
       context: values.content
     }), {
-      beautify: true,
+      beautify: false,
       validationLevel: 'soft',
-    }).html;
+    }).html.replaceAll('\n', '').replaceAll('\t', '').replaceAll('  ', '');
 
-    fetch('http://localhost:8000/api/demo/log_email_html', {
+    fetch('http://localhost:8000/api/demo/templates/save', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/html'
       },
-      body: html
+      body: JSON.stringify({
+        name: templateName,
+        json: values.content,
+        html: html
+      })
     }).then(res => {
-      alert("OK")
+      alert("Saved")
     })
   };
 
+  const handleUploadImage = async (file: Blob) => {
+    return new Promise<string>((resolve, reject) => {
+      console.log(file) // TODO: upload file to server, return URL
+    })
+  }
 
-  const initialValues = {
-    subject: 'Welcome to Easy-email',
-    subTitle: 'Nice to meet you!',
-    content: BlockManager.getBlockByType(BasicType.PAGE)!.create({})
-  };
-
-
+  const handleCloseModal = () => setShowSaveGateModal(false);
   return (
-    <div>
-      <EmailEditorProvider
-        dashed={false}
-        data={initialValues}
-        height={'calc(100vh - 85px)'}
-        // onUploadImage={services.common.uploadByQiniu}
+    <>
+      <Modal show={showSaveGateModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Achtung!</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Du hast <strong>ungespeicherte Änderungen</strong>!<br />Möchtest du deine Änderungen wirklich verwerfen?</Modal.Body>
+        <Modal.Footer style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Button variant="danger" onClick={() => navigate('/')}>
+            Änderungen verwerfen
+          </Button>
+          <Button variant="success" onClick={handleCloseModal}>
+            Weiter Editieren
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-        autoComplete
-        fontList={fontList}
-        onSubmit={postHtmlToServer}
-      >
-        {({ values }, { submit }) => {
-          return (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', margin: '1em' }}>
-                <Link to="/"><Button variant='secondary'>Back</Button></Link>
-                <Button onClick={() => postHtmlToServer(values)}>Send HTML to Django</Button>
-              </div>
-              <StandardLayout
-                compact={!smallScene}
-                categories={categories}
-                showSourceCode={false}
-              >
-                <EmailEditor />
-              </StandardLayout>
-            </>
-          );
-        }}
-      </EmailEditorProvider>
-    </div>
+      <div>
+        <EmailEditorProvider
+          dashed={false}
+          data={{ ...initialValues, content }}
+          height={'calc(100vh)'}
+          onUploadImage={handleUploadImage}
+          autoComplete={false}
+          fontList={fontList}
+          onSubmit={handleSave}
+          enabledLogic={false} // conditional blocks and stuff, interesting but maybe complex at the beginning
+        // interactiveStyle={hoverColor:'#000000', selectedCorlor:'#000000'} <--- style the editor with CI colors
+        // onAddCollection={(collection) => console.log(collection)}  <--- allows to save blocks to a collection for reuse
+        // onRemoveCollection={(collection) => console.log(collection)}  <--- allows to remove blocks from a collection
+        // mergeTags={mergeTags} // <--- allows to add tokens to the editor
+
+        >
+          {({ values }, { submit }) => {
+            return (
+              <>
+                <StandardLayout
+                  compact={!smallScene}
+                  categories={categories}
+                  showSourceCode={false}
+
+                >
+                  <EmailEditor />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '1em' }}>
+                    <Button variant="secondary" onClick={() => handleBack(values)}>Zurück</Button>
+                    <Button variant="success" onClick={() => handleSave(values)}>Speichern</Button>
+                  </div>
+                </StandardLayout>
+
+              </>
+            );
+          }}
+        </EmailEditorProvider>
+      </div></>
   );
 }

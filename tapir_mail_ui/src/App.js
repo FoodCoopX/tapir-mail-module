@@ -10,7 +10,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/editor" element={<Editor />} />
+          <Route path="/editor/:templateName" element={<Editor />} />
         </Routes>
       </Router>
     </div>
