@@ -1,1 +1,6 @@
-
+|Begriff|Definition|
+|----------|--------------------------------------------------|
+|Segment|Empfänger(gruppe). Kann sowohl dynamisch per Datenbankabfrage, ggf. mit Filtern, als auch als statische Liste von Tapir-Usern und als Kombination von beiden definiert werden.	|
+|Trigger|Auslöser des e-Mail-Versands. Kann durch Applikationsereignisse, einen absoluten oder relativen Zeitpunkt oder manuell ausgelöst werden.	|
+|Token|Variablen in den Mails (z.B. Name, Vertragsdaten)		|
+|Mail-Typ-Definition|Das Layout einer e-Mail inkl. Name, Betreff, Segment und Trigger		|
