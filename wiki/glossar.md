@@ -4,3 +4,4 @@
 |Trigger|Auslöser des e-Mail-Versands. Kann durch Applikationsereignisse, einen absoluten oder relativen Zeitpunkt oder manuell ausgelöst werden.	|
 |Token|Variablen in den Mails (z.B. Name, Vertragsdaten)		|
 |Mail-Typ-Definition|Das Layout einer e-Mail inkl. Name, Betreff, Segment und Trigger		|
+|API, Schnittstelle|Verbindet das Frontend (Webseite im Browser) mit dem Backend für Speicherung und Abruf von Daten|
