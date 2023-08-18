@@ -11,10 +11,12 @@
     "easy-email-core": "^4.12.2",
     "easy-email-editor": "^4.12.2",
     "easy-email-extensions": "^4.14.1",
+    "filepond": "^4.30.4",
     "mjml-browser": "^4.14.1",
     "react": "^18.2.0",
     "react-bootstrap": "^2.8.0",
     "react-dom": "^18.2.0",
+    "react-filepond": "^7.1.2",
     "react-final-form": "^6.5.9",
     "react-router-dom": "^6.14.2",
     "react-scripts": "^5.0.1",
@@ -43,7 +45,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
   }
 }

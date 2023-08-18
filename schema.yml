@@ -1,0 +1,650 @@
+openapi: 3.0.3
+info:
+  title: ''
+  version: 0.0.0
+paths:
+  /api/schema/:
+    get:
+      operationId: api_schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /media_library/api/stored_upload/:
+    get:
+      operationId: storeduploads_list
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoredUpload'
+          description: ''
+    post:
+      operationId: storeduploads_create
+      tags:
+      - media_library
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoredUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StoredUpload'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StoredUpload'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoredUpload'
+          description: ''
+  /media_library/api/stored_upload/{upload_id}/:
+    get:
+      operationId: storeduploads_retrieve
+      parameters:
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this stored upload.
+        required: true
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoredUpload'
+          description: ''
+    put:
+      operationId: storeduploads_update
+      parameters:
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this stored upload.
+        required: true
+      tags:
+      - media_library
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoredUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StoredUpload'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StoredUpload'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoredUpload'
+          description: ''
+    patch:
+      operationId: storeduploads_partial_update
+      parameters:
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this stored upload.
+        required: true
+      tags:
+      - media_library
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStoredUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStoredUpload'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStoredUpload'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoredUpload'
+          description: ''
+    delete:
+      operationId: storeduploads_destroy
+      parameters:
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this stored upload.
+        required: true
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /media_library/api/temporary_upload/:
+    get:
+      operationId: temporaryuploads_list
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
+    post:
+      operationId: temporaryuploads_create
+      tags:
+      - media_library
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemporaryUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TemporaryUpload'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TemporaryUpload'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
+  /media_library/api/temporary_upload/{upload_id}/:
+    get:
+      operationId: temporaryuploads_retrieve
+      parameters:
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this temporary upload.
+        required: true
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
+    put:
+      operationId: temporaryuploads_update
+      parameters:
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this temporary upload.
+        required: true
+      tags:
+      - media_library
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemporaryUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TemporaryUpload'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TemporaryUpload'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
+    patch:
+      operationId: temporaryuploads_partial_update
+      parameters:
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this temporary upload.
+        required: true
+      tags:
+      - media_library
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTemporaryUpload'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTemporaryUpload'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTemporaryUpload'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
+    delete:
+      operationId: temporaryuploads_destroy
+      parameters:
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this temporary upload.
+        required: true
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /media_library/filepond/fetch/:
+    get:
+      operationId: media_library_filepond_fetch_retrieve
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /media_library/filepond/load/:
+    get:
+      operationId: media_library_filepond_load_retrieve
+      description: |-
+        Expect the upload ID to be provided with the 'id' parameter
+        This may be either an upload_id that is stored in the StoredUpload
+        table or it may be the path to a file (relative to the fixed upload
+        directory specified by the DJANGO_DRF_FILEPOND_FILE_STORE_PATH
+        setting parameter).
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /media_library/filepond/patch/{chunk_id}:
+    patch:
+      operationId: media_library_filepond_patch_partial_update
+      description: |-
+        This view handles a PATCH request containing a file chunk as part of the
+        filepond chunked upload support. The chunk will relate to an existing
+        chunked upload configuration created when a new chunked upload request
+        was made to the ProcessView.
+        See: https://pqina.nl/filepond/docs/patterns/api/server/#process-chunks
+        for details of how chunked uploads are handled in filepond.
+        Assuming everything in the request is valid, this view will store the
+        chunk.
+      parameters:
+      - in: path
+        name: chunk_id
+        schema:
+          type: string
+          pattern: ^[0-9a-zA-Z]{22}$
+        required: true
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /media_library/filepond/process/:
+    post:
+      operationId: media_library_filepond_process_create
+      description: |-
+        This view receives an uploaded file from the filepond client. It
+        stores the file in a temporary location and generates a unique ID which
+        it associates with the temporary upload. The unique ID is returned to
+        the client. If and when the parent form is finally submitted, the unique
+        ID is provided and the file is then moved from the temporary store into
+        permanent storage in line with the requirements of the parent application.
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /media_library/filepond/restore/:
+    get:
+      operationId: media_library_filepond_restore_retrieve
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /media_library/filepond/revert/:
+    delete:
+      operationId: media_library_filepond_revert_destroy
+      tags:
+      - media_library
+      security:
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    PatchedStoredUpload:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          maxLength: 22
+          minLength: 22
+        file:
+          type: string
+          format: uri
+        uploaded:
+          type: string
+          format: date-time
+        stored:
+          type: string
+          format: date-time
+          readOnly: true
+        uploaded_by:
+          type: integer
+          nullable: true
+    PatchedTemporaryUpload:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          maxLength: 22
+          minLength: 22
+        file_id:
+          type: string
+          maxLength: 22
+          minLength: 22
+        file:
+          type: string
+          format: uri
+        upload_name:
+          type: string
+          maxLength: 512
+        uploaded:
+          type: string
+          format: date-time
+          readOnly: true
+        upload_type:
+          $ref: '#/components/schemas/UploadTypeEnum'
+        uploaded_by:
+          type: integer
+          nullable: true
+    StoredUpload:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          maxLength: 22
+          minLength: 22
+        file:
+          type: string
+          format: uri
+        uploaded:
+          type: string
+          format: date-time
+        stored:
+          type: string
+          format: date-time
+          readOnly: true
+        uploaded_by:
+          type: integer
+          nullable: true
+      required:
+      - file
+      - stored
+      - upload_id
+      - uploaded
+    TemporaryUpload:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          maxLength: 22
+          minLength: 22
+        file_id:
+          type: string
+          maxLength: 22
+          minLength: 22
+        file:
+          type: string
+          format: uri
+        upload_name:
+          type: string
+          maxLength: 512
+        uploaded:
+          type: string
+          format: date-time
+          readOnly: true
+        upload_type:
+          $ref: '#/components/schemas/UploadTypeEnum'
+        uploaded_by:
+          type: integer
+          nullable: true
+      required:
+      - file
+      - file_id
+      - upload_id
+      - upload_name
+      - upload_type
+      - uploaded
+    UploadTypeEnum:
+      enum:
+      - F
+      - U
+      type: string
+      description: |-
+        * `F` - Uploaded file data
+        * `U` - Remote file URL
+  securitySchemes:
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"

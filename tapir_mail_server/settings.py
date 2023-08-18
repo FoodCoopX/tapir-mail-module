@@ -47,10 +47,20 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+]
+DEPENDENCIES_APPS = [
     "django_bootstrap5",
+    "rest_framework",
+    "drf_spectacular",
+    "django_drf_filepond",
+]
+TAPIR_MAIL_APPS = [
     "tapir_mail_server.dummy_accounts",
     "tapir_mail.core",
+    "tapir_mail.media_library",
 ]
+INSTALLED_APPS += DEPENDENCIES_APPS + TAPIR_MAIL_APPS
+
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -144,3 +154,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS
 ALLOWED_HOSTS = ["*"]
 CORS_ALLOW_ALL_ORIGINS = True
+
+DJANGO_DRF_FILEPOND_UPLOAD_TMP = os.path.join(BASE_DIR, "filepond_temp_uploads")
+DJANGO_DRF_FILEPOND_FILE_STORE_PATH = os.path.join(BASE_DIR, "filepond_stored_uploads")
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}

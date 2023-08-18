@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Form, Modal } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Button, Form, Modal} from 'react-bootstrap';
+import {Link, useNavigate} from 'react-router-dom';
 
 function Dashboard() {
     const [showNewTemplateModal, setShowNewTemplateModal] = useState(false);
@@ -20,6 +20,8 @@ function Dashboard() {
 
             <h1 style={{ marginTop: '2em' }}>Bestehende Designs editieren:</h1>
             {templates.map((t) => <><Link to={`/editor/${t}`}><Button variant="warning" style={{ margin: '1em', width: '20em' }}>{t}</Button></Link></>)}
+            <br />
+            <Link to={`/media_library/`}><Button variant="link" style={{ margin: '1em', width: '20em' }}>Media library</Button></Link>
         </div>
     </>
 }

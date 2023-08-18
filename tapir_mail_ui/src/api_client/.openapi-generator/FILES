@@ -1,0 +1,11 @@
+apis/ApiApi.ts
+apis/MediaLibraryApi.ts
+apis/index.ts
+index.ts
+models/PatchedStoredUpload.ts
+models/PatchedTemporaryUpload.ts
+models/StoredUpload.ts
+models/TemporaryUpload.ts
+models/UploadTypeEnum.ts
+models/index.ts
+runtime.ts

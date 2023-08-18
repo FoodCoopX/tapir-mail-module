@@ -1,5 +1,5 @@
 from django.conf.urls.static import static
-from django.urls import path
+from django.urls import path, include
 from django.views.generic.base import TemplateView
 
 from tapir_mail.views import (
@@ -18,6 +18,7 @@ urlpatterns = [
         read_email_template,
         name="read_email_template",
     ),
+    path("media_library/", include("tapir_mail.media_library.urls")),
 ] + static(
     settings.STATIC_URL, document_root=settings.STATIC_ROOT
 )  # React static files
