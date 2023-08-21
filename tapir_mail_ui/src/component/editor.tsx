@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-wrap-multilines */
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import {
   EmailEditor,
@@ -9,13 +9,11 @@ import {
 import 'easy-email-editor/lib/style.css';
 
 import '@arco-themes/react-easy-email-theme/css/arco.css';
-import { AdvancedType, BasicType, BlockManager, JsonToMjml } from 'easy-email-core';
+import { AdvancedType, BasicType, BlockManager } from 'easy-email-core';
 import 'easy-email-editor/lib/style.css';
 import { ExtensionProps, StandardLayout } from 'easy-email-extensions';
 import 'easy-email-extensions/lib/style.css';
-import mjml from 'mjml-browser';
-import { Button, Modal } from 'react-bootstrap';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from 'react-bootstrap';
 import { useWindowSize } from 'react-use';
 //import './CustomBlocks';
 
@@ -93,98 +91,32 @@ const categories: ExtensionProps['categories'] = [
   },
 ];
 
-const initialValues = {
-  subject: 'Welcome to Easy-email',
-  subTitle: 'Nice to meet you!',
-};
-
-export default function Editor() {
-  const { templateName } = useParams();
-  const [showSaveGateModal, setShowSaveGateModal] = useState(false);
-  const [content, setContent] = useState(BlockManager.getBlockByType(BasicType.PAGE)!.create({}))
-  const navigate = useNavigate();
-
+type EditorProps = {
+  handleBack?: (values: IEmailTemplate) => void;
+  handleSave?: (values: IEmailTemplate) => void;
+  content?: any;
+  subject?: string;
+  subtitle?: string;
+  onContentChange?: (values: IEmailTemplate) => void;
+}
+const Editor: React.FC<EditorProps> = ({ handleBack, handleSave, onContentChange, subject, subtitle, content = BlockManager.getBlockByType(BasicType.PAGE)!.create({}) }) => {
   const { width } = useWindowSize();
 
   const smallScene = width < 1400;
-
-  useEffect(() => {
-    fetch(`http://localhost:8000/api/demo/templates/read/${templateName}`)
-      .then(res => res.json()).then(data => {
-        setContent(data)
-      }).catch(err => {
-        if (err.status === 404) {
-          // new Design
-        } else {
-          console.error(err)
-        }
-      })
-
-  }, [templateName])
-
-
-  const handleBack = (values: IEmailTemplate) => {
-    if (values.content != content) {
-      setShowSaveGateModal(true);
-    } else {
-      navigate('/')
-    }
-  }
-
-  const handleSave = (values: IEmailTemplate) => {
-    setContent(values.content)
-    const html: string = mjml(JsonToMjml({
-      data: values.content,
-      mode: 'production',
-      context: values.content
-    }), {
-      beautify: false,
-      validationLevel: 'soft',
-    }).html.replaceAll('\n', '').replaceAll('\t', '').replaceAll('  ', '');
-
-    fetch('http://localhost:8000/api/demo/templates/save', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/html'
-      },
-      body: JSON.stringify({
-        name: templateName,
-        json: values.content,
-        html: html
-      })
-    }).then(res => {
-      alert("Saved")
-    })
-  };
 
   const handleUploadImage = async (file: Blob) => {
     return new Promise<string>((resolve, reject) => {
       console.log(file) // TODO: upload file to server, return URL
     })
   }
-
-  const handleCloseModal = () => setShowSaveGateModal(false);
+  
   return (
     <>
-      <Modal show={showSaveGateModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Achtung!</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Du hast <strong>ungespeicherte Änderungen</strong>!<br />Möchtest du deine Änderungen wirklich verwerfen?</Modal.Body>
-        <Modal.Footer style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button variant="danger" onClick={() => navigate('/')}>
-            Änderungen verwerfen
-          </Button>
-          <Button variant="success" onClick={handleCloseModal}>
-            Weiter Editieren
-          </Button>
-        </Modal.Footer>
-      </Modal>
 
       <div>
         <EmailEditorProvider
           dashed={false}
-          data={{ ...initialValues, content }}
+          data={{ subject: subject, subtitle: subtitle, content: content }}
           height={'calc(100vh)'}
           onUploadImage={handleUploadImage}
           autoComplete={false}
@@ -198,6 +130,9 @@ export default function Editor() {
 
         >
           {({ values }, { submit }) => {
+            if (onContentChange) {
+              onContentChange(values);
+            }
             return (
               <>
                 <StandardLayout
@@ -208,8 +143,8 @@ export default function Editor() {
                 >
                   <EmailEditor />
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '1em' }}>
-                    <Button variant="secondary" onClick={() => handleBack(values)}>Zurück</Button>
-                    <Button variant="success" onClick={() => handleSave(values)}>Speichern</Button>
+                    {handleBack && <Button variant="secondary" onClick={() => handleBack(values)}>Zurück</Button>}
+                    {handleSave && <Button variant="success" onClick={() => handleSave(values)}>Speichern</Button>}
                   </div>
                 </StandardLayout>
 
@@ -220,3 +155,4 @@ export default function Editor() {
       </div></>
   );
 }
+export default Editor;

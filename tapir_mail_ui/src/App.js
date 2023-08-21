@@ -2,7 +2,8 @@ import React from 'react'
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import './App.css';
 import Dashboard from './pages/dashboard';
-import Editor from './pages/editor';
+import TemplateEditor from './pages/template-editor';
+import MailPlanning from './pages/mail-planning';
 
 function App() {
   return (
@@ -10,7 +11,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/editor/:templateName" element={<Editor />} />
+          <Route path="/mailing/new" element={<MailPlanning />} />
+          <Route path="/editor/:templateName" element={<TemplateEditor />} />
         </Routes>
       </Router>
     </div>
