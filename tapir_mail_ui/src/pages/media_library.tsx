@@ -1,16 +1,20 @@
-import React, {useEffect, useState} from 'react';
-import {FilePond} from 'react-filepond';
 import * as FilePondJs from 'filepond';
+import React, { useEffect, useState } from 'react';
+import { FilePond } from 'react-filepond';
 
 import 'filepond/dist/filepond.min.css';
-import {Button, Card, Col, Form, Row} from "react-bootstrap";
-import {Configuration, MediaLibraryApi, StoredUpload, TemporaryUpload} from "../api_client";
-import TemporaryUploadsCard from "../components/media_library/TemporaryUploadsCard";
+import { Button, Card, Col, Form, Row } from "react-bootstrap";
+import { MediaLibraryApi, StoredUpload, TemporaryUpload } from "../api_client";
 import StoredUploadsCard from "../components/media_library/StoredUploadsCard";
+import TemporaryUploadsCard from "../components/media_library/TemporaryUploadsCard";
+import { useApi } from '../hooks/useApi';
 
 export default function MediaLibrary() {
     const [temporaryUploads, setTemporaryUploads] = useState<TemporaryUpload[]>([]);
     const [storedUploads, setStoredUploads] = useState<StoredUpload[]>([]);
+
+    const apiClient = useApi(MediaLibraryApi)
+
     let pond: FilePond | null = null;
 
     function onFilePondInit() {
@@ -38,14 +42,10 @@ export default function MediaLibrary() {
         });
     }
 
-    const apiClient = new MediaLibraryApi(new Configuration({
-        basePath: 'http://localhost:8000/'
-    }));
-
     useEffect(() => {
-            updateTemporaryUploadsList();
-            updateStoredUploadsList();
-        },
+        updateTemporaryUploadsList();
+        updateStoredUploadsList();
+    },
         [],
     );
 
@@ -68,7 +68,7 @@ export default function MediaLibrary() {
     }
 
     return <>
-        <div className="container" style={{margin: 'auto', marginTop: '2em'}}>
+        <div className="container" style={{ margin: 'auto', marginTop: '2em' }}>
             <h1>Prototype media library</h1>
             <Row>
                 <Col>
@@ -79,7 +79,7 @@ export default function MediaLibrary() {
                                 <FilePond ref={(ref) => {
                                     pond = ref
                                 }} allowMultiple={true}
-                                          oninit={() => onFilePondInit()} onprocessfiles={updateTemporaryUploadsList}/>
+                                    oninit={() => onFilePondInit()} onprocessfiles={updateTemporaryUploadsList} />
                                 <Button type="submit">Confirm upload</Button>
                             </Form>
                         </Card.Body>
@@ -87,11 +87,11 @@ export default function MediaLibrary() {
                 </Col>
                 <Col>
                     <StoredUploadsCard storedUploads={storedUploads} apiClient={apiClient}
-                                       updateStoredUploadsList={updateStoredUploadsList}/>
+                        updateStoredUploadsList={updateStoredUploadsList} />
                 </Col>
                 <Col>
                     <TemporaryUploadsCard temporaryUploads={temporaryUploads} apiClient={apiClient}
-                                          updateTemporaryUploadsList={updateTemporaryUploadsList}/>
+                        updateTemporaryUploadsList={updateTemporaryUploadsList} />
                 </Col>
             </Row>
         </div>

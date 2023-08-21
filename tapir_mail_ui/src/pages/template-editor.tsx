@@ -1,31 +1,42 @@
-import { BasicType, BlockManager, JsonToMjml } from "easy-email-core";
 import { IEmailTemplate } from "easy-email-editor";
-import mjml from 'mjml-browser';
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { Button, Modal } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import Editor from "../component/editor";
+import { useNavigate, useParams } from "react-router-dom";
+import { EmailTemplateApi } from "../api_client";
+import Editor, { EMPTY_PAGE } from "../components/editor";
+import { useAlert } from "../contexts/alerts";
+import { useApi } from "../hooks/useApi";
 
-const TemplateEditor = ({ template = {
-    id: '',
-    name: '',
-    content: BlockManager.getBlockByType(BasicType.PAGE)!.create({})
-} }: {
-    template: {
-        id: string,
-        name: string,
-        content: any
-    }
-}) => {
+const TemplateEditor = () => {
+    const showAlert = useAlert();
     const navigate = useNavigate();
-    const [showSaveGateModal, setShowSaveGateModal] = useState(false);
+    const api = useApi(EmailTemplateApi)
 
-    const handleContentChange = (values: IEmailTemplate) => {
-        console.log(values)
-    }
+    const { templateId } = useParams();
+
+    const [id, setId] = useState(templateId)
+    const [name, setName] = useState("");
+    const [content, setContent] = useState<any | undefined>(EMPTY_PAGE)
+    const [showSaveGateModal, setShowSaveGateModal] = useState(false);
+    const [loading, setLoading] = useState(Boolean(id));
+
+    useLayoutEffect(() => {
+        if (id) {
+            setLoading(true)
+            api.emailtemplatesRetrieve({ id: id }).then(data => {
+                setId(data.id)
+                setName(data.name)
+                setContent(JSON.parse(data.content))
+                setLoading(false)
+            }).catch(err => {
+                showAlert("Beim Laden ist ein Fehler aufgetreten.", 'danger');
+                navigate('/')
+            })
+        }
+    }, [])
 
     const handleBack = (values: IEmailTemplate) => {
-        if (values.content != template.content) {
+        if (values.content != content) {
             setShowSaveGateModal(true);
         } else {
             navigate('/')
@@ -33,29 +44,34 @@ const TemplateEditor = ({ template = {
     }
 
     const handleSave = (values: IEmailTemplate) => {
-        // TODO: generate HTML in backend
-        const html: string = mjml(JsonToMjml({
-            data: values.content,
-            mode: 'production',
-            context: values.content
-        }), {
-            beautify: false,
-            validationLevel: 'soft',
-        }).html.replaceAll('\n', '').replaceAll('\t', '').replaceAll('  ', '');
-
-        fetch('http://localhost:8000/api/demo/templates/save', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/html'
-            },
-            body: JSON.stringify({
-                name: template.name,
-                json: values.content,
-                html: html
+        if (!templateId) {
+            api.emailtemplatesCreate({
+                emailTemplateCreate: {
+                    name: name,
+                    content: JSON.stringify(values.content)
+                }
+            }).then(data => {
+                showAlert("Dein Template wurde gespeichert!", 'success')
+                if (data.id) {
+                    navigate("/editor/" + data.id)
+                }
+            }).catch(err => {
+                showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, 'danger');
             })
-        }).then(res => {
-            alert("Saved")
-        })
+        } else {
+            api.emailtemplatesUpdate({
+                id: templateId,
+                emailTemplateCreate: {
+                    name: name,
+                    content: JSON.stringify(values.content)
+                }
+            }).then(data => {
+                showAlert("Deine Änderungen wurden gespeichert!", 'success')
+                setContent(values.content)
+            }).catch(err => {
+                showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, 'danger');
+            })
+        }
     };
 
     const handleCloseModal = () => setShowSaveGateModal(false);
@@ -75,7 +91,13 @@ const TemplateEditor = ({ template = {
                     </Button>
                 </Modal.Footer>
             </Modal>
-            <Editor handleBack={handleBack} handleSave={handleSave} onContentChange={handleContentChange} />
+            {loading ? <h1>Loading...</h1> : <Editor
+                onGoBack={handleBack}
+                onSave={handleSave}
+                onTemplateNameChange={name => setName(name)}
+                templateName={name}
+                content={content}
+            />}
         </>
     )
 

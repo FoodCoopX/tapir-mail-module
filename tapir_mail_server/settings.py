@@ -36,7 +36,6 @@ DEBUG = env("DEBUG", cast=bool, default=False)
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -56,6 +55,7 @@ DEPENDENCIES_APPS = [
 ]
 TAPIR_MAIL_APPS = [
     "tapir_mail_server.dummy_accounts",
+    "tapir_mail",
     "tapir_mail.core",
     "tapir_mail.media_library",
 ]
@@ -164,3 +164,15 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]

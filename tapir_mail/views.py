@@ -1,66 +1,42 @@
-import json
-import os
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework import viewsets
 
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.http import require_GET, require_POST
-
-# DUMMY CONTROLLERS
-
-TEMPLATES_PATH = "email-templates"
-
-
-@require_POST
-def save_email_template(request):
-    """
-    Dummy demo controller, can be replaced with real APIs soon
-    """
-
-    data = json.loads(request.body)
-
-    print("HTML:\n", data["html"])
-    print("MJML:\n", data["json"])
-
-    template_name = data["name"]
-
-    if not os.path.exists(TEMPLATES_PATH):
-        os.makedirs(TEMPLATES_PATH)
-    # write mjml to file
-    with open(f"{TEMPLATES_PATH}/{template_name}.json", "w") as f:
-        f.write(json.dumps(data["json"]))
-
-    return HttpResponse(status=200)
+from tapir_mail.models import EmailConfiguration, EmailTemplate
+from tapir_mail.serializers import (
+    EmailConfigurationCreateSerializer,
+    EmailConfigurationSerializer,
+    EmailTemplateCreateSerializer,
+    EmailTemplateSerializer,
+)
 
 
-@require_GET
-def list_email_templates(request):
-    # list all files from email-templates folder
-    file_names = (
-        [
-            f.split(".")[0]
-            for f in os.listdir(TEMPLATES_PATH)
-            if os.path.isfile(os.path.join(TEMPLATES_PATH, f))
-        ]
-        if os.path.exists(TEMPLATES_PATH)
-        else []
-    )
+@extend_schema_view(
+    create=extend_schema(operation_id="emailtemplates_create"),
+    list=extend_schema(operation_id="emailtemplates_list"),
+    retrieve=extend_schema(operation_id="emailtemplates_retrieve"),
+    update=extend_schema(operation_id="emailtemplates_update"),
+    destroy=extend_schema(operation_id="emailtemplates_destroy"),
+)
+class EmailTemplateViewSet(viewsets.ModelViewSet):
+    queryset = EmailTemplate.objects.all()
 
-    return JsonResponse({"templates": file_names}, status=200)
-
-
-@require_GET
-def read_email_template(request, name):
-    file_path = f"{TEMPLATES_PATH}/{name}.json"
-    if os.path.exists(file_path):
-        with open(file_path, "r") as file:
-            file_contents = file.read()
-
-        return HttpResponse(file_contents, content_type="application/json", status=200)
-    else:
-        return HttpResponse(status=404)
+    def get_serializer_class(self):
+        if self.action in ["create", "update"]:
+            return EmailTemplateCreateSerializer
+        return EmailTemplateSerializer
 
 
-@require_POST
-def save_mailing(request):
-    print(request.body)
+@extend_schema_view(
+    create=extend_schema(operation_id="emailconfigurations_create"),
+    list=extend_schema(operation_id="emailconfigurations_list"),
+    retrieve=extend_schema(operation_id="emailconfigurations_retrieve"),
+    update=extend_schema(operation_id="emailconfigurations_update"),
+    destroy=extend_schema(operation_id="emailconfigurations_destroy"),
+)
+class EmailConfigurationViewSet(viewsets.ModelViewSet):
+    queryset = EmailConfiguration.objects.all()
 
-    return HttpResponse(status=200)
+    def get_serializer_class(self):
+        if self.action in ["create", "update"]:
+            return EmailConfigurationCreateSerializer
+        return EmailConfigurationSerializer
