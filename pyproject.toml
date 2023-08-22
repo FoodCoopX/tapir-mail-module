@@ -12,6 +12,9 @@ django = "^3.2.20"
 django-bootstrap5 = "^23.3"
 django-environ = "^0.10.0"
 django-cors-headers = "^4.2.0"
+django-drf-filepond = "^0.5.0"
+djangorestframework = "^3.14.0"
+drf-spectacular = "^0.26.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"

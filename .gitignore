@@ -241,3 +241,6 @@ fabric.properties
 tapir_mail/__ui__
 tapir_mail/__static__/
 email-templates/
+
+filepond_temp_uploads/
+filepond_stored_uploads/

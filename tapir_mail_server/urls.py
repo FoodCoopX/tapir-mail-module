@@ -16,9 +16,22 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView
+
+from tapir_mail_server import settings
 
 urlpatterns = [
     path("", include("tapir_mail.urls")),
     path("dummy_accounts/", include("tapir_mail_server.dummy_accounts.urls")),
     path("admin/", admin.site.urls),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += (
+        path(
+            "api/schema/redoc/",
+            SpectacularRedocView.as_view(url_name="schema"),
+            name="redoc",
+        ),
+    )

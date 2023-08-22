@@ -1,7 +1,9 @@
 import React from 'react'
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import './App.css';
 import Dashboard from './pages/dashboard';
+import Editor from './pages/editor';
+import MediaLibrary from "./pages/media_library";
 import TemplateEditor from './pages/template-editor';
 import MailPlanning from './pages/mail-planning';
 
@@ -11,8 +13,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/mailing/new" element={<MailPlanning />} />
-          <Route path="/editor/:templateName" element={<TemplateEditor />} />
+          <Route path="/editor/:templateName" element={<Editor />} />
+          <Route path="/media_library/" element={<MediaLibrary />} />
         </Routes>
       </Router>
     </div>
