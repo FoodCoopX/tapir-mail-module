@@ -2,7 +2,7 @@ import json
 import os
 
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 # DUMMY CONTROLLERS
 
@@ -57,3 +57,10 @@ def read_email_template(request, name):
         return HttpResponse(file_contents, content_type="application/json", status=200)
     else:
         return HttpResponse(status=404)
+
+
+@require_POST
+def save_mailing(request):
+    print(request.body)
+
+    return HttpResponse(status=200)

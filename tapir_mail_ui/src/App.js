@@ -4,6 +4,8 @@ import './App.css';
 import Dashboard from './pages/dashboard';
 import Editor from './pages/editor';
 import MediaLibrary from "./pages/media_library";
+import TemplateEditor from './pages/template-editor';
+import MailPlanning from './pages/mail-planning';
 
 function App() {
   return (

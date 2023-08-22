@@ -4,24 +4,24 @@ import {Link, useNavigate} from 'react-router-dom';
 
 function Dashboard() {
     const [showNewTemplateModal, setShowNewTemplateModal] = useState(false);
-    const [templates, setTemplates] = React.useState([])
-    useEffect(() => {
-        fetch('http://localhost:8000/api/demo/templates/list').then(res => res.json()).then(data => {
-            setTemplates(data.templates)
-        })
-    }, []);
 
     return <>
         <NewTemplateModalForm show={showNewTemplateModal} onHide={() => setShowNewTemplateModal(false)} />
-        <div className="container" style={{ margin: 'auto', marginTop: '2em' }}>
+        <div className="container" style={{ margin: 'auto', marginTop: '2em', display: 'flex', justifyContent: 'space-evenly' }}>
             <Button onClick={() => setShowNewTemplateModal(true)} variant="primary">
-                Neues Design anlegen
+                Neues Template designen
             </Button>
 
             <h1 style={{ marginTop: '2em' }}>Bestehende Designs editieren:</h1>
             {templates.map((t) => <><Link to={`/editor/${t}`}><Button variant="warning" style={{ margin: '1em', width: '20em' }}>{t}</Button></Link></>)}
             <br />
             <Link to={`/media_library/`}><Button variant="link" style={{ margin: '1em', width: '20em' }}>Media library</Button></Link>
+        
+          <Link to="/mailing/new">
+                <Button onClick={() => setShowNewTemplateModal(true)} variant="primary">
+                    Neues Mailing anlegen
+                </Button>
+            </Link>
         </div>
     </>
 }
@@ -33,15 +33,6 @@ type NewTemplateModalFormProps = {
 const NewTemplateModalForm: React.FC<NewTemplateModalFormProps> = ({ show, onHide }) => {
     const navigate = useNavigate();
 
-    function makeUrlFriendly(str: string) {
-        return str
-            .toLowerCase()                       // Convert the string to lowercase
-            .replace(/\s+/g, '-')               // Replace spaces with hyphens
-            .replace(/[^a-z0-9-]/g, '')         // Remove all non-alphanumeric characters except hyphens
-            .replace(/--+/g, '-')               // Replace multiple hyphens with a single hyphen
-            .replace(/^-+/, '')                 // Trim leading hyphens
-    }
-
     const [templateName, setTemplateName] = useState('')
     const handleSubmit = () => navigate(`/editor/${templateName}`)
     return (
@@ -52,12 +43,12 @@ const NewTemplateModalForm: React.FC<NewTemplateModalFormProps> = ({ show, onHid
             <Modal.Body>
                 <Form onSubmit={handleSubmit}>
                     <Form.Group controlId="templateName">
-                        <Form.Label>Template Name (intern)</Form.Label>
+                        <Form.Label>Template Name</Form.Label>
                         <Form.Control
                             value={templateName}
-                            onChange={(e) => setTemplateName(makeUrlFriendly(e.target.value))}
+                            onChange={(e) => setTemplateName(e.target.value)}
                             type="text"
-                            placeholder="mein-template" />
+                            placeholder="" />
                     </Form.Group>
                 </Form>
             </Modal.Body>
