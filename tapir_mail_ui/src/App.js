@@ -1,22 +1,26 @@
-import React from 'react'
-import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
+import React from 'react';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import './App.css';
+import { AlertProvider } from './contexts/alerts';
 import Dashboard from './pages/dashboard';
-import Editor from './pages/editor';
+import MailPlanning from './pages/mail-planning';
 import MediaLibrary from "./pages/media_library";
 import TemplateEditor from './pages/template-editor';
-import MailPlanning from './pages/mail-planning';
 
 function App() {
   return (
     <div className="App"> {/* this should be replaced with a layout component */}
-      <Router>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/editor/:templateName" element={<Editor />} />
-          <Route path="/media_library/" element={<MediaLibrary />} />
-        </Routes>
-      </Router>
+      <AlertProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/mailing/new" element={<MailPlanning />} />
+            <Route path="/editor/:templateId" element={<TemplateEditor />} />
+            <Route path="/editor" element={<TemplateEditor />} />
+            <Route path="/media_library" element={<MediaLibrary />} />
+          </Routes>
+        </Router>
+      </AlertProvider>
     </div>
   );
 }

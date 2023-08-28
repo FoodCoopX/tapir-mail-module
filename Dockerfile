@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install system packages and clean up afterwards
 RUN apt update -y && apt upgrade -y && \
-    apt install -y libldap2-dev libsasl2-dev gettext && \
+    apt install -y libldap2-dev libsasl2-dev gettext default-jdk && \
     curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
     apt install -y nodejs && \
     apt-get clean && \
@@ -19,6 +19,6 @@ RUN pip install --upgrade pip && \
 
 # Copy your application files and install Python dependencies
 COPY . /app
-RUN ./bundle.sh
 RUN poetry lock --no-update && \
     poetry install
+RUN ./bundle.sh

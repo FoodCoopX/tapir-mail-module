@@ -13,7 +13,7 @@ import { AdvancedType, BasicType, BlockManager } from 'easy-email-core';
 import 'easy-email-editor/lib/style.css';
 import { ExtensionProps, StandardLayout } from 'easy-email-extensions';
 import 'easy-email-extensions/lib/style.css';
-import { Button } from 'react-bootstrap';
+import { Alert, Button, Form } from 'react-bootstrap';
 import { useWindowSize } from 'react-use';
 //import './CustomBlocks';
 
@@ -90,16 +90,20 @@ const categories: ExtensionProps['categories'] = [
     ],
   },
 ];
+export const EMPTY_PAGE = BlockManager.getBlockByType(BasicType.PAGE)!.create({})
 
 type EditorProps = {
-  handleBack?: (values: IEmailTemplate) => void;
-  handleSave?: (values: IEmailTemplate) => void;
+  onGoBack?: (values: IEmailTemplate) => void;
+  onSave?: (values: IEmailTemplate) => void;
+  onTemplateNameChange?: (name: string) => void;
+  templateName?: string;
   content?: any;
   subject?: string;
   subtitle?: string;
   onContentChange?: (values: IEmailTemplate) => void;
 }
-const Editor: React.FC<EditorProps> = ({ handleBack, handleSave, onContentChange, subject, subtitle, content = BlockManager.getBlockByType(BasicType.PAGE)!.create({}) }) => {
+
+const Editor: React.FC<EditorProps> = ({ onGoBack, onSave, onTemplateNameChange, onContentChange, templateName = '', subject, subtitle, content = EMPTY_PAGE }) => {
   const { width } = useWindowSize();
 
   const smallScene = width < 1400;
@@ -109,7 +113,7 @@ const Editor: React.FC<EditorProps> = ({ handleBack, handleSave, onContentChange
       console.log(file) // TODO: upload file to server, return URL
     })
   }
-  
+
   return (
     <>
 
@@ -121,7 +125,7 @@ const Editor: React.FC<EditorProps> = ({ handleBack, handleSave, onContentChange
           onUploadImage={handleUploadImage}
           autoComplete={false}
           fontList={fontList}
-          onSubmit={handleSave}
+          onSubmit={onSave}
           enabledLogic={false} // conditional blocks and stuff, interesting but maybe complex at the beginning
         // interactiveStyle={hoverColor:'#000000', selectedCorlor:'#000000'} <--- style the editor with CI colors
         // onAddCollection={(collection) => console.log(collection)}  <--- allows to save blocks to a collection for reuse
@@ -133,26 +137,42 @@ const Editor: React.FC<EditorProps> = ({ handleBack, handleSave, onContentChange
             if (onContentChange) {
               onContentChange(values);
             }
+            const saveDisabled = templateName.length === 0 || content === values.content
             return (
               <>
                 <StandardLayout
                   compact={!smallScene}
                   categories={categories}
                   showSourceCode={false}
-
                 >
+                  <Form.Control
+                    placeholder="Template Name"
+                    aria-label="Template Name"
+                    required
+                    style={{ borderRadius: '0' }}
+                    className={templateName ? "" : "is-invalid"}
+                    disabled={!onTemplateNameChange}
+                    onChange={onTemplateNameChange ? (e => onTemplateNameChange(e.target.value)) : (e) => null}
+                    value={templateName}
+                  />
                   <EmailEditor />
+
+                  {templateName.length === 0 && <Alert variant='warning'><small>
+                    <svg style={{ height: '1.5em' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>&nbsp;&nbsp;&nbsp;Bitte gib einen Namen für das Template ein!</small></Alert>}
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '1em' }}>
-                    {handleBack && <Button variant="secondary" onClick={() => handleBack(values)}>Zurück</Button>}
-                    {handleSave && <Button variant="success" onClick={() => handleSave(values)}>Speichern</Button>}
+                    {onGoBack ? <Button variant="secondary" onClick={() => onGoBack(values)}>Zurück</Button> : <div />}
+                    {onSave ? <Button disabled={saveDisabled} variant={saveDisabled ? "disabled" : "success"} onClick={() => onSave(values)}>Template Speichern</Button> : <div />}
                   </div>
-                </StandardLayout>
+                </StandardLayout >
 
               </>
             );
           }}
         </EmailEditorProvider>
-      </div></>
+      </div ></>
   );
 }
 export default Editor;

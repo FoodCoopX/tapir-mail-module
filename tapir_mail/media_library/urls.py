@@ -10,7 +10,7 @@ urlpatterns = [
 ]
 
 router = routers.DefaultRouter()
-router.register("api/temporary_upload", views.TemporaryUploadViewSet)
-router.register("api/stored_upload", views.StoredUploadViewSet)
+router.register("temporary_upload", views.TemporaryUploadViewSet)
+router.register("stored_upload", views.StoredUploadViewSet)
 
 urlpatterns += router.urls

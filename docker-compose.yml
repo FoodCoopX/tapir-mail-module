@@ -2,29 +2,12 @@ version: "3.9"
 services:
   web:
     build: .
-    command: bash -c "./bundle.sh && poetry run python manage.py runserver 0.0.0.0:80 & cd tapir_mail_ui && HOST=0.0.0.0 npm start"
+    command: bash -c "./bundle.sh & poetry run python manage.py runserver 0.0.0.0:8000 & (cd tapir_mail_ui && HOST=0.0.0.0 npm start) & wait"
     volumes:
       - .:/app
+    ports:
+      - "8000:8000"
+      - "3000:3000"
     environment:
       VIRTUAL_HOST: localhost
       DEBUG: 1
-    network_mode: "host"
-
-  nginx-proxy:
-    image: jwilder/nginx-proxy
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./docker/nginx/certs:/etc/nginx/certs:ro
-      - ./docker/nginx/vhost.d:/etc/nginx/vhost.d:ro
-      - ./docker/nginx/client_auth_certs:/etc/nginx/client_auth_certs:ro
-    ports:
-      - "8000:80"
-      - "8001:443"
-    environment:
-      HTTPS_METHOD: noredirect
-      DEFAULT_HOST: localhost
-    depends_on:
-      - web
-
-volumes:
-  nginx-certs-volume:
