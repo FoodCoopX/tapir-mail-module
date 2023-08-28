@@ -3,6 +3,8 @@ import { Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { EmailTemplate, EmailTemplateApi } from '../api_client';
 import { useApi } from '../hooks/useApi';
+import Paths from '../routing';
+import Loading from '../components/loading';
 
 function Dashboard() {
     const [templates, setTemplates] = useState<EmailTemplate[]>([])
@@ -14,13 +16,13 @@ function Dashboard() {
         })
     }, [])
 
+
     return <>
         <div className="container" style={{ margin: 'auto', marginTop: '2em', display: 'flex', justifyContent: 'space-evenly' }}>
-            <Link to={`/media_library/`}><Button variant="link" style={{ margin: '1em', width: '20em' }}>Media library</Button></Link>
-
-            <Link to="/mailing/new">
+            <Link to={Paths.mediaLibrary}><Button variant="link" style={{ margin: '1em', width: '20em' }}>Media library</Button></Link>
+            <Link to={Paths.emailConfiguration}>
                 <Button variant="primary">
-                    Neues Mailing anlegen
+                    Email Definitionen
                 </Button>
             </Link>
 
@@ -34,7 +36,7 @@ function Dashboard() {
 
             <div>
                 {templates.map(template => {
-                    return <Link key={template.id} to={"/editor/" + template.id}>
+                    return <Link key={template.id} to={Paths.templateEditorEdit.replace(":templateId", template.id!!)}>
                         <ul>
                             <li>{template.name}</li>
                         </ul>

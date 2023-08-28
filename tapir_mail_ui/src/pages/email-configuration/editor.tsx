@@ -1,20 +1,26 @@
 import { IEmailTemplate } from "easy-email-editor";
-import React, { useEffect, useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { Alert, Button, Form } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import { EmailConfigurationApi, EmailTemplate, EmailTemplateApi } from "../api_client";
-import Editor, { EMPTY_PAGE } from "../components/editor";
-import { useAlert } from "../contexts/alerts";
-import { useApi } from "../hooks/useApi";
+import { Link, useParams } from "react-router-dom";
+import { EmailConfigurationApi, EmailTemplate, EmailTemplateApi } from "../../api_client";
+import Editor, { EMPTY_PAGE } from "../../components/editor";
+import Loading from "../../components/loading";
+import { useAlert } from "../../contexts/alerts";
+import { useApi } from "../../hooks/useApi";
+import Paths from "../../routing";
+import { mjmlToHtml } from "../../utils/mjml";
 
 const ID_NEW_TEMPLATE = '<new>'
 
-const MailPlanning = () => {
+const EmailConfigurationEditor = () => {
+    const { id } = useParams();
+
+    const [loading, setLoading] = useState<Boolean>(Boolean(id));
     const [mailingName, setMailingName] = useState("");
     const [subject, setSubject] = useState("")
     const [subtitle, setSubtitle] = useState("")
     const [selectedTemplate, setSelectedTemplate] = useState<string>(ID_NEW_TEMPLATE);
-    const [recipient, setRecipient] = useState("");
+    const [recipients, setRecipients] = useState("");
     const [templates, setTemplates] = useState<EmailTemplate[]>([])
     const [loadedContent, setLoadedContent] = useState<any | undefined>(EMPTY_PAGE)
     const [templateName, setTemplateName] = useState("")
@@ -31,30 +37,60 @@ const MailPlanning = () => {
             setTemplates(data)
         })
 
-    useEffect(() => {
-        fetchTemplates()
-    }, []);
+    useLayoutEffect(() => {
+        fetchTemplates().then(() => {
+            if (id) {
+                emailConfigApi.emailconfigurationsRetrieve({ id: id }).then(data => {
+                    setMailingName(data.name)
+                    setSubject(data.subject)
+                    setSubtitle(data.subtitle || "")
+                    setRecipients(data.recipients || "")
+                    handleSelectTemplate({ target: { value: data.template } })
+                }).catch(err => {
+                    showAlert("Beim Laden ist ein Fehler aufgetreten.", 'danger');
+                })
+            }
+        }).catch(err => {
+            showAlert("Beim Laden ist ein Fehler aufgetreten.", 'danger');
+        })
+    }, [id]);
+
 
     const handleSave = () => {
-        emailConfigApi.emailconfigurationsCreate({
+        const props = {
             emailConfigurationCreate: {
                 name: mailingName,
                 subject: subject,
                 subtitle: subtitle,
-                template: selectedTemplate!!
+                template: selectedTemplate!!,
+                recipients: recipients
             }
-        }).then(data => {
-            showAlert("Deine Email Konfiguration wurde gespeichert!", 'success')
-        }).catch(err => {
-            showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, 'danger');
-        })
+        }
+
+        if (id) {
+            emailConfigApi.emailconfigurationsUpdate({
+                id: id,
+                ...props
+            }).then(data => {
+                showAlert("Deine Änderungen wurden gespeichert!", 'success')
+            }).catch(err => {
+                showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, 'danger');
+            })
+        } else {
+            emailConfigApi.emailconfigurationsCreate(props).then(data => {
+                showAlert("Deine Email Konfiguration wurde gespeichert!", 'success')
+            }).catch(err => {
+                showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, 'danger');
+            })
+        }
     }
 
     const handleSaveTemplate = (values: IEmailTemplate) => {
         const props = {
             emailTemplateCreate: {
                 name: templateName,
-                content: JSON.stringify(values.content)
+                content: JSON.stringify(values.content),
+                html: mjmlToHtml(values.content)
             }
         }
         if (selectedTemplate !== ID_NEW_TEMPLATE) {
@@ -91,11 +127,14 @@ const MailPlanning = () => {
             }).catch(err => {
                 setSelectedTemplate(ID_NEW_TEMPLATE)
                 showAlert("Beim Laden des Templates ist ein Fehler aufgetreten.", 'danger');
+            }).finally(() => {
+                setLoading(false)
             })
         } else {
             setLoadedContent(EMPTY_PAGE)
             setTemplateName(mailingName)
             setSelectedTemplate(ID_NEW_TEMPLATE)
+            setLoading(false)
         }
     }
 
@@ -104,10 +143,10 @@ const MailPlanning = () => {
     }
 
     const saveButtonDisabled = !mailingName || !selectedTemplate || !subject || (content != loadedContent) || loadedContent === EMPTY_PAGE
-    return (
+    return loading ? <Loading /> : (
         <div style={{ display: 'grid', gridTemplateColumns: "1fr 5fr" }}>
             <div style={{ margin: '1em' }}>
-                <Link to="/"><Button size="sm" style={{ width: '100%' }} variant="secondary">&lt;&lt;&nbsp;&nbsp;&nbsp;Zurück zur Übersicht</Button></Link>
+                <Link to={Paths.emailConfiguration}><Button size="sm" style={{ width: '100%' }} variant="secondary">&lt;&lt;&nbsp;&nbsp;&nbsp;Zurück zur Übersicht</Button></Link>
                 <hr />
                 <Form>
                     <Form.Group>
@@ -157,15 +196,15 @@ const MailPlanning = () => {
                         <Form.Label>Empfänger</Form.Label>
                         <Form.Control
                             type="text"
-                            value={recipient}
-                            onChange={(e) => setRecipient(e.target.value)}
+                            value={recipients}
+                            onChange={(e) => setRecipients(e.target.value)}
                         />
                     </Form.Group>
                     <br />
 
                     <Form.Group>
                         <Form.Label>Versandzeitpunkt</Form.Label>
-                        <Form.Control as="select" value="now">
+                        <Form.Control as="select" value="now" readOnly={true} disabled={true}>
                             <option value="now">Sofort</option>
                         </Form.Control>
                     </Form.Group>
@@ -175,7 +214,7 @@ const MailPlanning = () => {
                         disabled={saveButtonDisabled}
                         variant={saveButtonDisabled ? "disabled" : "success"}
                         style={{ width: '100%' }}
-                        onClick={handleSave}>Mailing Konfiguration speichern</Button>
+                        onClick={handleSave}>Konfiguration speichern</Button>
                     {saveButtonDisabled && <Alert style={{ margin: '1em' }} variant="warning"><small>Bitte speichere zuerst das Template.</small></Alert>}
                 </Form>
             </div>
@@ -187,4 +226,4 @@ const MailPlanning = () => {
 }
 
 
-export default MailPlanning;
+export default EmailConfigurationEditor;

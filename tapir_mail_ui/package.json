@@ -12,6 +12,7 @@
     "easy-email-editor": "^4.12.2",
     "easy-email-extensions": "^4.14.1",
     "filepond": "^4.30.4",
+    "framer-motion": "^10.16.1",
     "mjml-browser": "^4.14.1",
     "react": "^18.2.0",
     "react-bootstrap": "^2.8.0",
@@ -20,6 +21,7 @@
     "react-final-form": "^6.5.9",
     "react-router-dom": "^6.14.2",
     "react-scripts": "^5.0.1",
+    "react-spinners": "^0.13.8",
     "web-vitals": "^3.4.0"
   },
   "devDependencies": {
