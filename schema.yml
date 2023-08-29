@@ -150,6 +150,28 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/email_configuration/{id}/send_email/:
+    post:
+      operationId: emailconfigurations_send_email
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration.
+        required: true
+      tags:
+      - email_configuration
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfiguration'
+          description: ''
   /api/email_template/:
     get:
       operationId: emailtemplates_list
@@ -851,6 +873,9 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        recipients:
+          type: string
+          nullable: true
         template:
           type: string
       required:
@@ -878,6 +903,9 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        recipients:
+          type: string
+          nullable: true
         template:
           type: string
       required:
@@ -903,9 +931,12 @@ components:
           maxLength: 255
         content:
           type: string
+        html:
+          type: string
       required:
       - content
       - created_at
+      - html
       - name
       - updated_at
     EmailTemplateCreate:
@@ -919,8 +950,11 @@ components:
           maxLength: 255
         content:
           type: string
+        html:
+          type: string
       required:
       - content
+      - html
       - name
     PatchedEmailConfiguration:
       type: object
@@ -949,6 +983,9 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        recipients:
+          type: string
+          nullable: true
         template:
           type: string
     PatchedEmailTemplate:
@@ -969,6 +1006,8 @@ components:
           type: string
           maxLength: 255
         content:
+          type: string
+        html:
           type: string
     PatchedStoredUpload:
       type: object

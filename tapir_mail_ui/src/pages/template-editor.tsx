@@ -1,11 +1,15 @@
+import { JsonToMjml } from "easy-email-core";
 import { IEmailTemplate } from "easy-email-editor";
+import mjml from 'mjml-browser';
 import React, { useLayoutEffect, useState } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import { EmailTemplateApi } from "../api_client";
 import Editor, { EMPTY_PAGE } from "../components/editor";
+import Loading from "../components/loading";
 import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
+import { mjmlToHtml } from "../utils/mjml";
 
 const TemplateEditor = () => {
     const showAlert = useAlert();
@@ -44,27 +48,27 @@ const TemplateEditor = () => {
     }
 
     const handleSave = (values: IEmailTemplate) => {
+        const props = {
+            emailTemplateCreate: {
+                name: name,
+                content: JSON.stringify(values.content),
+                html: mjmlToHtml(values.content)
+            }
+        }
         if (!templateId) {
-            api.emailtemplatesCreate({
-                emailTemplateCreate: {
-                    name: name,
-                    content: JSON.stringify(values.content)
-                }
-            }).then(data => {
-                showAlert("Dein Template wurde gespeichert!", 'success')
-                if (data.id) {
-                    navigate("/editor/" + data.id)
-                }
-            }).catch(err => {
-                showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, 'danger');
-            })
+            api.emailtemplatesCreate(props)
+                .then(data => {
+                    showAlert("Dein Template wurde gespeichert!", 'success')
+                    if (data.id) {
+                        navigate("/editor/" + data.id)
+                    }
+                }).catch(err => {
+                    showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, 'danger');
+                })
         } else {
             api.emailtemplatesUpdate({
                 id: templateId,
-                emailTemplateCreate: {
-                    name: name,
-                    content: JSON.stringify(values.content)
-                }
+                ...props
             }).then(data => {
                 showAlert("Deine Änderungen wurden gespeichert!", 'success')
                 setContent(values.content)
@@ -91,7 +95,7 @@ const TemplateEditor = () => {
                     </Button>
                 </Modal.Footer>
             </Modal>
-            {loading ? <h1>Loading...</h1> : <Editor
+            {loading ? <Loading /> : <Editor
                 onGoBack={handleBack}
                 onSave={handleSave}
                 onTemplateNameChange={name => setName(name)}

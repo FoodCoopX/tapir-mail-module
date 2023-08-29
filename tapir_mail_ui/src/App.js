@@ -1,25 +1,39 @@
-import React from 'react';
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { AnimatePresence, motion } from "framer-motion";
+import React, { Suspense } from 'react';
+import { Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
 import './App.css';
+import Loading from './components/loading';
 import { AlertProvider } from './contexts/alerts';
-import Dashboard from './pages/dashboard';
-import MailPlanning from './pages/mail-planning';
-import MediaLibrary from "./pages/media_library";
-import TemplateEditor from './pages/template-editor';
+import { routes } from './routing';
+
+// add new routes in routing.ts
+
+const InnerApp = () => {
+  const location = useLocation();
+  return <motion.div key={location.pathname}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}>
+    <Suspense fallback={<div style={{ width: '100%', marginTop: '5em' }}><Loading /></div>}>
+      <Routes>
+        {routes.map((route, index) => (
+          <Route key={index} path={route.path} element={<route.element />} />
+        ))}
+      </Routes>
+    </Suspense>
+  </motion.div>
+}
+
 
 function App() {
   return (
-    <div className="App"> {/* this should be replaced with a layout component */}
+    <div className="App">
       <AlertProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/mailing/new" element={<MailPlanning />} />
-            <Route path="/editor/:templateId" element={<TemplateEditor />} />
-            <Route path="/editor" element={<TemplateEditor />} />
-            <Route path="/media_library" element={<MediaLibrary />} />
-          </Routes>
-        </Router>
+        <AnimatePresence mode="wait">
+          <Router>
+            <InnerApp />
+          </Router>
+        </AnimatePresence>
       </AlertProvider>
     </div>
   );

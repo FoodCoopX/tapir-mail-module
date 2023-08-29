@@ -137,7 +137,7 @@ const Editor: React.FC<EditorProps> = ({ onGoBack, onSave, onTemplateNameChange,
             if (onContentChange) {
               onContentChange(values);
             }
-            const saveDisabled = templateName.length === 0 || content === values.content
+            const saveDisabled = templateName.length === 0 || content === values.content;
             return (
               <>
                 <StandardLayout

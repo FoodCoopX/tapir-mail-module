@@ -94,6 +94,27 @@ TEMPLATES = [
 WSGI_APPLICATION = "tapir_mail_server.wsgi.application"
 
 
+# django-environ EMAIL_URL mechanism is a bit hairy with passwords with slashes in them, so use this instead
+EMAIL_ENV = env("EMAIL_ENV", default="dev")
+if EMAIL_ENV == "dev":
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    EMAIL_HOST_SENDER = "dev@example.com"
+elif EMAIL_ENV == "test":
+    # Local SMTP
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+elif EMAIL_ENV == "prod":
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = env.str("EMAIL_HOST")
+    EMAIL_HOST_SENDER = env.str("EMAIL_HOST_SENDER")
+    EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
+    EMAIL_PORT = env.str("EMAIL_PORT", default=587)
+    # the next 2 options are mutually exclusive!
+    EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+    EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+    EMAIL_AUTO_BCC = env.str("EMAIL_AUTO_BCC", default=None)
+
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 

@@ -1,0 +1,36 @@
+from django.core.mail import EmailMultiAlternatives
+
+from tapir_mail.models import EmailTemplate
+from tapir_mail_server import settings
+
+
+def send_email(**kwargs):
+    """
+    Sends an email using the configuration provided in the kwargs.
+    """
+
+    template = kwargs.pop("template")
+    email_body = template.html
+
+    subject = kwargs.pop("subject")
+    recipients = kwargs.pop("recipients")
+
+    # TODO: persist sent email in database
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=email_body,
+        to=recipients,
+        bcc=[settings.EMAIL_AUTO_BCC]
+        if hasattr(settings, "EMAIL_AUTO_BCC") and settings.EMAIL_AUTO_BCC
+        else None,
+        from_email=settings.EMAIL_HOST_SENDER,
+        headers={
+            "From": f"{settings.EMAIL_HOST_SENDER_NAME} <{settings.EMAIL_HOST_SENDER}>"
+        }
+        if hasattr(settings, "EMAIL_HOST_SENDER_NAME")
+        else None,
+    )
+    email.content_subtype = "html"
+
+    email.send()
