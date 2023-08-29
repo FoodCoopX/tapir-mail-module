@@ -8,6 +8,7 @@ import { MediaLibraryApi, StoredUpload, TemporaryUpload } from "../api_client";
 import StoredUploadsCard from "../components/media_library/StoredUploadsCard";
 import TemporaryUploadsCard from "../components/media_library/TemporaryUploadsCard";
 import { useApi } from '../hooks/useApi';
+import {Link} from "react-router-dom";
 
 export default function MediaLibrary() {
     const [temporaryUploads, setTemporaryUploads] = useState<TemporaryUpload[]>([]);
@@ -20,7 +21,7 @@ export default function MediaLibrary() {
     function onFilePondInit() {
         FilePondJs.setOptions({
             server: {
-                url: 'http://localhost:8000/media_library/filepond',
+                url: 'http://localhost:8000/api/media_library/filepond',
                 process: '/process/',
                 revert: '/revert/',
                 restore: '/restore/',
@@ -52,7 +53,7 @@ export default function MediaLibrary() {
     function onConfirmUpload(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        fetch("http://localhost:8000/media_library/confirm_upload/", {
+        fetch("http://localhost:8000/api/media_library/confirm_upload/", {
             method: 'post',
             body: formData,
         }).then(response => {
@@ -69,7 +70,7 @@ export default function MediaLibrary() {
 
     return <>
         <div className="container" style={{ margin: 'auto', marginTop: '2em' }}>
-            <h1>Prototype media library</h1>
+            <Link to="/"><Button size="sm" variant="secondary">&lt;&lt;&nbsp;&nbsp;&nbsp;Zurück zur Übersicht</Button></Link><h1>Prototype media library</h1>
             <Row>
                 <Col>
                     <Card className="mb-2">
