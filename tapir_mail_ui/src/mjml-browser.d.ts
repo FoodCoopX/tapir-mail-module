@@ -1,1 +1,1 @@
-declare module 'mjml-browser';
+declare module "mjml-browser";
