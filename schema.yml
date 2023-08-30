@@ -1016,6 +1016,8 @@ components:
           type: string
           maxLength: 22
           minLength: 22
+        file_name:
+          type: string
         file:
           type: string
           format: uri
@@ -1036,6 +1038,8 @@ components:
           type: string
           maxLength: 22
           minLength: 22
+        file_name:
+          type: string
         file_id:
           type: string
           maxLength: 22
@@ -1062,6 +1066,8 @@ components:
           type: string
           maxLength: 22
           minLength: 22
+        file_name:
+          type: string
         file:
           type: string
           format: uri
@@ -1077,6 +1083,7 @@ components:
           nullable: true
       required:
       - file
+      - file_name
       - stored
       - upload_id
       - uploaded
@@ -1087,6 +1094,8 @@ components:
           type: string
           maxLength: 22
           minLength: 22
+        file_name:
+          type: string
         file_id:
           type: string
           maxLength: 22
@@ -1109,6 +1118,7 @@ components:
       required:
       - file
       - file_id
+      - file_name
       - upload_id
       - upload_name
       - upload_type
