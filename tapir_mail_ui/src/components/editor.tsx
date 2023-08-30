@@ -10,12 +10,11 @@ import "easy-email-editor/lib/style.css";
 
 import "@arco-themes/react-easy-email-theme/css/arco.css";
 import { AdvancedType, BasicType, BlockManager } from "easy-email-core";
-import "easy-email-editor/lib/style.css";
 import { ExtensionProps, StandardLayout } from "easy-email-extensions";
 import "easy-email-extensions/lib/style.css";
 import { Alert, Button, Form } from "react-bootstrap";
 import { useWindowSize } from "react-use";
-import { useApi } from "../hooks/useApi";
+import { getMediaLibraryFileUrl } from "../utils/getMediaLibraryFileUrl";
 //import './CustomBlocks';
 
 const fontList = [
@@ -162,11 +161,7 @@ const Editor: React.FC<EditorProps> = ({
           }
 
           confirmResponse.json().then((confirmData) => {
-            const url =
-              (process.env.REACT_APP_API_ROOT as string) +
-              "/api/media_library/get_file/" +
-              confirmData.uploads[0];
-            resolve(url);
+            resolve(getMediaLibraryFileUrl(confirmData.uploads[0]));
           });
         });
       }
