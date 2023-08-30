@@ -16,7 +16,9 @@ from django.http.response import (
     HttpResponseBadRequest,
     HttpResponseNotFound,
     HttpResponseServerError,
+    FileResponse,
 )
+from django.shortcuts import get_object_or_404
 from django.views.generic import View
 from django_drf_filepond.api import store_upload, delete_stored_upload
 from django_drf_filepond.models import TemporaryUpload, StoredUpload
@@ -116,3 +118,8 @@ class TemporaryUploadViewSet(viewsets.ModelViewSet):
 class StoredUploadViewSet(viewsets.ModelViewSet):
     serializer_class = StoredUploadSerializer
     queryset = StoredUpload.objects.all()
+
+
+def get_file_view(request, upload_id: str):
+    stored_upload = get_object_or_404(StoredUpload, upload_id=upload_id)
+    return FileResponse(stored_upload.file, filename=stored_upload.file.name)
