@@ -1,38 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  {% load static %}
 
-{% load static %}
-
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Dummy Tapir Users</title>
 
-    <link rel="stylesheet" href="{% static 'core/bootstrap-5.3.1-dist/css/bootstrap.min.css' %}">
-</head>
-<body>
-<div class="card m-2">
-    <h5 class="card-header d-flex justify-content-between justify-content-between">
+    <link
+      rel="stylesheet"
+      href="{% static 'core/bootstrap-5.3.1-dist/css/bootstrap.min.css' %}"
+    />
+  </head>
+  <body>
+    <div class="card m-2">
+      <h5
+        class="card-header d-flex justify-content-between justify-content-between"
+      >
         <span>Dummy tapir users</span>
-        <a class="btn tapir-btn btn-outline-primary" href="{% url 'dummy_tapir_user_create_view' %}">
-            Create
+        <a
+          class="btn tapir-btn btn-outline-primary"
+          href="{% url 'dummy_tapir_user_create_view' %}"
+        >
+          Create
         </a>
-    </h5>
-    <div class="card-body">
+      </h5>
+      <div class="card-body">
         <table class="table table-striped table-hover">
-            <thead>
+          <thead>
             <tr>
-                <th>ID</th>
-                <th>E-Mail</th>
+              <th>ID</th>
+              <th>E-Mail</th>
             </tr>
-            </thead>
-            {% for dummy_tapir_user in object_list %}
-                <tr>
-                    <td class="align-middle">{{ dummy_tapir_user.id }}</td>
-                    <td class="align-middle">{{ dummy_tapir_user.email }}</td>
-                </tr>
-            {% endfor %}
+          </thead>
+          {% for dummy_tapir_user in object_list %}
+          <tr>
+            <td class="align-middle">{{ dummy_tapir_user.id }}</td>
+            <td class="align-middle">{{ dummy_tapir_user.email }}</td>
+          </tr>
+          {% endfor %}
         </table>
+      </div>
     </div>
-</div>
-</body>
+  </body>
 </html>
