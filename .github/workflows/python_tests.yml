@@ -3,7 +3,7 @@ name: Python tests
 on: [push]
 
 jobs:
-  build:
+  python-tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,5 +19,7 @@ jobs:
         run: poetry install
       - name: Bundle
         run: ./bundle.sh
+        env:
+          CI: false # must set this to false otherwise "npm build" treats warnings as errors
       - name: Run tests
         run: poetry run pytest
