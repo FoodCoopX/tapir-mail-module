@@ -20,7 +20,16 @@ nanoid = "^2.0.0"
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
 pre-commit = "^3.3.3"
+pytest-django = "^4.5.2"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tapir_mail_server.settings"
+python_files = "tests.py test_*.py"
+filterwarnings = [
+    "ignore:::.*django.*", #ignore warnings coming from the django lib
+    "ignore::django.utils.deprecation.RemovedInDjango40Warning" #ignore django deprecation warnings
+]
