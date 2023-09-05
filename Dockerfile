@@ -21,3 +21,4 @@ RUN pip install --upgrade pip && \
 COPY . /app
 RUN poetry lock --no-update && \
     poetry install
+RUN ./bundle.sh
