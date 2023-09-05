@@ -237,6 +237,7 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 # React Static
+tapir_mail/__ui__
 tapir_mail/__static__/
 email-templates/
 
