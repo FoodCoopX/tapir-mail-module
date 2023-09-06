@@ -8,6 +8,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Check access rights 0
+        run: docker compose run web ls -la tapir_mail_ui
       - name: Check access rights 1
         run: docker compose run web ls -la tapir_mail
       - name: Check access rights 2
