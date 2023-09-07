@@ -37,3 +37,7 @@ class EmailConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailConfiguration
         fields = "__all__"
+
+
+class RecipientSerializer(serializers.Serializer):
+    recipients = serializers.ListField(child=serializers.EmailField(), required=True)
