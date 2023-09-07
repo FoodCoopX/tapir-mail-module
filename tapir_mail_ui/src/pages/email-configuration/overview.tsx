@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useState } from "react";
 import { Button, Modal, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { EmailConfiguration, EmailConfigurationApi } from "../../api_client";
+import EmailInput from "../../components/EmailInput";
 import Loading from "../../components/loading";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
@@ -34,19 +35,6 @@ const MailPlanningOverview = () => {
         setLoading(false);
       });
   }, []);
-
-  const handleSendEmail = () => {
-    setSendModalOpen(false);
-    api
-      .emailconfigurationsSendEmail({ id: selectedEmailConfiguration!!.id!! })
-      .then(() => {
-        showAlert("Email wurde versendet!", "success");
-      })
-      .catch((err) => {
-        console.error(err);
-        showAlert("Beim Versenden ist ein Fehler aufgetreten.", "danger");
-      });
-  };
 
   const handleCloseModal = () => setSendModalOpen(false);
   return (
@@ -120,43 +108,82 @@ const MailPlanningOverview = () => {
           </tbody>
         </Table>
       )}
-
-      <Modal
-        show={Boolean(sendModalOpen)}
-        onHide={handleCloseModal}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Email senden</Modal.Title>
-        </Modal.Header>
-        {selectedEmailConfiguration && (
-          <Modal.Body>
-            Möchtest du die Email{" "}
-            <strong>{selectedEmailConfiguration!!.name}</strong> an folgende
-            Empfänger senden?
-            <br />
-            {selectedEmailConfiguration!!.recipients
-              ?.split(",")
-              .map((r) => <>- {r}</>)}
-          </Modal.Body>
-        )}
-        <Modal.Footer
-          style={{ display: "flex", justifyContent: "space-between" }}
-        >
-          <Button
-            variant="success"
-            onClick={handleCloseModal}
-          >
-            Abbrechen
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSendEmail}
-          >
-            Email senden
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <SendTestMailModal
+        open={sendModalOpen}
+        emailConfiguration={selectedEmailConfiguration!!}
+        onClose={handleCloseModal}
+      />
     </div>
+  );
+};
+
+const SendTestMailModal = ({
+  emailConfiguration,
+  open,
+  onClose,
+}: {
+  emailConfiguration: EmailConfiguration;
+  open: boolean;
+  onClose: () => void;
+}) => {
+  const api = useApi(EmailConfigurationApi);
+  const showAlert = useAlert();
+
+  const [recipients, setRecipients] = useState<string[]>([]);
+  const handleRecipientsChange = (emails: string[]) => {
+    setRecipients(emails);
+  };
+
+  const handleSendEmail = () => {
+    onClose();
+    api
+      .emailconfigurationsSendTestEmail({
+        id: emailConfiguration!!.id!!,
+        recipient: { recipients: recipients },
+      })
+      .then(() => {
+        showAlert("Email wurde versendet!", "success");
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Beim Versenden ist ein Fehler aufgetreten.", "danger");
+      });
+  };
+
+  return (
+    <Modal
+      show={Boolean(open)}
+      onHide={onClose}
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>Testemail senden</Modal.Title>
+      </Modal.Header>
+      {emailConfiguration && (
+        <Modal.Body>
+          Möchtest du die Email <strong>{emailConfiguration!!.name}</strong> als
+          Testmail versenden?
+          <br />
+          <EmailInput onEmailListChange={handleRecipientsChange} />
+        </Modal.Body>
+      )}
+      <Modal.Footer
+        style={{ display: "flex", justifyContent: "space-between" }}
+      >
+        <Button
+          variant="success"
+          onClick={onClose}
+        >
+          Abbrechen
+        </Button>
+        <Button
+          variant={recipients.length > 0 ? "primary" : "disabled"}
+          onClick={handleSendEmail}
+          disabled={recipients.length === 0}
+        >
+          Email senden
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 };
 
