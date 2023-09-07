@@ -52,6 +52,7 @@ DEPENDENCIES_APPS = [
     "rest_framework",
     "drf_spectacular",
     "django_drf_filepond",
+    "django_extensions",
 ]
 TAPIR_MAIL_APPS = [
     "tapir_mail_server.dummy_accounts",
