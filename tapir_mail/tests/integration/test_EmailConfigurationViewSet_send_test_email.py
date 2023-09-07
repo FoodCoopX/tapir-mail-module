@@ -2,10 +2,10 @@ from django.core import mail
 
 from tapir_mail.models import EmailConfiguration
 from tapir_mail.tests.factories import EmailConfigurationFactory
-from tapir_mail.tests.test_utils import TapirFactoryTestCase
+from tapir_mail.tests.test_utils import TapirIntegrationTest
 
 
-class TestsEmailConfigurationSendTestEmail(TapirFactoryTestCase):
+class TestEmailConfigurationSendTestEmail(TapirIntegrationTest):
     def test_emailConfigurationDoesNotExist_returns404(self):
         self.assertEqual(0, EmailConfiguration.objects.count())
         response = self._send_request("abc", None)
@@ -35,7 +35,7 @@ class TestsEmailConfigurationSendTestEmail(TapirFactoryTestCase):
         self.assertEqual(recipients, sent_mail.to)
         self.assertEqual(subject, sent_mail.subject)
 
-    def _send_request(self, email_configuration_id: str, post_data):
+    def _send_request(self, email_configuration_id: str, post_data: dict | None):
         return self.apiClient.post(
             f"/api/email_configuration/{email_configuration_id}/send_test_email/",
             data=post_data,
