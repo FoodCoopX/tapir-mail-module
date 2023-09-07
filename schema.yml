@@ -1,333 +1,346 @@
 openapi: 3.0.3
 info:
-  title: ""
+  title: ''
   version: 0.0.0
 paths:
   /api/email_configuration/:
     get:
       operationId: emailconfigurations_list
       tags:
-        - email_configuration
+      - email_configuration
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/EmailConfiguration"
-          description: ""
+                  $ref: '#/components/schemas/EmailConfiguration'
+          description: ''
     post:
       operationId: emailconfigurations_create
       tags:
-        - email_configuration
+      - email_configuration
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EmailConfigurationCreate"
+              $ref: '#/components/schemas/EmailConfigurationCreate'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/EmailConfigurationCreate"
+              $ref: '#/components/schemas/EmailConfigurationCreate'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/EmailConfigurationCreate"
+              $ref: '#/components/schemas/EmailConfigurationCreate'
         required: true
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "201":
+        '201':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmailConfigurationCreate"
-          description: ""
+                $ref: '#/components/schemas/EmailConfigurationCreate'
+          description: ''
   /api/email_configuration/{id}/:
     get:
       operationId: emailconfigurations_retrieve
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: A unique value identifying this email configuration.
-          required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration.
+        required: true
       tags:
-        - email_configuration
+      - email_configuration
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmailConfiguration"
-          description: ""
+                $ref: '#/components/schemas/EmailConfiguration'
+          description: ''
     put:
       operationId: emailconfigurations_update
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: A unique value identifying this email configuration.
-          required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration.
+        required: true
       tags:
-        - email_configuration
+      - email_configuration
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EmailConfigurationCreate"
+              $ref: '#/components/schemas/EmailConfigurationCreate'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/EmailConfigurationCreate"
+              $ref: '#/components/schemas/EmailConfigurationCreate'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/EmailConfigurationCreate"
+              $ref: '#/components/schemas/EmailConfigurationCreate'
         required: true
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmailConfigurationCreate"
-          description: ""
+                $ref: '#/components/schemas/EmailConfigurationCreate'
+          description: ''
     patch:
       operationId: email_configuration_partial_update
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: A unique value identifying this email configuration.
-          required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration.
+        required: true
       tags:
-        - email_configuration
+      - email_configuration
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchedEmailConfiguration"
+              $ref: '#/components/schemas/PatchedEmailConfiguration'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/PatchedEmailConfiguration"
+              $ref: '#/components/schemas/PatchedEmailConfiguration'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/PatchedEmailConfiguration"
+              $ref: '#/components/schemas/PatchedEmailConfiguration'
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmailConfiguration"
-          description: ""
+                $ref: '#/components/schemas/EmailConfiguration'
+          description: ''
     delete:
       operationId: emailconfigurations_destroy
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: A unique value identifying this email configuration.
-          required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration.
+        required: true
       tags:
-        - email_configuration
+      - email_configuration
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "204":
+        '204':
           description: No response body
-  /api/email_configuration/{id}/send_email/:
+  /api/email_configuration/{id}/send_test_email/:
     post:
-      operationId: emailconfigurations_send_email
+      operationId: emailconfigurations_send_test_email
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: A unique value identifying this email configuration.
-          required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration.
+        required: true
       tags:
-        - email_configuration
+      - email_configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recipient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Recipient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Recipient'
+        required: true
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmailConfiguration"
-          description: ""
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/email_template/:
     get:
       operationId: emailtemplates_list
       tags:
-        - email_template
+      - email_template
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/EmailTemplate"
-          description: ""
+                  $ref: '#/components/schemas/EmailTemplate'
+          description: ''
     post:
       operationId: emailtemplates_create
       tags:
-        - email_template
+      - email_template
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EmailTemplateCreate"
+              $ref: '#/components/schemas/EmailTemplateCreate'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/EmailTemplateCreate"
+              $ref: '#/components/schemas/EmailTemplateCreate'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/EmailTemplateCreate"
+              $ref: '#/components/schemas/EmailTemplateCreate'
         required: true
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "201":
+        '201':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmailTemplateCreate"
-          description: ""
+                $ref: '#/components/schemas/EmailTemplateCreate'
+          description: ''
   /api/email_template/{id}/:
     get:
       operationId: emailtemplates_retrieve
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: A unique value identifying this email template.
-          required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email template.
+        required: true
       tags:
-        - email_template
+      - email_template
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmailTemplate"
-          description: ""
+                $ref: '#/components/schemas/EmailTemplate'
+          description: ''
     put:
       operationId: emailtemplates_update
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: A unique value identifying this email template.
-          required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email template.
+        required: true
       tags:
-        - email_template
+      - email_template
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EmailTemplateCreate"
+              $ref: '#/components/schemas/EmailTemplateCreate'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/EmailTemplateCreate"
+              $ref: '#/components/schemas/EmailTemplateCreate'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/EmailTemplateCreate"
+              $ref: '#/components/schemas/EmailTemplateCreate'
         required: true
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmailTemplateCreate"
-          description: ""
+                $ref: '#/components/schemas/EmailTemplateCreate'
+          description: ''
     patch:
       operationId: email_template_partial_update
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: A unique value identifying this email template.
-          required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email template.
+        required: true
       tags:
-        - email_template
+      - email_template
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchedEmailTemplate"
+              $ref: '#/components/schemas/PatchedEmailTemplate'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/PatchedEmailTemplate"
+              $ref: '#/components/schemas/PatchedEmailTemplate'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/PatchedEmailTemplate"
+              $ref: '#/components/schemas/PatchedEmailTemplate'
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmailTemplate"
-          description: ""
+                $ref: '#/components/schemas/EmailTemplate'
+          description: ''
     delete:
       operationId: emailtemplates_destroy
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          description: A unique value identifying this email template.
-          required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email template.
+        required: true
       tags:
-        - email_template
+      - email_template
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "204":
+        '204':
           description: No response body
   /api/media_library/filepond/fetch/:
     get:
       operationId: media_library_filepond_fetch_retrieve
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
+      - tokenAuth: []
       responses:
-        "200":
+        '200':
           description: No response body
   /api/media_library/filepond/load/:
     get:
@@ -339,11 +352,11 @@ paths:
         directory specified by the DJANGO_DRF_FILEPOND_FILE_STORE_PATH
         setting parameter).
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
+      - tokenAuth: []
       responses:
-        "200":
+        '200':
           description: No response body
   /api/media_library/filepond/patch/{chunk_id}:
     patch:
@@ -358,18 +371,18 @@ paths:
         Assuming everything in the request is valid, this view will store the
         chunk.
       parameters:
-        - in: path
-          name: chunk_id
-          schema:
-            type: string
-            pattern: ^[0-9a-zA-Z]{22}$
-          required: true
+      - in: path
+        name: chunk_id
+        schema:
+          type: string
+          pattern: ^[0-9a-zA-Z]{22}$
+        required: true
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
+      - tokenAuth: []
       responses:
-        "200":
+        '200':
           description: No response body
   /api/media_library/filepond/process/:
     post:
@@ -382,325 +395,325 @@ paths:
         ID is provided and the file is then moved from the temporary store into
         permanent storage in line with the requirements of the parent application.
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
+      - tokenAuth: []
       responses:
-        "200":
+        '200':
           description: No response body
   /api/media_library/filepond/restore/:
     get:
       operationId: media_library_filepond_restore_retrieve
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
+      - tokenAuth: []
       responses:
-        "200":
+        '200':
           description: No response body
   /api/media_library/filepond/revert/:
     delete:
       operationId: media_library_filepond_revert_destroy
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
+      - tokenAuth: []
       responses:
-        "204":
+        '204':
           description: No response body
   /api/media_library/stored_upload/:
     get:
       operationId: storeduploads_list
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/StoredUpload"
-          description: ""
+                  $ref: '#/components/schemas/StoredUpload'
+          description: ''
     post:
       operationId: storeduploads_create
       tags:
-        - media_library
+      - media_library
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StoredUpload"
+              $ref: '#/components/schemas/StoredUpload'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/StoredUpload"
+              $ref: '#/components/schemas/StoredUpload'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/StoredUpload"
+              $ref: '#/components/schemas/StoredUpload'
         required: true
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "201":
+        '201':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StoredUpload"
-          description: ""
+                $ref: '#/components/schemas/StoredUpload'
+          description: ''
   /api/media_library/stored_upload/{upload_id}/:
     get:
       operationId: storeduploads_retrieve
       parameters:
-        - in: path
-          name: upload_id
-          schema:
-            type: string
-          description: A unique value identifying this stored upload.
-          required: true
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this stored upload.
+        required: true
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StoredUpload"
-          description: ""
+                $ref: '#/components/schemas/StoredUpload'
+          description: ''
     put:
       operationId: storeduploads_update
       parameters:
-        - in: path
-          name: upload_id
-          schema:
-            type: string
-          description: A unique value identifying this stored upload.
-          required: true
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this stored upload.
+        required: true
       tags:
-        - media_library
+      - media_library
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StoredUpload"
+              $ref: '#/components/schemas/StoredUpload'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/StoredUpload"
+              $ref: '#/components/schemas/StoredUpload'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/StoredUpload"
+              $ref: '#/components/schemas/StoredUpload'
         required: true
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StoredUpload"
-          description: ""
+                $ref: '#/components/schemas/StoredUpload'
+          description: ''
     patch:
       operationId: storeduploads_partial_update
       parameters:
-        - in: path
-          name: upload_id
-          schema:
-            type: string
-          description: A unique value identifying this stored upload.
-          required: true
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this stored upload.
+        required: true
       tags:
-        - media_library
+      - media_library
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchedStoredUpload"
+              $ref: '#/components/schemas/PatchedStoredUpload'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/PatchedStoredUpload"
+              $ref: '#/components/schemas/PatchedStoredUpload'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/PatchedStoredUpload"
+              $ref: '#/components/schemas/PatchedStoredUpload'
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StoredUpload"
-          description: ""
+                $ref: '#/components/schemas/StoredUpload'
+          description: ''
     delete:
       operationId: storeduploads_destroy
       parameters:
-        - in: path
-          name: upload_id
-          schema:
-            type: string
-          description: A unique value identifying this stored upload.
-          required: true
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this stored upload.
+        required: true
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "204":
+        '204':
           description: No response body
   /api/media_library/temporary_upload/:
     get:
       operationId: temporaryuploads_list
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TemporaryUpload"
-          description: ""
+                  $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
     post:
       operationId: temporaryuploads_create
       tags:
-        - media_library
+      - media_library
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TemporaryUpload"
+              $ref: '#/components/schemas/TemporaryUpload'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/TemporaryUpload"
+              $ref: '#/components/schemas/TemporaryUpload'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/TemporaryUpload"
+              $ref: '#/components/schemas/TemporaryUpload'
         required: true
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "201":
+        '201':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemporaryUpload"
-          description: ""
+                $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
   /api/media_library/temporary_upload/{upload_id}/:
     get:
       operationId: temporaryuploads_retrieve
       parameters:
-        - in: path
-          name: upload_id
-          schema:
-            type: string
-          description: A unique value identifying this temporary upload.
-          required: true
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this temporary upload.
+        required: true
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemporaryUpload"
-          description: ""
+                $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
     put:
       operationId: temporaryuploads_update
       parameters:
-        - in: path
-          name: upload_id
-          schema:
-            type: string
-          description: A unique value identifying this temporary upload.
-          required: true
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this temporary upload.
+        required: true
       tags:
-        - media_library
+      - media_library
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TemporaryUpload"
+              $ref: '#/components/schemas/TemporaryUpload'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/TemporaryUpload"
+              $ref: '#/components/schemas/TemporaryUpload'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/TemporaryUpload"
+              $ref: '#/components/schemas/TemporaryUpload'
         required: true
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemporaryUpload"
-          description: ""
+                $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
     patch:
       operationId: temporaryuploads_partial_update
       parameters:
-        - in: path
-          name: upload_id
-          schema:
-            type: string
-          description: A unique value identifying this temporary upload.
-          required: true
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this temporary upload.
+        required: true
       tags:
-        - media_library
+      - media_library
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchedTemporaryUpload"
+              $ref: '#/components/schemas/PatchedTemporaryUpload'
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/PatchedTemporaryUpload"
+              $ref: '#/components/schemas/PatchedTemporaryUpload'
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/PatchedTemporaryUpload"
+              $ref: '#/components/schemas/PatchedTemporaryUpload'
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemporaryUpload"
-          description: ""
+                $ref: '#/components/schemas/TemporaryUpload'
+          description: ''
     delete:
       operationId: temporaryuploads_destroy
       parameters:
-        - in: path
-          name: upload_id
-          schema:
-            type: string
-          description: A unique value identifying this temporary upload.
-          required: true
+      - in: path
+        name: upload_id
+        schema:
+          type: string
+        description: A unique value identifying this temporary upload.
+        required: true
       tags:
-        - media_library
+      - media_library
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "204":
+        '204':
           description: No response body
   /api/schema/:
     get:
@@ -711,121 +724,121 @@ paths:
         - YAML: application/vnd.oai.openapi
         - JSON: application/vnd.oai.openapi+json
       parameters:
-        - in: query
-          name: format
-          schema:
-            type: string
-            enum:
-              - json
-              - yaml
-        - in: query
-          name: lang
-          schema:
-            type: string
-            enum:
-              - af
-              - ar
-              - ar-dz
-              - ast
-              - az
-              - be
-              - bg
-              - bn
-              - br
-              - bs
-              - ca
-              - cs
-              - cy
-              - da
-              - de
-              - dsb
-              - el
-              - en
-              - en-au
-              - en-gb
-              - eo
-              - es
-              - es-ar
-              - es-co
-              - es-mx
-              - es-ni
-              - es-ve
-              - et
-              - eu
-              - fa
-              - fi
-              - fr
-              - fy
-              - ga
-              - gd
-              - gl
-              - he
-              - hi
-              - hr
-              - hsb
-              - hu
-              - hy
-              - ia
-              - id
-              - ig
-              - io
-              - is
-              - it
-              - ja
-              - ka
-              - kab
-              - kk
-              - km
-              - kn
-              - ko
-              - ky
-              - lb
-              - lt
-              - lv
-              - mk
-              - ml
-              - mn
-              - mr
-              - my
-              - nb
-              - ne
-              - nl
-              - nn
-              - os
-              - pa
-              - pl
-              - pt
-              - pt-br
-              - ro
-              - ru
-              - sk
-              - sl
-              - sq
-              - sr
-              - sr-latn
-              - sv
-              - sw
-              - ta
-              - te
-              - tg
-              - th
-              - tk
-              - tr
-              - tt
-              - udm
-              - uk
-              - ur
-              - uz
-              - vi
-              - zh-hans
-              - zh-hant
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
       tags:
-        - schema
+      - schema
       security:
-        - tokenAuth: []
-        - {}
+      - tokenAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/vnd.oai.openapi:
               schema:
@@ -843,7 +856,7 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
-          description: ""
+          description: ''
 components:
   schemas:
     EmailConfiguration:
@@ -879,11 +892,11 @@ components:
         template:
           type: string
       required:
-        - created_at
-        - name
-        - subject
-        - template
-        - updated_at
+      - created_at
+      - name
+      - subject
+      - template
+      - updated_at
     EmailConfigurationCreate:
       type: object
       properties:
@@ -909,9 +922,9 @@ components:
         template:
           type: string
       required:
-        - name
-        - subject
-        - template
+      - name
+      - subject
+      - template
     EmailTemplate:
       type: object
       properties:
@@ -934,11 +947,11 @@ components:
         html:
           type: string
       required:
-        - content
-        - created_at
-        - html
-        - name
-        - updated_at
+      - content
+      - created_at
+      - html
+      - name
+      - updated_at
     EmailTemplateCreate:
       type: object
       properties:
@@ -953,9 +966,9 @@ components:
         html:
           type: string
       required:
-        - content
-        - html
-        - name
+      - content
+      - html
+      - name
     PatchedEmailConfiguration:
       type: object
       properties:
@@ -1055,10 +1068,20 @@ components:
           format: date-time
           readOnly: true
         upload_type:
-          $ref: "#/components/schemas/UploadTypeEnum"
+          $ref: '#/components/schemas/UploadTypeEnum'
         uploaded_by:
           type: integer
           nullable: true
+    Recipient:
+      type: object
+      properties:
+        recipients:
+          type: array
+          items:
+            type: string
+            format: email
+      required:
+      - recipients
     StoredUpload:
       type: object
       properties:
@@ -1082,11 +1105,11 @@ components:
           type: integer
           nullable: true
       required:
-        - file
-        - file_name
-        - stored
-        - upload_id
-        - uploaded
+      - file
+      - file_name
+      - stored
+      - upload_id
+      - uploaded
     TemporaryUpload:
       type: object
       properties:
@@ -1111,22 +1134,22 @@ components:
           format: date-time
           readOnly: true
         upload_type:
-          $ref: "#/components/schemas/UploadTypeEnum"
+          $ref: '#/components/schemas/UploadTypeEnum'
         uploaded_by:
           type: integer
           nullable: true
       required:
-        - file
-        - file_id
-        - file_name
-        - upload_id
-        - upload_name
-        - upload_type
-        - uploaded
+      - file
+      - file_id
+      - file_name
+      - upload_id
+      - upload_name
+      - upload_type
+      - uploaded
     UploadTypeEnum:
       enum:
-        - F
-        - U
+      - F
+      - U
       type: string
       description: |-
         * `F` - Uploaded file data
