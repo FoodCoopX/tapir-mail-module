@@ -203,7 +203,10 @@ const Editor: React.FC<EditorProps> = ({
                 <StandardLayout
                   compact={!smallScene}
                   categories={categories}
-                  showSourceCode={false}
+                  // showSourceCode=true is needed to have a back button to see the block selection...
+                  showSourceCode
+                  jsonReadOnly
+                  mjmlReadOnly
                 >
                   <Form.Control
                     placeholder="Template Name"
