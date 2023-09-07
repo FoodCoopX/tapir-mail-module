@@ -1,6 +1,6 @@
 name: Back formatting check
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   black-formatting-check:
