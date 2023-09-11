@@ -9,6 +9,7 @@ from tapir_mail_server import settings
 router = routers.DefaultRouter()
 router.register("email_template", views.EmailTemplateViewSet)
 router.register("email_configuration", views.EmailConfigurationViewSet)
+router.register("email_configuration_version", views.EmailConfigurationVersionViewSet)
 
 urlpatterns = [
     re_path(

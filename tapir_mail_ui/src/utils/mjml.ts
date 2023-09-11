@@ -9,7 +9,6 @@ export const mjmlToHtml = (content: IPage) => {
       context: content,
     }),
     {
-      beautify: true,
       validationLevel: "soft",
     },
   ).html;

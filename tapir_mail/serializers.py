@@ -1,6 +1,10 @@
 from rest_framework import serializers
 
-from tapir_mail.models import EmailConfiguration, EmailTemplate
+from tapir_mail.models import (
+    EmailConfiguration,
+    EmailConfigurationVersion,
+    EmailTemplate,
+)
 
 # TODO: Is there a better way to exclude the automatically filled fields? Whatever I tried, I couldn't get the fields to be required=False in the schema.
 
@@ -36,6 +40,20 @@ class EmailConfigurationCreateSerializer(
 class EmailConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailConfiguration
+        fields = "__all__"
+
+
+class EmailConfigurationVersionCreateSerializer(
+    ExcludeTimestampMixin, serializers.ModelSerializer
+):
+    class Meta:
+        model = EmailConfigurationVersion
+        fields = "__all__"
+
+
+class EmailConfigurationVersionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailConfigurationVersion
         fields = "__all__"
 
 

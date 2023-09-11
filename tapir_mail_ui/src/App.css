@@ -2,3 +2,7 @@
   text-align: center;
   margin: 0em;
 }
+
+.preview-modal {
+  min-width: 50em;
+}

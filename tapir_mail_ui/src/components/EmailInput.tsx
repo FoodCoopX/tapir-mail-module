@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Form, Badge, Alert } from "react-bootstrap";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, Badge, Form } from "react-bootstrap";
 
 interface EmailInputProps {
   onEmailListChange: (emails: string[]) => void;
@@ -27,7 +27,7 @@ const EmailInput: React.FC<EmailInputProps> = ({ onEmailListChange }) => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    setInputValue(e.target.value.toLowerCase().trim());
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

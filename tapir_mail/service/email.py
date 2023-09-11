@@ -9,9 +9,7 @@ def send_email(**kwargs):
     Sends an email using the configuration provided in the kwargs.
     """
 
-    template = kwargs.pop("template")
-    email_body = template.html
-
+    email_body = kwargs.pop("html")
     subject = kwargs.pop("subject")
     recipients = kwargs.pop("recipients")
 

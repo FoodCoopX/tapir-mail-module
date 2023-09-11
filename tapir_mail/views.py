@@ -7,10 +7,16 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from tapir_mail.models import EmailConfiguration, EmailTemplate
+from tapir_mail.models import (
+    EmailConfiguration,
+    EmailConfigurationVersion,
+    EmailTemplate,
+)
 from tapir_mail.serializers import (
     EmailConfigurationCreateSerializer,
     EmailConfigurationSerializer,
+    EmailConfigurationVersionCreateSerializer,
+    EmailConfigurationVersionSerializer,
     EmailTemplateCreateSerializer,
     EmailTemplateSerializer,
     RecipientSerializer,
@@ -36,14 +42,28 @@ class EmailTemplateViewSet(viewsets.ModelViewSet):
         return EmailTemplateSerializer
 
 
+class EmailConfigurationViewSet(viewsets.ModelViewSet):
+    queryset = EmailConfiguration.objects.all()
+
+    def get_serializer_class(self):
+        if self.action in ["create", "update"]:
+            return EmailConfigurationCreateSerializer
+        return EmailConfigurationSerializer
+
+    @extend_schema(
+        responses={200: EmailConfigurationVersionSerializer(many=True)},
+    )
+    @action(detail=True, methods=["GET"])
+    def versions(self, request, pk=None):
+        email_configuration = get_object_or_404(EmailConfiguration, id=pk)
+        versions = email_configuration.versions.all()
+        serializer = EmailConfigurationVersionSerializer(versions, many=True)
+        return Response(serializer.data)
+
+
 @extend_schema_view(
-    create=extend_schema(operation_id="emailconfigurations_create"),
-    list=extend_schema(operation_id="emailconfigurations_list"),
-    retrieve=extend_schema(operation_id="emailconfigurations_retrieve"),
-    update=extend_schema(operation_id="emailconfigurations_update"),
-    destroy=extend_schema(operation_id="emailconfigurations_destroy"),
     send_email=extend_schema(
-        operation_id="emailconfigurations_send_test_email",
+        operation_id="email_configuration_version_send_test_email",
         request={
             "type": "object",
             "properties": {
@@ -56,22 +76,55 @@ class EmailTemplateViewSet(viewsets.ModelViewSet):
         },
     ),
 )
-class EmailConfigurationViewSet(viewsets.ModelViewSet):
-    queryset = EmailConfiguration.objects.all()
+class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
+    queryset = EmailConfigurationVersion.objects.all()
 
     def get_serializer_class(self):
         if self.action in ["create", "update"]:
-            return EmailConfigurationCreateSerializer
-        return EmailConfigurationSerializer
+            return EmailConfigurationVersionCreateSerializer
+        return EmailConfigurationVersionSerializer
+
+    @extend_schema(
+        request=None,
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    @action(detail=True, methods=["POST"])
+    def release(self, request, pk=None):
+        version = self.get_object()
+        version.release()
+        return Response({"status": "released"})
+
+    @extend_schema(
+        request=None,
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    @action(detail=True, methods=["POST"])
+    def archive(self, request, pk=None):
+        version = self.get_object()
+        version.archive()
+        return Response({"status": "archived"})
+
+    @extend_schema(
+        request=None,
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    @action(detail=True, methods=["POST"])
+    def draft(self, request, pk=None):
+        version = self.get_object()
+        version.status = "draft"
+        version.save()
+        return Response({"status": "draft"})
 
     @extend_schema(
         request=RecipientSerializer,
         responses={200: OpenApiTypes.OBJECT},
-        operation_id="emailconfigurations_send_test_email",
+        operation_id="email_configuration_version_send_test_email",
     )
     @action(detail=True, methods=["post"])
     def send_test_email(self, request, pk=None):
-        email_configuration = get_object_or_404(EmailConfiguration, id=pk)
+        email_version_configuration = get_object_or_404(
+            EmailConfigurationVersion, id=pk
+        )
         recipients = request.data.get("recipients", None)
 
         if recipients is None:
@@ -88,9 +141,9 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
                 data={"message": f"Invalid recipients parameter: {str(e)}"},
             )
         send_email(
-            template=email_configuration.template,
-            subject=email_configuration.subject,
-            subtitle=email_configuration.subtitle,
+            html=email_version_configuration.html,
+            subject=email_version_configuration.subject,
+            subtitle=email_version_configuration.subtitle,
             recipients=recipients_list,
         )
 
