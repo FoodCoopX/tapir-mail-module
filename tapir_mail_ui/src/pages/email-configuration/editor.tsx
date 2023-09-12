@@ -3,12 +3,12 @@ import React, { useEffect, useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  EmailConfigurationApi,
   EmailConfigurationVersionApi,
   EmailTemplate,
   EmailTemplateApi,
 } from "../../api_client";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
+import EmailInput from "../../components/emailInput";
 import Loading from "../../components/loading";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
@@ -26,7 +26,7 @@ const EmailConfigurationEditor = () => {
   const [subtitle, setSubtitle] = useState("");
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
-  const [recipients, setRecipients] = useState("");
+  const [recipients, setRecipients] = useState<string>("");
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
@@ -34,17 +34,12 @@ const EmailConfigurationEditor = () => {
   const [content, setContent] = useState<any | undefined>(undefined);
   const [status, setStatus] = useState<string>("draft");
 
-  const [emailConfigurationId, setEmailConfigurationId] = useState<
-    string | undefined
-  >(undefined);
-
   const [lastSavedTime, setLastSavedTime] = useState(Date.now());
 
   const showAlert = useAlert();
 
   const templateApi = useApi(EmailTemplateApi);
-  const versionApi = useApi(EmailConfigurationVersionApi);
-  const configApi = useApi(EmailConfigurationApi);
+  const api = useApi(EmailConfigurationVersionApi);
 
   const navigate = useNavigate();
 
@@ -60,133 +55,105 @@ const EmailConfigurationEditor = () => {
 
   useEffect(() => {
     if (id) {
-      versionApi
-        .emailConfigurationVersionRetrieve({
+      api
+        .emailConfigurationVersionGetBundledInfoRetrieve({
           id: id,
         })
         .then((data) => {
           const content = data.content ? mjmlToJson(data.content) : EMPTY_PAGE;
 
-          setEmailConfigurationId(data.emailConfiguration);
           setSubject(data.subject);
           setSubtitle(data.subtitle || "");
           setLoadedContent(content);
-          setLoading(false);
-          setStatus(data.status || "draft");
-
-          if (data.emailConfiguration) {
-            configApi
-              .emailConfigurationRetrieve({
-                id: data.emailConfiguration,
-              })
-              .then((configData) => {
-                setMailingName(configData.name);
-                setRecipients(configData.recipients || "");
-              })
-              .catch((err) => {
-                console.error(err);
-                showAlert(
-                  "Beim Laden der Konfiguration ist ein Fehler aufgetreten.",
-                  "danger",
-                );
-              });
-          }
+          setStatus(data.releaseStatus || "draft");
+          setMailingName(data.name || "");
+          setRecipients(data.recipients || "");
+          console.log(typeof data.recipients, data.recipients);
         })
         .catch((err) => {
           console.error(err);
           showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
+        })
+        .finally(() => {
+          setLoading(false);
         });
     } else {
       fetchTemplates();
     }
   }, [id]);
 
-  const saveVersion = (content: IPage) => {
-    const props = {
-      subject: subject,
-      content: jsonToMjml(content),
-    };
+  const saveVersion = (content: IPage, newStatus: string = status) => {
+    return new Promise<void>((resolve, reject) => {
+      setLastSavedTime(Date.now());
+      setStatus(newStatus);
 
-    if (id) {
-      // UPDATE
-      configApi.emailConfigurationPartialUpdate({
-        id: emailConfigurationId!!,
-        patchedEmailConfiguration: {
-          name: mailingName,
-          recipients: recipients,
-        },
-      });
-      if (status === "released") {
-        // create new draft version
-        versionApi
-          .emailConfigurationVersionCreate({
-            emailConfigurationVersionCreate: {
-              emailConfiguration: emailConfigurationId!!,
-              ...props,
-            },
-          })
-          .then((data) => {
-            navigate(Paths.emailConfigurationEdit.replace(":id", data.id!!));
-          });
-      } else {
-        // update current draft version
-        versionApi
-          .emailConfigurationVersionPartialUpdate({
-            id: id!!,
-            patchedEmailConfigurationVersion: props,
-          })
-          .then(() => {
-            setLoadedContent(content);
-          });
-      }
-    } else {
-      // CREATE
-      configApi
-        .emailConfigurationCreate({
-          emailConfigurationCreate: {
-            name: mailingName,
-            recipients: recipients,
-          },
-        })
-        .then((configData) => {
-          versionApi
+      const props = {
+        description: "TODO",
+        subject: subject,
+        subtitle: subtitle,
+        content: jsonToMjml(content),
+        name: mailingName,
+        recipients: recipients,
+        scheduledTime: new Date(),
+        releaseStatus: newStatus,
+      };
+
+      if (id) {
+        // UPDATE
+        if (status === "released") {
+          // create new draft version
+          api
             .emailConfigurationVersionCreate({
-              emailConfigurationVersionCreate: {
-                emailConfiguration: configData.id!!,
+              bundledEmailConfiguration: {
                 ...props,
               },
             })
-            .then((versionData) =>
-              navigate(
-                Paths.emailConfigurationEdit.replace(":id", versionData.id!!),
-              ),
-            );
-        });
-    }
+            .then((data) => {
+              console.log(data);
+              navigate(Paths.emailConfigurationEdit.replace(":id", data.id));
+              resolve();
+            })
+            .catch(reject);
+        } else {
+          // update current draft version
+          api
+            .emailConfigurationVersionUpdate({
+              id: id!!,
+              bundledEmailConfiguration: props,
+            })
+            .then(() => {
+              setLoadedContent(content);
+              resolve();
+            })
+            .catch(reject);
+        }
+      } else {
+        // CREATE
+        api
+          .emailConfigurationVersionCreate({
+            bundledEmailConfiguration: {
+              ...props,
+            },
+          })
+          .then(({ id }) => {
+            navigate(Paths.emailConfigurationEdit.replace(":id", id));
+            resolve();
+          })
+          .catch(reject);
+      }
+    });
   };
 
   const handleEditorChange = (content: IPage) => {
     setContent(content);
-
     const currentTime = Date.now();
-    if (id && currentTime - lastSavedTime >= 1000 && content != loadedContent) {
-      saveVersion(content);
-      setLastSavedTime(currentTime);
-    }
-  };
-
-  const handleRelease = () => {
-    if (!id) {
+    if (
+      id &&
+      currentTime - lastSavedTime >= 1000 &&
+      content !== loadedContent
+    ) {
       saveVersion(content);
     }
-    versionApi
-      .emailConfigurationVersionReleaseCreate({
-        id: id!!,
-      })
-      .then(() => {
-        showAlert("Email Konfiguration wurde veröffentlicht.", "success");
-        navigate(Paths.emailConfiguration);
-      });
   };
 
   const handleSelectTemplate = (e: any) => {
@@ -215,37 +182,24 @@ const EmailConfigurationEditor = () => {
     }
   };
 
-  const handleSavedraft = () => {
-    if (id) {
-      configApi.emailConfigurationPartialUpdate({
-        id: emailConfigurationId!!,
-        patchedEmailConfiguration: {
-          name: mailingName,
-          recipients: recipients,
-        },
-      });
-      versionApi
-        .emailConfigurationVersionPartialUpdate({
-          id: id!!,
-          patchedEmailConfigurationVersion: {
-            subject: subject,
-            content: jsonToMjml(content),
-          },
-        })
-        .then(() => {
-          showAlert(
-            "Email Konfiguration wurde als Entwurf gespeichert.",
-            "success",
-          );
-          navigate(Paths.emailConfiguration);
-        });
-    } else {
-      saveVersion(content);
-    }
-  };
+  const handleRelease = () =>
+    saveVersion(content, "released")
+      .then(() => showAlert("Email Konfiguration veröffentlicht!", "success"))
+      .catch(() =>
+        showAlert("Beim Veröffentlichen ist ein Fehler aufgetreten.", "danger"),
+      );
+
+  const handleSaveDraft = () =>
+    saveVersion(content, "draft")
+      .then(() => {
+        showAlert("Email Konfiguration gespeichert!", "success");
+      })
+      .catch(() =>
+        showAlert("Beim Speichern ist ein Fehler aufgetreten.", "danger"),
+      );
 
   const saveButtonDisabled =
-    !mailingName || !subject || (id !== undefined && content != loadedContent);
+    !mailingName || !subject || (id !== undefined && content !== loadedContent);
   return loading ? (
     <Loading />
   ) : (
@@ -320,14 +274,12 @@ const EmailConfigurationEditor = () => {
             </>
           )}
 
-          <Form.Group>
-            <Form.Label>Empfänger</Form.Label>
-            <Form.Control
-              type="text"
-              value={recipients}
-              onChange={(e) => setRecipients(e.target.value)}
-            />
-          </Form.Group>
+          <Form.Label>Empfänger</Form.Label>
+          <EmailInput
+            initialValue={recipients.split(",")}
+            onEmailListChange={(emails) => setRecipients(emails.join(","))}
+            autoFocus={false}
+          />
           <br />
 
           <Form.Group>
@@ -344,7 +296,7 @@ const EmailConfigurationEditor = () => {
 
           <hr />
           <Button
-            disabled={!id || saveButtonDisabled}
+            disabled={saveButtonDisabled}
             variant={saveButtonDisabled ? "disabled" : "primary"}
             style={{ width: "100%", marginBottom: "1em" }}
             onClick={handleRelease}
@@ -355,7 +307,7 @@ const EmailConfigurationEditor = () => {
             disabled={saveButtonDisabled}
             variant={saveButtonDisabled ? "disabled" : "success"}
             style={{ width: "100%" }}
-            onClick={handleSavedraft}
+            onClick={handleSaveDraft}
           >
             Als Entwurf speichern
           </Button>

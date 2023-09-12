@@ -28,9 +28,6 @@ class EmailConfigurationFactory(factory.django.DjangoModelFactory):
 
     name = factory.Faker("bs")
     description = factory.Faker("sentence")
-    recipients = factory.LazyAttribute(
-        lambda self: [factory.Faker("email")] * self.number_of_recipients
-    )
 
 
 class EmailConfigurationVersionFactory(factory.django.DjangoModelFactory):

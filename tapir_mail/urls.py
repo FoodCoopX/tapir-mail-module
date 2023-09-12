@@ -10,6 +10,7 @@ router = routers.DefaultRouter()
 router.register("email_template", views.EmailTemplateViewSet)
 router.register("email_configuration", views.EmailConfigurationViewSet)
 router.register("email_configuration_version", views.EmailConfigurationVersionViewSet)
+router.register("email_configuration_dispatch", views.EmailConfigurationDispatchViewSet)
 
 urlpatterns = [
     re_path(

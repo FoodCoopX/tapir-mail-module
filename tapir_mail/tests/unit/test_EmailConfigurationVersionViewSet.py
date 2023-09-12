@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from tapir_mail.models import EmailConfigurationVersion
 from tapir_mail.serializers import (
-    EmailConfigurationVersionCreateSerializer,
+    BundledEmailConfigurationSerializer,
     EmailConfigurationVersionSerializer,
 )
 from tapir_mail.tests.test_utils import TapirFactoryTestCase
@@ -15,24 +15,24 @@ from tapir_mail.views import EmailConfigurationVersionViewSet
 
 class TestEmailConfigurationVersion(TapirFactoryTestCase):
     def test_getSerializerClass_updateAction_returnsCreateSerializer(self):
-        serializer = EmailConfigurationVersionViewSet()
-        serializer.action = "update"
+        viewset = EmailConfigurationVersionViewSet()
+        viewset.action = "update"
         self.assertEqual(
-            EmailConfigurationVersionCreateSerializer, serializer.get_serializer_class()
+            BundledEmailConfigurationSerializer, viewset.get_serializer_class()
         )
 
     def test_getSerializerClass_createAction_returnsCreateSerializer(self):
-        serializer = EmailConfigurationVersionViewSet()
-        serializer.action = "create"
+        viewset = EmailConfigurationVersionViewSet()
+        viewset.action = "create"
         self.assertEqual(
-            EmailConfigurationVersionCreateSerializer, serializer.get_serializer_class()
+            BundledEmailConfigurationSerializer, viewset.get_serializer_class()
         )
 
     def test_getSerializerClass_otherAction_returnsCreateSerializer(self):
-        serializer = EmailConfigurationVersionViewSet()
-        serializer.action = "delete"
+        viewset = EmailConfigurationVersionViewSet()
+        viewset.action = "delete"
         self.assertEqual(
-            EmailConfigurationVersionSerializer, serializer.get_serializer_class()
+            EmailConfigurationVersionSerializer, viewset.get_serializer_class()
         )
 
     @patch("tapir_mail.views.get_object_or_404")

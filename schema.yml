@@ -174,6 +174,176 @@ paths:
                 items:
                   $ref: '#/components/schemas/EmailConfigurationVersion'
           description: ''
+  /api/email_configuration_dispatch/:
+    get:
+      operationId: email_configuration_dispatch_list
+      tags:
+      - email_configuration_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmailConfigurationDispatch'
+          description: ''
+    post:
+      operationId: email_configuration_dispatch_create
+      tags:
+      - email_configuration_dispatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationDispatch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationDispatch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationDispatch'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfigurationDispatch'
+          description: ''
+  /api/email_configuration_dispatch/{id}/:
+    get:
+      operationId: email_configuration_dispatch_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this email configuration dispatch.
+        required: true
+      tags:
+      - email_configuration_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfigurationDispatch'
+          description: ''
+    put:
+      operationId: email_configuration_dispatch_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this email configuration dispatch.
+        required: true
+      tags:
+      - email_configuration_dispatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationDispatch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationDispatch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationDispatch'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfigurationDispatch'
+          description: ''
+    patch:
+      operationId: email_configuration_dispatch_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this email configuration dispatch.
+        required: true
+      tags:
+      - email_configuration_dispatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEmailConfigurationDispatch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEmailConfigurationDispatch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEmailConfigurationDispatch'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfigurationDispatch'
+          description: ''
+    delete:
+      operationId: email_configuration_dispatch_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this email configuration dispatch.
+        required: true
+      tags:
+      - email_configuration_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/email_configuration_dispatch/last_sent/:
+    get:
+      operationId: email_configuration_dispatch_last_sent_list
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of last sent email dispatches to retrieve
+      tags:
+      - email_configuration_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmailConfigurationDispatch'
+          description: ''
   /api/email_configuration_version/:
     get:
       operationId: email_configuration_version_list
@@ -199,23 +369,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+              $ref: '#/components/schemas/BundledEmailConfiguration'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+              $ref: '#/components/schemas/BundledEmailConfiguration'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+              $ref: '#/components/schemas/BundledEmailConfiguration'
         required: true
       security:
       - tokenAuth: []
       - {}
       responses:
-        '201':
+        '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+                type: object
+                additionalProperties: {}
           description: ''
   /api/email_configuration_version/{id}/:
     get:
@@ -254,13 +425,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+              $ref: '#/components/schemas/BundledEmailConfiguration'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+              $ref: '#/components/schemas/BundledEmailConfiguration'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+              $ref: '#/components/schemas/BundledEmailConfiguration'
         required: true
       security:
       - tokenAuth: []
@@ -270,7 +441,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+                $ref: '#/components/schemas/BundledEmailConfiguration'
           description: ''
     patch:
       operationId: email_configuration_version_partial_update
@@ -366,6 +537,28 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
+          description: ''
+  /api/email_configuration_version/{id}/get_bundled_info/:
+    get:
+      operationId: email_configuration_version_get_bundled_info_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration version.
+        required: true
+      tags:
+      - email_configuration_version
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BundledEmailConfiguration'
           description: ''
   /api/email_configuration_version/{id}/release/:
     post:
@@ -1099,6 +1292,35 @@ paths:
           description: ''
 components:
   schemas:
+    BundledEmailConfiguration:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+        subject:
+          type: string
+        subtitle:
+          type: string
+          nullable: true
+        release_status:
+          type: string
+        scheduled_time:
+          type: string
+          format: date-time
+        recipients:
+          type: string
+          nullable: true
+      required:
+      - content
+      - description
+      - name
+      - release_status
+      - scheduled_time
+      - subject
     EmailConfiguration:
       type: object
       properties:
@@ -1119,9 +1341,6 @@ components:
         description:
           type: string
           nullable: true
-        recipients:
-          type: string
-          nullable: true
       required:
       - created_at
       - name
@@ -1138,17 +1357,33 @@ components:
         description:
           type: string
           nullable: true
+      required:
+      - name
+    EmailConfigurationDispatch:
+      type: object
+      properties:
+        id:
+          type: string
+        email_configuration_version:
+          $ref: '#/components/schemas/EmailConfigurationVersion'
+        scheduled_time:
+          type: string
+          format: date-time
         recipients:
           type: string
           nullable: true
       required:
-      - name
+      - email_configuration_version
+      - id
+      - scheduled_time
     EmailConfigurationVersion:
       type: object
       properties:
         id:
           type: string
           maxLength: 10
+        email_configuration:
+          $ref: '#/components/schemas/EmailConfiguration'
         created_at:
           type: string
           format: date-time
@@ -1169,36 +1404,11 @@ components:
           maxLength: 255
         status:
           $ref: '#/components/schemas/StatusEnum'
-        email_configuration:
-          type: string
       required:
       - created_at
       - email_configuration
       - subject
       - updated_at
-    EmailConfigurationVersionCreate:
-      type: object
-      properties:
-        id:
-          type: string
-          maxLength: 10
-        content:
-          type: string
-          nullable: true
-        subject:
-          type: string
-          maxLength: 255
-        subtitle:
-          type: string
-          nullable: true
-          maxLength: 255
-        status:
-          $ref: '#/components/schemas/StatusEnum'
-        email_configuration:
-          type: string
-      required:
-      - email_configuration
-      - subject
     EmailTemplate:
       type: object
       properties:
@@ -1257,6 +1467,16 @@ components:
         description:
           type: string
           nullable: true
+    PatchedEmailConfigurationDispatch:
+      type: object
+      properties:
+        id:
+          type: string
+        email_configuration_version:
+          $ref: '#/components/schemas/EmailConfigurationVersion'
+        scheduled_time:
+          type: string
+          format: date-time
         recipients:
           type: string
           nullable: true
@@ -1266,6 +1486,8 @@ components:
         id:
           type: string
           maxLength: 10
+        email_configuration:
+          $ref: '#/components/schemas/EmailConfiguration'
         created_at:
           type: string
           format: date-time
@@ -1286,8 +1508,6 @@ components:
           maxLength: 255
         status:
           $ref: '#/components/schemas/StatusEnum'
-        email_configuration:
-          type: string
     PatchedEmailTemplate:
       type: object
       properties:

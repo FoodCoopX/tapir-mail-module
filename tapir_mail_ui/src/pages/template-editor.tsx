@@ -2,12 +2,12 @@ import { IEmailTemplate } from "easy-email-editor";
 import React, { useLayoutEffect, useState } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
+import { EmailTemplateApi } from "../api_client";
 import Editor, { EMPTY_PAGE } from "../components/editor";
 import Loading from "../components/loading";
 import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
-import { jsonToMjml, mjmlToHtml, mjmlToJson } from "../utils/mjml";
-import { EmailTemplateApi } from "../api_client";
+import { jsonToMjml, mjmlToJson } from "../utils/mjml";
 
 const TemplateEditor = () => {
   const showAlert = useAlert();
@@ -39,10 +39,10 @@ const TemplateEditor = () => {
           navigate("/");
         });
     }
-  }, []);
+  }, [id]);
 
   const handleBack = (values: IEmailTemplate) => {
-    if (values.content != content) {
+    if (values.content !== content) {
       setShowSaveGateModal(true);
     } else {
       navigate("/");
