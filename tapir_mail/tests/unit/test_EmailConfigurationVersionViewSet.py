@@ -83,7 +83,9 @@ class TestEmailConfigurationVersion(TapirFactoryTestCase):
         mock_request.data.get.return_value = recipients
         email_configuration_version_id = 123
         email_configuration_version = SimpleNamespace(
-            html="<h1>Test Email</h1>", subject="TEST_SUBJECT", subtitle="TEST_SUBTITLE"
+            content="<mjml><mj-body><mj-text>Test Email<mj-body><mj-text></mjml>",
+            subject="TEST_SUBJECT",
+            subtitle="TEST_SUBTITLE",
         )
         mock_get_object_or_404.return_value = email_configuration_version
 
@@ -98,7 +100,7 @@ class TestEmailConfigurationVersion(TapirFactoryTestCase):
         self.assertIsInstance(response, Response)
         self.assertEqual(200, response.status_code)
         mock_send_mail.assert_called_once_with(
-            html=email_configuration_version.html,
+            mjml=email_configuration_version.content,
             subject=email_configuration_version.subject,
             subtitle=email_configuration_version.subtitle,
             recipients=recipients,

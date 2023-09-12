@@ -7,12 +7,14 @@ import {
   EmailConfigurationVersion,
   EmailConfigurationVersionApi,
 } from "../../api_client";
-import EmailInput from "../../components/EmailInput";
+import EmailInput from "../../components/emailInput";
 import HtmlInDiv from "../../components/htmlInDiv";
 import Loading from "../../components/loading";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
+import { jsonToMjml, mjmlToHtml } from "../../utils/mjml";
+import EmailConfigurationVersionSelect from "../../components/emailConfigurationVersionSelect";
 
 const MailPlanningOverview = () => {
   const api = useApi(EmailConfigurationApi);
@@ -125,65 +127,6 @@ const MailPlanningOverview = () => {
   );
 };
 
-const EmailConfigurationVersionSelect = ({
-  versions,
-  selectedVersionId,
-  onChange,
-}: {
-  versions: EmailConfigurationVersion[];
-  selectedVersionId: string;
-  onChange: (version: string) => void;
-}) => {
-  const STATUS_PROPS = {
-    released: { color: "success", text: "Veröffentlicht" },
-    draft: { color: "secondary", text: "Entwurf" },
-    archived: { color: "danger", text: "Archiviert" },
-  };
-
-  const handleSelect = (key: any, event: any) => {
-    onChange(key);
-  };
-
-  const selectedVersion = versions.find((v) => v.id === selectedVersionId);
-  return (
-    <Form>
-      <Form.Group controlId="exampleForm.SelectCustom">
-        <Dropdown onSelect={handleSelect}>
-          <Dropdown.Toggle
-            style={{ width: "100%" }}
-            variant={
-              "outline-" +
-              (selectedVersion
-                ? STATUS_PROPS[selectedVersion!!.status || "draft"].color
-                : "primary")
-            }
-            id="dropdown-custom-components"
-          >
-            {selectedVersion
-              ? `${
-                  STATUS_PROPS[selectedVersion.status!!].text
-                } ${selectedVersion.updatedAt.toISOString()}`
-              : "Select version"}
-          </Dropdown.Toggle>
-          <Dropdown.Menu style={{ width: "100%", textAlign: "center" }}>
-            {versions.map((v: EmailConfigurationVersion) => (
-              <Dropdown.Item
-                key={v.id}
-                eventKey={v.id}
-              >
-                <Badge bg={STATUS_PROPS[v.status || "draft"].color}>
-                  {STATUS_PROPS[v.status || "draft"].text}
-                </Badge>{" "}
-                {v.updatedAt.toISOString()}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Menu>
-        </Dropdown>
-      </Form.Group>
-    </Form>
-  );
-};
-
 const SelectVersionModal = ({
   emailConfiguration,
   open,
@@ -199,8 +142,6 @@ const SelectVersionModal = ({
 
   const [versions, setVersions] = useState<EmailConfigurationVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string>("");
-
-  const selectedVersion = versions.find((v) => v.id === selectedVersionId);
 
   useEffect(() => {
     if (emailConfiguration) {
@@ -239,19 +180,11 @@ const SelectVersionModal = ({
           Welche Version möchtest du editieren?
           <br />
           <EmailConfigurationVersionSelect
+            preview={true}
             versions={versions}
             selectedVersionId={selectedVersionId}
             onChange={(id: string) => setSelectedVersionId(id)}
           />
-          {selectedVersion && (
-            <>
-              <hr />
-              <span>
-                <strong>Betreff: </strong> {selectedVersion.subject}
-              </span>
-              <HtmlInDiv htmlContent={selectedVersion!!.html!!} />
-            </>
-          )}
         </Modal.Body>
       )}
       <Modal.Footer
@@ -346,21 +279,11 @@ const SendTestMailModal = ({
           <EmailInput onEmailListChange={handleRecipientsChange} />
           <br />
           <EmailConfigurationVersionSelect
+            preview={true}
             versions={versions}
             selectedVersionId={selectedVersionId}
             onChange={(id: string) => setSelectedVersionId(id)}
           />
-          {selectedVersionId && (
-            <>
-              <br />
-              Vorschau
-              <HtmlInDiv
-                htmlContent={
-                  versions.find((v) => v.id === selectedVersionId)!!.html!!
-                }
-              />
-            </>
-          )}
         </Modal.Body>
       )}
       <Modal.Footer

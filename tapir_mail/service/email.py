@@ -1,6 +1,6 @@
 from django.core.mail import EmailMultiAlternatives
+from django.template import Template, Context
 
-from tapir_mail.models import EmailTemplate
 from tapir_mail_server import settings
 
 
@@ -9,7 +9,14 @@ def send_email(**kwargs):
     Sends an email using the configuration provided in the kwargs.
     """
 
-    email_body = kwargs.pop("html")
+    mjml = kwargs.pop("mjml")
+    if not mjml:
+        raise ValueError("mjml is required")
+
+    email_body = Template(
+        "{% load mjml %}\n{% mjml %}" + mjml + "{% endmjml %}"
+    ).render(Context({}))
+
     subject = kwargs.pop("subject")
     recipients = kwargs.pop("recipients")
 
@@ -30,5 +37,4 @@ def send_email(**kwargs):
         else None,
     )
     email.content_subtype = "html"
-
     email.send()

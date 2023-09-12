@@ -11,6 +11,7 @@ from tapir_mail.models import (
     EmailConfiguration,
     EmailConfigurationVersion,
     EmailTemplate,
+    ReleaseStatus,
 )
 from tapir_mail.serializers import (
     EmailConfigurationCreateSerializer,
@@ -92,7 +93,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
     def release(self, request, pk=None):
         version = self.get_object()
         version.release()
-        return Response({"status": "released"})
+        return Response({"status": ReleaseStatus.RELEASED})
 
     @extend_schema(
         request=None,
@@ -102,7 +103,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
     def archive(self, request, pk=None):
         version = self.get_object()
         version.archive()
-        return Response({"status": "archived"})
+        return Response({"status": ReleaseStatus.ARCHIVED})
 
     @extend_schema(
         request=None,
@@ -111,9 +112,9 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["POST"])
     def draft(self, request, pk=None):
         version = self.get_object()
-        version.status = "draft"
+        version.status = ReleaseStatus.DRAFT
         version.save()
-        return Response({"status": "draft"})
+        return Response({"status": ReleaseStatus.DRAFT})
 
     @extend_schema(
         request=RecipientSerializer,
@@ -141,7 +142,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 data={"message": f"Invalid recipients parameter: {str(e)}"},
             )
         send_email(
-            html=email_version_configuration.html,
+            mjml=email_version_configuration.content,
             subject=email_version_configuration.subject,
             subtitle=email_version_configuration.subtitle,
             recipients=recipients_list,

@@ -13,7 +13,7 @@ import Loading from "../../components/loading";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
-import { mjmlToHtml } from "../../utils/mjml";
+import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
 
 const ID_NEW_TEMPLATE = "<new>";
 
@@ -28,7 +28,7 @@ const EmailConfigurationEditor = () => {
     useState<string>(ID_NEW_TEMPLATE);
   const [recipients, setRecipients] = useState("");
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-  const [loadedContent, setLoadedContent] = useState<any | undefined>(
+  const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
   );
   const [content, setContent] = useState<any | undefined>(undefined);
@@ -65,7 +65,7 @@ const EmailConfigurationEditor = () => {
           id: id,
         })
         .then((data) => {
-          const content = data.content ? JSON.parse(data.content) : EMPTY_PAGE;
+          const content = data.content ? mjmlToJson(data.content) : EMPTY_PAGE;
 
           setEmailConfigurationId(data.emailConfiguration);
           setSubject(data.subject);
@@ -84,6 +84,7 @@ const EmailConfigurationEditor = () => {
                 setRecipients(configData.recipients || "");
               })
               .catch((err) => {
+                console.error(err);
                 showAlert(
                   "Beim Laden der Konfiguration ist ein Fehler aufgetreten.",
                   "danger",
@@ -92,6 +93,7 @@ const EmailConfigurationEditor = () => {
           }
         })
         .catch((err) => {
+          console.error(err);
           showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
         });
     } else {
@@ -100,7 +102,10 @@ const EmailConfigurationEditor = () => {
   }, [id]);
 
   const saveVersion = (content: IPage) => {
-    console.log("saving...");
+    const props = {
+      subject: subject,
+      content: jsonToMjml(content),
+    };
 
     if (id) {
       // UPDATE
@@ -117,9 +122,7 @@ const EmailConfigurationEditor = () => {
           .emailConfigurationVersionCreate({
             emailConfigurationVersionCreate: {
               emailConfiguration: emailConfigurationId!!,
-              subject: subject,
-              content: JSON.stringify(content),
-              html: mjmlToHtml(content),
+              ...props,
             },
           })
           .then((data) => {
@@ -130,11 +133,7 @@ const EmailConfigurationEditor = () => {
         versionApi
           .emailConfigurationVersionPartialUpdate({
             id: id!!,
-            patchedEmailConfigurationVersion: {
-              subject: subject,
-              content: JSON.stringify(content),
-              html: mjmlToHtml(content),
-            },
+            patchedEmailConfigurationVersion: props,
           })
           .then(() => {
             setLoadedContent(content);
@@ -154,9 +153,7 @@ const EmailConfigurationEditor = () => {
             .emailConfigurationVersionCreate({
               emailConfigurationVersionCreate: {
                 emailConfiguration: configData.id!!,
-                subject: subject,
-                content: JSON.stringify(content),
-                html: mjmlToHtml(content),
+                ...props,
               },
             })
             .then((versionData) =>
@@ -179,6 +176,9 @@ const EmailConfigurationEditor = () => {
   };
 
   const handleRelease = () => {
+    if (!id) {
+      saveVersion(content);
+    }
     versionApi
       .emailConfigurationVersionReleaseCreate({
         id: id!!,
@@ -195,7 +195,7 @@ const EmailConfigurationEditor = () => {
       templateApi
         .emailtemplatesRetrieve({ id: id!! })
         .then((data) => {
-          setLoadedContent(JSON.parse(data.content));
+          setLoadedContent(mjmlToJson(data.content));
           setSelectedTemplate(id);
         })
         .catch((err) => {
@@ -229,8 +229,7 @@ const EmailConfigurationEditor = () => {
           id: id!!,
           patchedEmailConfigurationVersion: {
             subject: subject,
-            content: JSON.stringify(content),
-            html: mjmlToHtml(content),
+            content: jsonToMjml(content),
           },
         })
         .then(() => {
@@ -345,7 +344,7 @@ const EmailConfigurationEditor = () => {
 
           <hr />
           <Button
-            disabled={saveButtonDisabled}
+            disabled={!id || saveButtonDisabled}
             variant={saveButtonDisabled ? "disabled" : "primary"}
             style={{ width: "100%", marginBottom: "1em" }}
             onClick={handleRelease}

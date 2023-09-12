@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "mjml",
 ]
 DEPENDENCIES_APPS = [
     "django_bootstrap5",
@@ -198,3 +199,6 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+MJML_BACKEND_MODE = "cmd"
+MJML_EXEC_CMD = "mjml"
