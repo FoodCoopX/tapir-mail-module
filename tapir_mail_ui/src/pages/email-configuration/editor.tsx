@@ -246,11 +246,7 @@ const EmailConfigurationEditor = () => {
   };
 
   const saveButtonDisabled =
-    !mailingName ||
-    !selectedTemplate ||
-    !subject ||
-    content != loadedContent ||
-    loadedContent === EMPTY_PAGE;
+    !mailingName || !subject || (id !== undefined && content != loadedContent);
   return loading ? (
     <Loading />
   ) : (
