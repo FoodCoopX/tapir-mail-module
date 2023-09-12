@@ -208,23 +208,24 @@ const Editor: React.FC<EditorProps> = ({
                   jsonReadOnly
                   mjmlReadOnly
                 >
-                  <Form.Control
-                    placeholder="Template Name"
-                    aria-label="Template Name"
-                    required
-                    style={{ borderRadius: "0" }}
-                    className={templateName ? "" : "is-invalid"}
-                    disabled={!onTemplateNameChange}
-                    onChange={
-                      onTemplateNameChange
-                        ? (e) => onTemplateNameChange(e.target.value)
-                        : (e) => null
-                    }
-                    value={templateName}
-                  />
+                  {onTemplateNameChange && (
+                    <Form.Control
+                      placeholder="Template Name"
+                      aria-label="Template Name"
+                      required
+                      style={{ borderRadius: "0" }}
+                      className={templateName ? "" : "is-invalid"}
+                      disabled={!onTemplateNameChange}
+                      onChange={
+                        onTemplateNameChange
+                          ? (e) => onTemplateNameChange(e.target.value)
+                          : (e) => null
+                      }
+                      value={templateName}
+                    />
+                  )}
                   <EmailEditor />
-
-                  {templateName.length === 0 && (
+                  {onTemplateNameChange && templateName.length === 0 && (
                     <Alert variant="warning">
                       <small>
                         <svg
@@ -247,36 +248,37 @@ const Editor: React.FC<EditorProps> = ({
                       </small>
                     </Alert>
                   )}
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      margin: "1em",
-                    }}
-                  >
-                    {onGoBack ? (
-                      <Button
-                        variant="secondary"
-                        onClick={() => onGoBack(values)}
-                      >
-                        Zurück
-                      </Button>
-                    ) : (
-                      <div />
-                    )}
-                    {onSave ? (
-                      <Button
-                        disabled={saveDisabled}
-                        variant={saveDisabled ? "disabled" : "success"}
-                        onClick={() => onSave(values)}
-                      >
-                        Template Speichern
-                      </Button>
-                    ) : (
-                      <div />
-                    )}
-                  </div>
+                  {(onGoBack || onSave) && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        margin: "1em",
+                      }}
+                    >
+                      {onGoBack ? (
+                        <Button
+                          variant="secondary"
+                          onClick={() => onGoBack(values)}
+                        >
+                          Zurück
+                        </Button>
+                      ) : (
+                        <div />
+                      )}
+                      {onSave ? (
+                        <Button
+                          disabled={saveDisabled}
+                          variant={saveDisabled ? "disabled" : "success"}
+                          onClick={() => onSave(values)}
+                        >
+                          Template Speichern
+                        </Button>
+                      ) : (
+                        <div />
+                      )}
+                    </div>
+                  )}
                 </StandardLayout>
               </>
             );

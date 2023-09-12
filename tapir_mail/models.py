@@ -1,6 +1,6 @@
 from functools import partial
 
-from django.db import models
+from django.db import models, transaction
 from nanoid import generate
 
 ID_LENGTH = 10
@@ -43,16 +43,55 @@ class EmailTemplate(BaseModel):
 
 
 class EmailConfiguration(BaseModel):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(null=True, blank=True)
+    recipients = models.TextField(null=True, blank=True)
+
+
+class ReleaseStatus:
+    DRAFT = "draft"
+    RELEASED = "released"
+    ARCHIVED = "archived"
+
+
+RELEASE_STATUS_CHOICES = [
+    (ReleaseStatus.DRAFT, "Draft"),
+    (ReleaseStatus.RELEASED, "Released"),
+    (ReleaseStatus.ARCHIVED, "Archived"),
+]
+
+
+class EmailConfigurationVersion(BaseModel):
     """
     This represents the configuration for an email that will be sent to a user or segment.
     """
 
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(null=True, blank=True)
-    template = models.ForeignKey(EmailTemplate, on_delete=models.CASCADE)
+    content = models.TextField(null=True)
+    html = models.TextField(null=True)
     subject = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
-    recipients = models.TextField(null=True, blank=True)
+    email_configuration = models.ForeignKey(
+        EmailConfiguration, on_delete=models.CASCADE, related_name="versions"
+    )
+    status = models.CharField(
+        max_length=255,
+        choices=RELEASE_STATUS_CHOICES,
+        default=ReleaseStatus.DRAFT,
+    )
+
+    @transaction.atomic
+    def release(self):
+        self.status = ReleaseStatus.RELEASED
+        self.save()
+
+        # Archive current released version
+        self.email_configuration.versions.exclude(id=self.id).filter(
+            status=ReleaseStatus.RELEASED
+        ).update(status=ReleaseStatus.ARCHIVED)
+
+    def archive(self):
+        self.status = ReleaseStatus.ARCHIVED
+        self.save()
 
     def __str__(self):
         return self.name

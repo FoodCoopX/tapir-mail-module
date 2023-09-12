@@ -1,6 +1,10 @@
 import factory
 
-from tapir_mail.models import EmailConfiguration, EmailTemplate
+from tapir_mail.models import (
+    EmailConfiguration,
+    EmailConfigurationVersion,
+    EmailTemplate,
+)
 
 
 class EmailTemplateFactory(factory.django.DjangoModelFactory):
@@ -27,9 +31,23 @@ class EmailConfigurationFactory(factory.django.DjangoModelFactory):
 
     name = factory.Faker("bs")
     description = factory.Faker("sentence")
-    template = factory.SubFactory(EmailTemplateFactory)
-    subject = factory.Faker("sentence")
-    subtitle = factory.Faker("sentence")
     recipients = factory.LazyAttribute(
         lambda self: [factory.Faker("email")] * self.number_of_recipients
     )
+
+
+class EmailConfigurationVersionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EmailConfigurationVersion
+
+    html = factory.lazy_attribute(
+        lambda self: open("tapir_mail/tests/dummy_email_template_html.html", "r").read()
+    )
+    content = factory.lazy_attribute(
+        lambda self: open(
+            "tapir_mail/tests/dummy_email_template_content.json", "r"
+        ).read()
+    )
+    subject = factory.Faker("sentence")
+    subtitle = factory.Faker("sentence")
+    email_configuration = factory.SubFactory(EmailConfigurationFactory)

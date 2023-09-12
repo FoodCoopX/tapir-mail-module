@@ -1,9 +1,10 @@
-import { IEmailTemplate } from "easy-email-editor";
-import React, { useLayoutEffect, useState } from "react";
-import { Alert, Button, Form } from "react-bootstrap";
-import { Link, useParams } from "react-router-dom";
+import { IPage } from "easy-email-core";
+import React, { useEffect, useState } from "react";
+import { Button, Form } from "react-bootstrap";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   EmailConfigurationApi,
+  EmailConfigurationVersionApi,
   EmailTemplate,
   EmailTemplateApi,
 } from "../../api_client";
@@ -30,113 +31,162 @@ const EmailConfigurationEditor = () => {
   const [loadedContent, setLoadedContent] = useState<any | undefined>(
     EMPTY_PAGE,
   );
-  const [templateName, setTemplateName] = useState("");
   const [content, setContent] = useState<any | undefined>(undefined);
+  const [status, setStatus] = useState<string>("draft");
+
+  const [emailConfigurationId, setEmailConfigurationId] = useState<
+    string | undefined
+  >(undefined);
+
+  const [lastSavedTime, setLastSavedTime] = useState(Date.now());
 
   const showAlert = useAlert();
 
   const templateApi = useApi(EmailTemplateApi);
-  const emailConfigApi = useApi(EmailConfigurationApi);
+  const versionApi = useApi(EmailConfigurationVersionApi);
+  const configApi = useApi(EmailConfigurationApi);
+
+  const navigate = useNavigate();
 
   const fetchTemplates = () =>
-    templateApi.emailtemplatesList().then((data) => {
-      setTemplates(data);
-    });
-
-  useLayoutEffect(() => {
-    fetchTemplates()
-      .then(() => {
-        if (id) {
-          emailConfigApi
-            .emailconfigurationsRetrieve({ id: id })
-            .then((data) => {
-              setMailingName(data.name);
-              setSubject(data.subject);
-              setSubtitle(data.subtitle || "");
-              setRecipients(data.recipients || "");
-              handleSelectTemplate({ target: { value: data.template } });
-            })
-            .catch((err) => {
-              showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
-            });
-        }
+    templateApi
+      .emailtemplatesList()
+      .then((data) => {
+        setTemplates(data);
       })
       .catch((err) => {
         showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
       });
-  }, [id]);
 
-  const handleSave = () => {
-    const props = {
-      emailConfigurationCreate: {
-        name: mailingName,
-        subject: subject,
-        subtitle: subtitle,
-        template: selectedTemplate!!,
-        recipients: recipients,
-      },
-    };
-
+  useEffect(() => {
     if (id) {
-      emailConfigApi
-        .emailconfigurationsUpdate({
+      versionApi
+        .emailConfigurationVersionRetrieve({
           id: id,
-          ...props,
         })
         .then((data) => {
-          showAlert("Deine Änderungen wurden gespeichert!", "success");
+          const content = data.content ? JSON.parse(data.content) : EMPTY_PAGE;
+
+          setEmailConfigurationId(data.emailConfiguration);
+          setSubject(data.subject);
+          setSubtitle(data.subtitle || "");
+          setLoadedContent(content);
+          setLoading(false);
+          setStatus(data.status || "draft");
+
+          if (data.emailConfiguration) {
+            configApi
+              .emailConfigurationRetrieve({
+                id: data.emailConfiguration,
+              })
+              .then((configData) => {
+                setMailingName(configData.name);
+                setRecipients(configData.recipients || "");
+              })
+              .catch((err) => {
+                showAlert(
+                  "Beim Laden der Konfiguration ist ein Fehler aufgetreten.",
+                  "danger",
+                );
+              });
+          }
         })
         .catch((err) => {
-          showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, "danger");
+          showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
         });
     } else {
-      emailConfigApi
-        .emailconfigurationsCreate(props)
-        .then((data) => {
-          showAlert("Deine Email Konfiguration wurde gespeichert!", "success");
+      fetchTemplates();
+    }
+  }, [id]);
+
+  const saveVersion = (content: IPage) => {
+    console.log("saving...");
+
+    if (id) {
+      // UPDATE
+      configApi.emailConfigurationPartialUpdate({
+        id: emailConfigurationId!!,
+        patchedEmailConfiguration: {
+          name: mailingName,
+          recipients: recipients,
+        },
+      });
+      if (status === "released") {
+        // create new draft version
+        versionApi
+          .emailConfigurationVersionCreate({
+            emailConfigurationVersionCreate: {
+              emailConfiguration: emailConfigurationId!!,
+              subject: subject,
+              content: JSON.stringify(content),
+              html: mjmlToHtml(content),
+            },
+          })
+          .then((data) => {
+            navigate(Paths.emailConfigurationEdit.replace(":id", data.id!!));
+          });
+      } else {
+        // update current draft version
+        versionApi
+          .emailConfigurationVersionPartialUpdate({
+            id: id!!,
+            patchedEmailConfigurationVersion: {
+              subject: subject,
+              content: JSON.stringify(content),
+              html: mjmlToHtml(content),
+            },
+          })
+          .then(() => {
+            setLoadedContent(content);
+          });
+      }
+    } else {
+      // CREATE
+      configApi
+        .emailConfigurationCreate({
+          emailConfigurationCreate: {
+            name: mailingName,
+            recipients: recipients,
+          },
         })
-        .catch((err) => {
-          showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, "danger");
+        .then((configData) => {
+          versionApi
+            .emailConfigurationVersionCreate({
+              emailConfigurationVersionCreate: {
+                emailConfiguration: configData.id!!,
+                subject: subject,
+                content: JSON.stringify(content),
+                html: mjmlToHtml(content),
+              },
+            })
+            .then((versionData) =>
+              navigate(
+                Paths.emailConfigurationEdit.replace(":id", versionData.id!!),
+              ),
+            );
         });
     }
   };
 
-  const handleSaveTemplate = (values: IEmailTemplate) => {
-    const props = {
-      emailTemplateCreate: {
-        name: templateName,
-        content: JSON.stringify(values.content),
-        html: mjmlToHtml(values.content),
-      },
-    };
-    if (selectedTemplate !== ID_NEW_TEMPLATE) {
-      // update template
-      templateApi
-        .emailtemplatesUpdate({
-          id: selectedTemplate,
-          ...props,
-        })
-        .then((data) => {
-          showAlert("Template gespeichert", "success");
-          setLoadedContent(JSON.parse(data.content));
-        })
-        .catch((err) => {
-          showAlert("Fehler beim Speichern", "danger");
-        });
-    } else {
-      // create template
-      templateApi
-        .emailtemplatesCreate(props)
-        .then((data) => {
-          showAlert("Template gespeichert", "success");
-          setLoadedContent(JSON.parse(data.content));
-          fetchTemplates();
-          setSelectedTemplate(data.id!!);
-        })
-        .catch((err) => {
-          showAlert("Fehler beim Speichern", "danger");
-        });
+  const handleEditorChange = (content: IPage) => {
+    setContent(content);
+
+    const currentTime = Date.now();
+    if (id && currentTime - lastSavedTime >= 1000 && content != loadedContent) {
+      saveVersion(content);
+      setLastSavedTime(currentTime);
     }
+  };
+
+  const handleRelease = () => {
+    versionApi
+      .emailConfigurationVersionReleaseCreate({
+        id: id!!,
+      })
+      .then(() => {
+        showAlert("Email Konfiguration wurde veröffentlicht.", "success");
+        navigate(Paths.emailConfiguration);
+      });
   };
 
   const handleSelectTemplate = (e: any) => {
@@ -146,7 +196,6 @@ const EmailConfigurationEditor = () => {
         .emailtemplatesRetrieve({ id: id!! })
         .then((data) => {
           setLoadedContent(JSON.parse(data.content));
-          setTemplateName(data.name);
           setSelectedTemplate(id);
         })
         .catch((err) => {
@@ -161,14 +210,39 @@ const EmailConfigurationEditor = () => {
         });
     } else {
       setLoadedContent(EMPTY_PAGE);
-      setTemplateName(mailingName);
       setSelectedTemplate(ID_NEW_TEMPLATE);
       setLoading(false);
     }
   };
 
-  const handleEditorChange = (values: IEmailTemplate) => {
-    setContent(values.content);
+  const handleSavedraft = () => {
+    if (id) {
+      configApi.emailConfigurationPartialUpdate({
+        id: emailConfigurationId!!,
+        patchedEmailConfiguration: {
+          name: mailingName,
+          recipients: recipients,
+        },
+      });
+      versionApi
+        .emailConfigurationVersionPartialUpdate({
+          id: id!!,
+          patchedEmailConfigurationVersion: {
+            subject: subject,
+            content: JSON.stringify(content),
+            html: mjmlToHtml(content),
+          },
+        })
+        .then(() => {
+          showAlert(
+            "Email Konfiguration wurde als Entwurf gespeichert.",
+            "success",
+          );
+          navigate(Paths.emailConfiguration);
+        });
+    } else {
+      saveVersion(content);
+    }
   };
 
   const saveButtonDisabled =
@@ -227,25 +301,29 @@ const EmailConfigurationEditor = () => {
           </Form.Group>
           <br />
 
-          <Form.Group>
-            <Form.Label>Template auswählen</Form.Label>
-            <Form.Control
-              as="select"
-              value={selectedTemplate || ID_NEW_TEMPLATE}
-              onChange={handleSelectTemplate}
-            >
-              <option value={ID_NEW_TEMPLATE}>Neue Mail erstellen</option>
-              {templates.map((t: EmailTemplate) => (
-                <option
-                  key={t.id}
-                  value={t.id}
+          {!id && (
+            <>
+              <Form.Group>
+                <Form.Label>Template auswählen</Form.Label>
+                <Form.Control
+                  as="select"
+                  value={selectedTemplate || ID_NEW_TEMPLATE}
+                  onChange={handleSelectTemplate}
                 >
-                  {t.name}
-                </option>
-              ))}
-            </Form.Control>
-          </Form.Group>
-          <br />
+                  <option value={ID_NEW_TEMPLATE}>Keine Vorlage</option>
+                  {templates.map((t: EmailTemplate) => (
+                    <option
+                      key={t.id}
+                      value={t.id}
+                    >
+                      {t.name}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+              <br />
+            </>
+          )}
 
           <Form.Group>
             <Form.Label>Empfänger</Form.Label>
@@ -272,31 +350,28 @@ const EmailConfigurationEditor = () => {
           <hr />
           <Button
             disabled={saveButtonDisabled}
+            variant={saveButtonDisabled ? "disabled" : "primary"}
+            style={{ width: "100%", marginBottom: "1em" }}
+            onClick={handleRelease}
+          >
+            Email Konfiguration veröffentlichen
+          </Button>
+          <Button
+            disabled={saveButtonDisabled}
             variant={saveButtonDisabled ? "disabled" : "success"}
             style={{ width: "100%" }}
-            onClick={handleSave}
+            onClick={handleSavedraft}
           >
-            Konfiguration speichern
+            Als Entwurf speichern
           </Button>
-          {saveButtonDisabled && (
-            <Alert
-              style={{ margin: "1em" }}
-              variant="warning"
-            >
-              <small>Bitte speichere zuerst das Template.</small>
-            </Alert>
-          )}
         </Form>
       </div>
       <div>
         <Editor
           content={loadedContent}
-          onSave={handleSaveTemplate}
-          templateName={templateName}
-          onTemplateNameChange={(name) => setTemplateName(name)}
           subject={subject}
           subtitle={subtitle}
-          onContentChange={handleEditorChange}
+          onContentChange={(values) => handleEditorChange(values.content)}
         />
       </div>
     </div>

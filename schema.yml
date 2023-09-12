@@ -5,7 +5,7 @@ info:
 paths:
   /api/email_configuration/:
     get:
-      operationId: emailconfigurations_list
+      operationId: email_configuration_list
       tags:
       - email_configuration
       security:
@@ -21,7 +21,7 @@ paths:
                   $ref: '#/components/schemas/EmailConfiguration'
           description: ''
     post:
-      operationId: emailconfigurations_create
+      operationId: email_configuration_create
       tags:
       - email_configuration
       requestBody:
@@ -48,7 +48,7 @@ paths:
           description: ''
   /api/email_configuration/{id}/:
     get:
-      operationId: emailconfigurations_retrieve
+      operationId: email_configuration_retrieve
       parameters:
       - in: path
         name: id
@@ -69,7 +69,7 @@ paths:
                 $ref: '#/components/schemas/EmailConfiguration'
           description: ''
     put:
-      operationId: emailconfigurations_update
+      operationId: email_configuration_update
       parameters:
       - in: path
         name: id
@@ -134,7 +134,7 @@ paths:
                 $ref: '#/components/schemas/EmailConfiguration'
           description: ''
     delete:
-      operationId: emailconfigurations_destroy
+      operationId: email_configuration_destroy
       parameters:
       - in: path
         name: id
@@ -150,9 +150,9 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/email_configuration/{id}/send_test_email/:
-    post:
-      operationId: emailconfigurations_send_test_email
+  /api/email_configuration/{id}/versions/:
+    get:
+      operationId: email_configuration_versions_list
       parameters:
       - in: path
         name: id
@@ -162,6 +162,246 @@ paths:
         required: true
       tags:
       - email_configuration
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmailConfigurationVersion'
+          description: ''
+  /api/email_configuration_version/:
+    get:
+      operationId: email_configuration_version_list
+      tags:
+      - email_configuration_version
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmailConfigurationVersion'
+          description: ''
+    post:
+      operationId: email_configuration_version_create
+      tags:
+      - email_configuration_version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+          description: ''
+  /api/email_configuration_version/{id}/:
+    get:
+      operationId: email_configuration_version_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration version.
+        required: true
+      tags:
+      - email_configuration_version
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfigurationVersion'
+          description: ''
+    put:
+      operationId: email_configuration_version_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration version.
+        required: true
+      tags:
+      - email_configuration_version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfigurationVersionCreate'
+          description: ''
+    patch:
+      operationId: email_configuration_version_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration version.
+        required: true
+      tags:
+      - email_configuration_version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEmailConfigurationVersion'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEmailConfigurationVersion'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEmailConfigurationVersion'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfigurationVersion'
+          description: ''
+    delete:
+      operationId: email_configuration_version_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration version.
+        required: true
+      tags:
+      - email_configuration_version
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/email_configuration_version/{id}/archive/:
+    post:
+      operationId: email_configuration_version_archive_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration version.
+        required: true
+      tags:
+      - email_configuration_version
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/email_configuration_version/{id}/draft/:
+    post:
+      operationId: email_configuration_version_draft_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration version.
+        required: true
+      tags:
+      - email_configuration_version
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/email_configuration_version/{id}/release/:
+    post:
+      operationId: email_configuration_version_release_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration version.
+        required: true
+      tags:
+      - email_configuration_version
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/email_configuration_version/{id}/send_test_email/:
+    post:
+      operationId: email_configuration_version_send_test_email
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration version.
+        required: true
+      tags:
+      - email_configuration_version
       requestBody:
         content:
           application/json:
@@ -879,23 +1119,12 @@ components:
         description:
           type: string
           nullable: true
-        subject:
-          type: string
-          maxLength: 255
-        subtitle:
-          type: string
-          nullable: true
-          maxLength: 255
         recipients:
           type: string
           nullable: true
-        template:
-          type: string
       required:
       - created_at
       - name
-      - subject
-      - template
       - updated_at
     EmailConfigurationCreate:
       type: object
@@ -909,6 +1138,31 @@ components:
         description:
           type: string
           nullable: true
+        recipients:
+          type: string
+          nullable: true
+      required:
+      - name
+    EmailConfigurationVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 10
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        content:
+          type: string
+          nullable: true
+        html:
+          type: string
+          nullable: true
         subject:
           type: string
           maxLength: 255
@@ -916,15 +1170,41 @@ components:
           type: string
           nullable: true
           maxLength: 255
-        recipients:
-          type: string
-          nullable: true
-        template:
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        email_configuration:
           type: string
       required:
-      - name
+      - created_at
+      - email_configuration
       - subject
-      - template
+      - updated_at
+    EmailConfigurationVersionCreate:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 10
+        content:
+          type: string
+          nullable: true
+        html:
+          type: string
+          nullable: true
+        subject:
+          type: string
+          maxLength: 255
+        subtitle:
+          type: string
+          nullable: true
+          maxLength: 255
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        email_configuration:
+          type: string
+      required:
+      - email_configuration
+      - subject
     EmailTemplate:
       type: object
       properties:
@@ -989,6 +1269,29 @@ components:
         description:
           type: string
           nullable: true
+        recipients:
+          type: string
+          nullable: true
+    PatchedEmailConfigurationVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 10
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        content:
+          type: string
+          nullable: true
+        html:
+          type: string
+          nullable: true
         subject:
           type: string
           maxLength: 255
@@ -996,10 +1299,9 @@ components:
           type: string
           nullable: true
           maxLength: 255
-        recipients:
-          type: string
-          nullable: true
-        template:
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        email_configuration:
           type: string
     PatchedEmailTemplate:
       type: object
@@ -1082,6 +1384,16 @@ components:
             format: email
       required:
       - recipients
+    StatusEnum:
+      enum:
+      - draft
+      - released
+      - archived
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `released` - Released
+        * `archived` - Archived
     StoredUpload:
       type: object
       properties:
