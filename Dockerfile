@@ -15,6 +15,8 @@ RUN apt update -y && apt upgrade -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g mjml@4.14.1
+
 # Upgrade pip and install poetry
 RUN pip install --upgrade pip && \
     pip install poetry

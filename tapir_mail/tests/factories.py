@@ -14,11 +14,8 @@ class EmailTemplateFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("bs")
     content = factory.lazy_attribute(
         lambda self: open(
-            "tapir_mail/tests/dummy_email_template_content.json", "r"
+            "tapir_mail/tests/dummy_email_template_content.mjml", "r"
         ).read()
-    )
-    html = factory.lazy_attribute(
-        lambda self: open("tapir_mail/tests/dummy_email_template_html.html", "r").read()
     )
 
 
@@ -40,12 +37,9 @@ class EmailConfigurationVersionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = EmailConfigurationVersion
 
-    html = factory.lazy_attribute(
-        lambda self: open("tapir_mail/tests/dummy_email_template_html.html", "r").read()
-    )
     content = factory.lazy_attribute(
         lambda self: open(
-            "tapir_mail/tests/dummy_email_template_content.json", "r"
+            "tapir_mail/tests/dummy_email_template_content.mjml", "r"
         ).read()
     )
     subject = factory.Faker("sentence")

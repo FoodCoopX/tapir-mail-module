@@ -6,7 +6,7 @@ import Editor, { EMPTY_PAGE } from "../components/editor";
 import Loading from "../components/loading";
 import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
-import { mjmlToHtml } from "../utils/mjml";
+import { jsonToMjml, mjmlToHtml, mjmlToJson } from "../utils/mjml";
 import { EmailTemplateApi } from "../api_client";
 
 const TemplateEditor = () => {
@@ -30,10 +30,11 @@ const TemplateEditor = () => {
         .then((data) => {
           setId(data.id);
           setName(data.name);
-          setContent(JSON.parse(data.content));
+          setContent(mjmlToJson(data.content));
           setLoading(false);
         })
         .catch((err) => {
+          console.error(err);
           showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
           navigate("/");
         });
@@ -52,8 +53,7 @@ const TemplateEditor = () => {
     const props = {
       emailTemplateCreate: {
         name: name,
-        content: JSON.stringify(values.content),
-        html: mjmlToHtml(values.content),
+        content: jsonToMjml(values.content),
       },
     };
     if (!templateId) {

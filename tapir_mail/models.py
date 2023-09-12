@@ -36,7 +36,6 @@ class EmailTemplate(BaseModel):
 
     name = models.CharField(max_length=255, unique=True)
     content = models.TextField()
-    html = models.TextField()
 
     def __str__(self):
         return self.name
@@ -67,7 +66,6 @@ class EmailConfigurationVersion(BaseModel):
     """
 
     content = models.TextField(null=True)
-    html = models.TextField(null=True)
     subject = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
     email_configuration = models.ForeignKey(

@@ -1160,9 +1160,6 @@ components:
         content:
           type: string
           nullable: true
-        html:
-          type: string
-          nullable: true
         subject:
           type: string
           maxLength: 255
@@ -1186,9 +1183,6 @@ components:
           type: string
           maxLength: 10
         content:
-          type: string
-          nullable: true
-        html:
           type: string
           nullable: true
         subject:
@@ -1224,12 +1218,9 @@ components:
           maxLength: 255
         content:
           type: string
-        html:
-          type: string
       required:
       - content
       - created_at
-      - html
       - name
       - updated_at
     EmailTemplateCreate:
@@ -1243,11 +1234,8 @@ components:
           maxLength: 255
         content:
           type: string
-        html:
-          type: string
       required:
       - content
-      - html
       - name
     PatchedEmailConfiguration:
       type: object
@@ -1289,9 +1277,6 @@ components:
         content:
           type: string
           nullable: true
-        html:
-          type: string
-          nullable: true
         subject:
           type: string
           maxLength: 255
@@ -1321,8 +1306,6 @@ components:
           type: string
           maxLength: 255
         content:
-          type: string
-        html:
           type: string
     PatchedStoredUpload:
       type: object

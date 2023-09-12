@@ -316,6 +316,23 @@ files = [
 Django = ">=3.2"
 
 [[package]]
+name = "django-mjml"
+version = "1.1"
+description = "Use MJML in Django templates"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "django-mjml-1.1.tar.gz", hash = "sha256:1a057d790227ea30fe4088eebfcfd5993e4e92840021034a1415d5b5c7997841"},
+    {file = "django_mjml-1.1-py3-none-any.whl", hash = "sha256:30a57d83c2257a998530032bb5f8fe2c1ca582ec021f884fed2798ec7ab993a9"},
+]
+
+[package.dependencies]
+django = ">=2.2,<5.0"
+
+[package.extras]
+requests = ["requests (>=2.24)"]
+
+[[package]]
 name = "django-storages"
 version = "1.13.2"
 description = "Support for many storage backends in Django"
@@ -979,4 +996,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "d0dabf8567f70f9b16c6bce4f18691ab4a82a7058082b2a61836f29526b41b71"
+content-hash = "4851de4d3ed382a37fb9b3a333b09cae49aec555a4fd21d57113bacafd7e78cb"

@@ -9,6 +9,9 @@ poetry run python manage.py spectacular --file schema.yml
 npm install -g @openapitools/openapi-generator-cli@2.7.0
 npx @openapitools/openapi-generator-cli generate -i schema.yml -g typescript-fetch -o ./tapir_mail_ui/src/api_client
 
+# Install mjml executable
+npm install -g mjml@4.14.1
+
 # Build the React app
 cd tapir_mail_ui
 npm install
