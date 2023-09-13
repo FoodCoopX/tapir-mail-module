@@ -8,8 +8,4 @@ describe("App", () => {
     await screen.findByTestId("App");
     expect(screen.getByTestId("App")).toBeInTheDocument();
   });
-
-  test("Fail", () => {
-    expect(false).toBe(true);
-  });
 });
