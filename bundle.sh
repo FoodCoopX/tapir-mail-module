@@ -7,6 +7,7 @@ export PUBLIC_URL=/static/
 # Generate API Client
 poetry run python manage.py spectacular --file schema.yml
 npm install -g @openapitools/openapi-generator-cli@2.7.0
+rm -rf ./tapir_mail_ui/src/api_client
 npx @openapitools/openapi-generator-cli generate -i schema.yml -g typescript-fetch -o ./tapir_mail_ui/src/api_client
 
 # Install mjml executable
@@ -14,14 +15,17 @@ npm install -g mjml@4.14.1
 
 # Build the React app
 cd tapir_mail_ui
+rm -rf build
 npm install
 npm run build
 
 # Copy build files to Django's static directory
+rm -rf ../tapir_mail/__static__/
 mkdir -p ../tapir_mail/__static__/
 cp -r build/* ../tapir_mail/__static__/
 
 # Serve the built index.html as a Django template
+rm -rf ../tapir_mail/__ui__/
 mkdir -p ../tapir_mail/__ui__/
 cp build/index.html ../tapir_mail/__ui__/
 
