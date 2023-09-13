@@ -3,7 +3,7 @@ name: React tests docker
 on: [push]
 
 jobs:
-  python-tests-docker:
+  react-tests-docker:
     runs-on: ubuntu-latest
 
     steps:
