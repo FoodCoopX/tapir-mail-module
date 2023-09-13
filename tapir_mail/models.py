@@ -1,6 +1,7 @@
 from functools import partial
 
 from django.db import models, transaction
+from django.utils import timezone
 from nanoid import generate
 
 ID_LENGTH = 10
@@ -44,7 +45,6 @@ class EmailTemplate(BaseModel):
 class EmailConfiguration(BaseModel):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True, blank=True)
-    recipients = models.TextField(null=True, blank=True)
 
 
 class ReleaseStatus:
@@ -93,3 +93,37 @@ class EmailConfigurationVersion(BaseModel):
 
     def __str__(self):
         return self.name
+
+
+class EmailConfigurationDispatch(models.Model):
+    """
+    This represents an email that has been scheduled to be sent to a list of recipients.
+
+    TODO: we need to replace the recipients field with the segmenting logic. The recipients need to be fetched from the segment at send time.
+    """
+
+    email_configuration_version = models.OneToOneField(
+        EmailConfigurationVersion, on_delete=models.CASCADE
+    )
+    recipients = models.TextField(null=True, blank=True)
+    scheduled_time = models.DateTimeField(default=timezone.now)
+    is_sent = models.BooleanField(default=False)
+
+
+class EmailDispatch(models.Model):
+    """
+    This represents an email that has been sent to a single recipient.
+    Here we can track bounces, errors, opening, etc.
+    """
+
+    email_configuration_dispatch = models.ForeignKey(
+        EmailConfigurationDispatch, on_delete=models.CASCADE
+    )
+    recipient = models.EmailField()
+    sent_time = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = (
+            "email_configuration_dispatch",
+            "recipient",
+        )

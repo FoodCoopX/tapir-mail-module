@@ -8,7 +8,8 @@ const Loading = () => {
         display: "flex",
         width: "100%",
         justifyContent: "center",
-        marginTop: "1em",
+        marginTop: "2em",
+        marginBottom: "2em",
       }}
     >
       <FadeLoader

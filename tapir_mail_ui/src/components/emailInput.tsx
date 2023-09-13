@@ -1,25 +1,36 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, Badge, Form } from "react-bootstrap";
 
+const SPLIT_CHARS = [",", ";", " "];
+
 interface EmailInputProps {
   onEmailListChange: (emails: string[]) => void;
+  initialValue?: string[];
+  autoFocus?: boolean;
 }
 
-const EmailInput: React.FC<EmailInputProps> = ({ onEmailListChange }) => {
+const EmailInput: React.FC<EmailInputProps> = ({
+  onEmailListChange,
+  initialValue = [],
+  autoFocus = true,
+}) => {
   const [inputValue, setInputValue] = useState<string>("");
   const [emailList, setEmailList] = useState<string[]>([]);
   const [isValidEmail, setIsValidEmail] = useState<boolean>(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (inputRef.current) {
+    if (autoFocus && inputRef.current) {
       inputRef.current.focus();
     }
-  }, []);
+  }, [autoFocus, inputRef]);
 
   useEffect(() => {
-    onEmailListChange(emailList);
-  }, [emailList]);
+    if (initialValue.length > 0) {
+      console.log(initialValue);
+      setEmailList(initialValue);
+    }
+  }, [initialValue]);
 
   const validateEmail = (email: string) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -31,7 +42,7 @@ const EmailInput: React.FC<EmailInputProps> = ({ onEmailListChange }) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ([" ", ",", ";", "Enter"].includes(e.key)) {
+    if ([...SPLIT_CHARS, "Enter"].includes(e.key)) {
       e.preventDefault();
       addEmail(inputValue.trim());
     }
@@ -56,7 +67,9 @@ const EmailInput: React.FC<EmailInputProps> = ({ onEmailListChange }) => {
       if (validateEmail(email)) {
         setIsValidEmail(true);
         if (!emailList.includes(email)) {
-          setEmailList([...emailList, email]);
+          const newEmailList = [...emailList, email];
+          onEmailListChange(newEmailList);
+          setEmailList(newEmailList);
         }
         setInputValue("");
       } else {
@@ -67,7 +80,9 @@ const EmailInput: React.FC<EmailInputProps> = ({ onEmailListChange }) => {
   };
 
   const removeEmail = (email: string) => {
-    setEmailList(emailList.filter((e) => e !== email));
+    const newEmailList = emailList.filter((e) => e !== email);
+    setEmailList(newEmailList);
+    onEmailListChange(newEmailList);
   };
 
   const handleBlur = () => {

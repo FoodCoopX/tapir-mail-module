@@ -52,6 +52,8 @@ class EmailConfigurationVersionCreateSerializer(
 
 
 class EmailConfigurationVersionSerializer(serializers.ModelSerializer):
+    email_configuration = EmailConfigurationSerializer()
+
     class Meta:
         model = EmailConfigurationVersion
         fields = "__all__"
@@ -59,3 +61,30 @@ class EmailConfigurationVersionSerializer(serializers.ModelSerializer):
 
 class RecipientSerializer(serializers.Serializer):
     recipients = serializers.ListField(child=serializers.EmailField(), required=True)
+
+
+class BundledEmailConfigurationSerializer(serializers.Serializer):
+    # EmailConfiguration fields
+    name = serializers.CharField()
+    description = serializers.CharField()
+
+    # EmailConfigurationVersion fields
+    content = serializers.CharField()
+    subject = serializers.CharField()
+    subtitle = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    release_status = serializers.CharField()
+
+    # EmailConfigurationDispatch fields
+    scheduled_time = serializers.DateTimeField()
+    recipients = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False
+    )
+
+
+class EmailConfigurationDispatchSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    email_configuration_version = EmailConfigurationVersionSerializer()
+    scheduled_time = serializers.DateTimeField()
+    recipients = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False
+    )
