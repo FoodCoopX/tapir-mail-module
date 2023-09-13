@@ -201,4 +201,18 @@ CORS_ALLOW_HEADERS = [
 ]
 
 MJML_BACKEND_MODE = "cmd"
-MJML_EXEC_CMD = "mjml"
+MJML_EXEC_CMD = [
+    "mjml",
+    "--config.juicePreserveTags",
+    "true",
+    "--config.validationLevel",
+    "skip",
+    "--config.minify",
+    "true",
+    "--config.beautify",
+    "false",
+    "--config.keepComments",
+    "false",
+    "--config.minifyOptions",
+    '{"removeComments": true}',
+]

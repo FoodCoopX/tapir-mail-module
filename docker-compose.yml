@@ -2,7 +2,7 @@ version: "3.9"
 services:
   web:
     build: .
-    command: bash -c "./bundle.sh & poetry run python manage.py runserver 0.0.0.0:8000 & (cd tapir_mail_ui && HOST=0.0.0.0 npm start) & wait"
+    command: bash -c "./bundle.sh && poetry run python manage.py runserver 0.0.0.0:8000 & (cd tapir_mail_ui && HOST=0.0.0.0 npm start) & wait"
     volumes:
       - .:/app
     ports:
