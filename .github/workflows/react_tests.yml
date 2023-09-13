@@ -13,4 +13,4 @@ jobs:
       - name: Bundle
         run: docker compose run web ./bundle.sh
       - name: Run tests
-        run: docker compose run web cd tapir_mail_ui && npm run test
+        run: docker compose run -w tapir_mail_ui/ web npm run test
