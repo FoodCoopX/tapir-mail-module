@@ -21,5 +21,8 @@ export const jsonToMjml = (content: IPage) => {
     data: content,
     mode: "production",
     context: content,
-  });
+    beautify: false,
+  })
+    .replaceAll("\n", "")
+    .replaceAll("<br>", "<br/>");
 };
