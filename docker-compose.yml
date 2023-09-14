@@ -3,7 +3,7 @@ services:
   django:
     build:
       dockerfile: Dockerfile-django
-    command: bash -c "poetry run python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "scripts/generate_api_clients.sh && poetry run python manage.py migrate && poetry run python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./tapir_mail:/app/tapir_mail
       - ./tapir_mail_server:/app/tapir_mail_server
