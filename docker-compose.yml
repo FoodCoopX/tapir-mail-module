@@ -1,13 +1,27 @@
 version: "3.9"
 services:
-  web:
-    build: .
-    command: bash -c "./bundle.sh && poetry run python manage.py runserver 0.0.0.0:8000 & (cd tapir_mail_ui && HOST=0.0.0.0 npm start) & wait"
+  django:
+    build:
+      dockerfile: Dockerfile-django
+    command: bash -c "poetry run python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - .:/app
+      - ./tapir_mail:/app/tapir_mail
+      - ./tapir_mail_server:/app/tapir_mail_server
     ports:
       - "8000:8000"
+    environment:
+      VIRTUAL_HOST: localhost
+      DEBUG: 1
+  react:
+    build:
+      dockerfile: Dockerfile-react
+    volumes:
+      - ./tapir_mail_ui:/app/tapir_mail_ui
+    ports:
       - "3000:3000"
     environment:
       VIRTUAL_HOST: localhost
       DEBUG: 1
+    depends_on:
+      - django
+    stdin_open: true

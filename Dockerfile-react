@@ -1,0 +1,10 @@
+FROM node:20
+
+COPY ./tapir_mail_ui /app/tapir_mail_ui
+
+WORKDIR /app/tapir_mail_ui
+
+RUN npm install
+
+ENV HOST=0.0.0.0
+CMD ["npm", "start"]
