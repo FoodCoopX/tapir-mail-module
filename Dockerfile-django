@@ -28,4 +28,3 @@ COPY ./tapir_mail_server ./tapir_mail_server
 COPY ./tapir_mail_ui ./tapir_mail_ui
 
 RUN ./scripts/install.sh
-RUN ./scripts/bundle.sh
