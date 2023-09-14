@@ -1,2 +1,4 @@
 tapir_mail/__static__
 tapir_mail/__ui__
+node_modules
+build
