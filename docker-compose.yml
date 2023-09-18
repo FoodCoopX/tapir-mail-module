@@ -1,10 +1,10 @@
 version: "3.9"
 services:
   django:
-    build:
+    build: &build-django
       dockerfile: Dockerfile-django
     command: bash -c "scripts/generate_api_clients.sh && poetry run python manage.py migrate && poetry run python manage.py runserver 0.0.0.0:8000"
-    volumes:
+    volumes: &volumes-django
       - ./tapir_mail:/app/tapir_mail
       - ./tapir_mail_server:/app/tapir_mail_server
     ports:
@@ -12,6 +12,7 @@ services:
     environment:
       VIRTUAL_HOST: localhost
       DEBUG: 1
+
   react:
     build:
       dockerfile: Dockerfile-react
@@ -26,3 +27,24 @@ services:
     depends_on:
       - django
     stdin_open: true
+
+  redis:
+    image: redis:alpine
+
+  celery:
+    build: *build-django
+    command: bash -c "poetry run celery -A tapir_mail_server worker -l info"
+    volumes: *volumes-django
+    environment:
+      DEBUG: 1
+    depends_on:
+      - redis
+
+  celery-beat:
+    build: *build-django
+    command: bash -c "poetry run celery -A tapir_mail_server beat -l info --schedule /tmp/celerybeat-schedule"
+    volumes: *volumes-django
+    environment:
+      DEBUG: 1
+    depends_on:
+      - redis

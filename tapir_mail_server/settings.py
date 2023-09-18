@@ -216,3 +216,6 @@ MJML_EXEC_CMD = [
     "--config.minifyOptions",
     '{"removeComments": true}',
 ]
+
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_RESULT_BACKEND = "redis://redis:6379"
