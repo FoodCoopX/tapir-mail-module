@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import datetime
 import os
 from pathlib import Path
 
@@ -219,3 +220,12 @@ MJML_EXEC_CMD = [
 
 CELERY_BROKER_URL = "redis://redis:6379"
 CELERY_RESULT_BACKEND = "redis://redis:6379"
+
+CELERY_BEAT_SCHEDULE = {
+    "send_shift_reminders": {
+        "task": "tapir_mail.tasks.dummy_task",
+        "schedule": datetime.timedelta(
+            seconds=5
+        ),  # Every two hours five after the hour
+    },
+}

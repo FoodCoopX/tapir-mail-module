@@ -1,6 +1,10 @@
+import time
+
 from celery import shared_task
 
 
 @shared_task
 def dummy_task():
-    print("A TASK IS BEING EXECUTED!")
+    print("TASK STARTING")
+    time.sleep(6)
+    print("TASK ENDING")
