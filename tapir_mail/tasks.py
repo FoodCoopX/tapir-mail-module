@@ -17,7 +17,7 @@ def send_oldest_email_configuration_task():
 
     try:
         config_dispatch: EmailConfigurationDispatch = (
-            EmailConfigurationDispatch.objects.filter(is_sent=False)
+            get_email_configuration_dispatches_that_should_be_sent()
             .order_by("scheduled_time")
             .first()
         )
@@ -27,7 +27,7 @@ def send_oldest_email_configuration_task():
 
         send_email_configuration_dispatch(config_dispatch)
 
-        if EmailConfigurationDispatch.objects.filter(is_sent=False).exists():
+        if get_email_configuration_dispatches_that_should_be_sent().exists():
             print("QUICK TASK SEND")
             app.send_task("tapir_mail.tasks.send_oldest_email_configuration_task")
     finally:
@@ -64,3 +64,9 @@ def send_email_configuration_dispatch(config_dispatch: EmailConfigurationDispatc
 
     config_dispatch.is_sent = True
     config_dispatch.save()
+
+
+def get_email_configuration_dispatches_that_should_be_sent():
+    return EmailConfigurationDispatch.objects.filter(
+        is_sent=False, scheduled_time__lte=timezone.now()
+    )
