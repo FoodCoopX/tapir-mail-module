@@ -124,7 +124,7 @@ elif EMAIL_ENV == "prod":
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": BASE_DIR / "sqlite/db.sqlite3",
     }
 }
 
@@ -222,10 +222,19 @@ CELERY_BROKER_URL = "redis://redis:6379"
 CELERY_RESULT_BACKEND = "redis://redis:6379"
 
 CELERY_BEAT_SCHEDULE = {
-    "send_shift_reminders": {
-        "task": "tapir_mail.tasks.dummy_task",
-        "schedule": datetime.timedelta(
-            seconds=5
-        ),  # Every two hours five after the hour
+    "send_oldest_email_configuration_task": {
+        "task": "tapir_mail.tasks.send_oldest_email_configuration_task",
+        "schedule": datetime.timedelta(seconds=5),
     },
+}
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": CELERY_BROKER_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
 }

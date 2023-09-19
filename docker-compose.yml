@@ -7,6 +7,7 @@ services:
     volumes: &volumes-django
       - ./tapir_mail:/app/tapir_mail
       - ./tapir_mail_server:/app/tapir_mail_server
+      - ./sqlite:/app/sqlite
     ports:
       - "8000:8000"
     environment:
@@ -46,5 +47,16 @@ services:
     volumes: *volumes-django
     environment:
       DEBUG: 1
+    depends_on:
+      - redis
+
+  flower:
+    build: *build-django
+    command: bash -c "poetry run celery -A tapir_mail_server flower"
+    volumes: *volumes-django
+    environment:
+      DEBUG: 1
+    ports:
+      - "5555:5555"
     depends_on:
       - redis
