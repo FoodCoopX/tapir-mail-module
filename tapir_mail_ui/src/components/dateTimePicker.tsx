@@ -1,5 +1,8 @@
-import React, { useEffect, useRef } from "react";
-import { TempusDominus } from "@eonasdan/tempus-dominus";
+import React, {useEffect, useRef} from "react";
+import {TempusDominus} from "@eonasdan/tempus-dominus";
+import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
+import "@fortawesome/fontawesome-free/css/solid.css";
+import "@fortawesome/fontawesome-free/css/fontawesome.css";
 
 interface DateTimePickerProps {
   onChange: (value: Date) => void;
@@ -11,7 +14,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ onChange }) => {
 
   useEffect(() => {
     if (pickerRef.current) {
-      dateTimePicker = new TempusDominus(pickerRef.current);
+      dateTimePicker = new TempusDominus(pickerRef.current, {display: {theme: "light"}});
     }
   });
 
