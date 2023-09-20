@@ -5,9 +5,7 @@ services:
       dockerfile: Dockerfile-django
     command: bash -c "scripts/generate_api_clients.sh && poetry run python manage.py migrate && poetry run python manage.py runserver 0.0.0.0:8000"
     volumes: &volumes-django
-      - ./tapir_mail:/app/tapir_mail
-      - ./tapir_mail_server:/app/tapir_mail_server
-      - ./sqlite:/app/sqlite
+      - .:/app
     ports:
       - "8000:8000"
     environment:
@@ -18,8 +16,7 @@ services:
     build:
       dockerfile: Dockerfile-react
     volumes:
-      - ./tapir_mail_ui/public:/app/tapir_mail_ui/public
-      - ./tapir_mail_ui/src:/app/tapir_mail_ui/src
+      - .:/app
     ports:
       - "3000:3000"
     environment:

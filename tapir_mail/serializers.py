@@ -6,6 +6,7 @@ from tapir_mail.models import (
     EmailTemplate,
 )
 
+
 # TODO: Is there a better way to exclude the automatically filled fields? Whatever I tried, I couldn't get the fields to be required=False in the schema.
 
 
