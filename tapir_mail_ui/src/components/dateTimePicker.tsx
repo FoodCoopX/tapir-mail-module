@@ -5,6 +5,7 @@ import "@fortawesome/fontawesome-free/css/solid.css";
 import "@fortawesome/fontawesome-free/css/fontawesome.css";
 // @ts-ignore
 import { localization, name } from "@eonasdan/tempus-dominus/dist/locales/de";
+import { ChangeEvent } from "@eonasdan/tempus-dominus/types/utilities/event-types";
 
 interface DateTimePickerProps {
   onChange: (value: Date) => void;
@@ -12,7 +13,7 @@ interface DateTimePickerProps {
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({ onChange }) => {
   const pickerRef = useRef<HTMLDivElement>(null);
-  let dateTimePicker: TempusDominus | null = null;
+  let dateTimePicker: TempusDominus;
 
   useEffect(() => {
     if (pickerRef.current) {
@@ -21,12 +22,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ onChange }) => {
       dateTimePicker = new TempusDominus(pickerRef.current, {
         display: { theme: "light" },
       });
+      dateTimePicker.subscribe("change.td", (e: ChangeEvent) => {
+        onChange(e.date ?? new Date());
+      });
     }
   });
-
-  const handleInputChange = () => {
-    if (dateTimePicker) onChange(dateTimePicker?.viewDate);
-  };
 
   return (
     <div id="htmlTarget">
@@ -39,7 +39,6 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ onChange }) => {
       >
         <input
           type="text"
-          onChange={handleInputChange}
           className="form-control"
           data-td-target="#datetimepicker1"
           id="datetimepicker1Input"

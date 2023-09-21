@@ -71,7 +71,6 @@ const EmailConfigurationEditor = () => {
           setMailingName(data.name || "");
           setRecipients(data.recipients || "");
           setScheduledTime(data.scheduledTime);
-          console.log(typeof data.recipients, data.recipients);
         })
         .catch((err) => {
           console.error(err);
@@ -100,6 +99,8 @@ const EmailConfigurationEditor = () => {
         scheduledTime: scheduledTime,
         releaseStatus: newStatus,
       };
+
+      console.log("ON SAVE " + scheduledTime);
 
       if (id) {
         // UPDATE

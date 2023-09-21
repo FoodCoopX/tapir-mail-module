@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -137,7 +136,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         email_configuration = version.email_configuration
 
         # Get existing dispatch instance
-        dispatch_instance = EmailConfigurationDispatch.objects.get_or_create(
+        (dispatch_instance, _) = EmailConfigurationDispatch.objects.get_or_create(
             email_configuration_version=version
         )
 
