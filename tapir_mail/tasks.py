@@ -2,7 +2,7 @@ from celery import shared_task
 from django.core.cache import cache
 from django.utils import timezone
 
-from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch
+from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import send_email
 from tapir_mail_server.celery import app
 
@@ -68,5 +68,7 @@ def send_email_configuration_dispatch(config_dispatch: EmailConfigurationDispatc
 
 def get_email_configuration_dispatches_that_should_be_sent():
     return EmailConfigurationDispatch.objects.filter(
-        is_sent=False, scheduled_time__lte=timezone.now()
+        is_sent=False,
+        scheduled_time__lte=timezone.now(),
+        email_configuration_version__status=ReleaseStatus.RELEASED,
     )
