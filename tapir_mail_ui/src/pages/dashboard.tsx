@@ -35,6 +35,7 @@ function Dashboard() {
       >
         <TemplatesCard />
         <LastSendEmailConfigurationsCard />
+        <NextSendsEmailConfigurationsCard />
       </div>
     </>
   );
@@ -147,7 +148,114 @@ const LastSendEmailConfigurationsCard = () => {
                       {emailConfigurationDispatch.scheduledTime.toISOString()}
                     </td>
                     <td>
-                      {emailConfigurationDispatch.recipients?.split(",").length}
+                      {emailConfigurationDispatch.recipients.map(
+                        (recipient) => (
+                          <span>{recipient}</span>
+                        ),
+                      )}
+                    </td>
+                  </tr>
+                ),
+              )}
+            </tbody>
+          </Table>
+        )}
+      </Card.Body>
+    </Card>
+  );
+};
+
+const NextSendsEmailConfigurationsCard = () => {
+  const api = useApi(EmailConfigurationDispatchApi);
+  const showAlert = useAlert();
+  const navigate = useNavigate();
+
+  const [emailConfigurationDispatches, setEmailConfigurationDispatches] =
+    useState<EmailConfigurationDispatch[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    api
+      .emailConfigurationDispatchNextSendsList({ limit: 10 })
+      .then(setEmailConfigurationDispatches)
+      .catch((err) => {
+        console.error(err);
+        showAlert(
+          "Error loading the next sent emails", //TODO translation
+          "danger",
+        );
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <Card>
+      <Card.Header>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <h4>Next sent Emails</h4> {/*TODO Translation*/}
+        </div>
+      </Card.Header>
+      <Card.Body style={{ padding: 0, border: "none" }}>
+        {loading ? (
+          <Loading />
+        ) : (
+          <Table
+            striped
+            hover
+            style={{ margin: "0" }}
+          >
+            <thead>
+              <tr>
+                <th>Email Konfiguration</th>
+                <th>Betreff</th>
+                <th>Gesendet am</th>
+                <th>Empfänger</th>
+              </tr>
+            </thead>
+            <tbody>
+              {emailConfigurationDispatches.map(
+                (emailConfigurationDispatch) => (
+                  <tr
+                    style={{ cursor: "pointer" }}
+                    key={emailConfigurationDispatch.id}
+                    onClick={() =>
+                      navigate(
+                        Paths.emailConfigurationEdit.replace(
+                          ":id",
+                          emailConfigurationDispatch.emailConfigurationVersion
+                            .id!!,
+                        ),
+                      )
+                    }
+                  >
+                    <td>
+                      {
+                        emailConfigurationDispatch.emailConfigurationVersion
+                          .emailConfiguration.name
+                      }
+                    </td>
+                    <td>
+                      {
+                        emailConfigurationDispatch.emailConfigurationVersion
+                          .subject
+                      }
+                    </td>
+                    <td>
+                      {emailConfigurationDispatch.scheduledTime.toISOString()}
+                    </td>
+                    <td>
+                      {emailConfigurationDispatch.recipients.map(
+                        (recipient) => (
+                          <span>{recipient}</span>
+                        ),
+                      )}
                     </td>
                   </tr>
                 ),

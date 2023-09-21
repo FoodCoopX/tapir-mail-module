@@ -109,6 +109,12 @@ class EmailConfigurationDispatch(models.Model):
     scheduled_time = models.DateTimeField(default=timezone.now)
     is_sent = models.BooleanField(default=False)
 
+    def get_recipient_list(self):
+        if self.is_sent:
+            return [dispatch.recipient for dispatch in self.emaildispatch_set.all()]
+        else:
+            return self.recipients.split(",")
+
 
 class EmailDispatch(models.Model):
     """

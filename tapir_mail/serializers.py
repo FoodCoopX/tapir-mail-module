@@ -86,6 +86,7 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     id = serializers.CharField()
     email_configuration_version = EmailConfigurationVersionSerializer()
     scheduled_time = serializers.DateTimeField()
-    recipients = serializers.CharField(
-        allow_null=True, allow_blank=True, required=False
+    recipients = serializers.ListField(
+        child=serializers.CharField(allow_null=True, allow_blank=True),
+        source="get_recipient_list",
     )
