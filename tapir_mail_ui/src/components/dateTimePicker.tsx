@@ -9,24 +9,34 @@ import { ChangeEvent } from "@eonasdan/tempus-dominus/types/utilities/event-type
 
 interface DateTimePickerProps {
   onChange: (value: Date) => void;
+  initialValue: Date;
 }
 
-const DateTimePicker: React.FC<DateTimePickerProps> = ({ onChange }) => {
+const DateTimePicker: React.FC<DateTimePickerProps> = ({
+  onChange,
+  initialValue,
+}) => {
   const pickerRef = useRef<HTMLDivElement>(null);
-  let dateTimePicker: TempusDominus;
+  let dateTimePicker: TempusDominus | null = null;
 
   useEffect(() => {
-    if (pickerRef.current) {
-      loadLocale({ localization, name });
-      locale(name);
-      dateTimePicker = new TempusDominus(pickerRef.current, {
-        display: { theme: "light" },
-      });
-      dateTimePicker.subscribe("change.td", (e: ChangeEvent) => {
-        onChange(e.date ?? new Date());
-      });
-    }
-  });
+    if (!pickerRef.current) return;
+    loadLocale({ localization, name });
+    locale(name);
+    dateTimePicker = new TempusDominus(pickerRef.current, {
+      display: { theme: "light" },
+    });
+    dateTimePicker.subscribe("change.td", (e: ChangeEvent) => {
+      onChange(e.date ?? new Date());
+    });
+  }, [pickerRef]);
+
+  useEffect(() => {
+    if (!dateTimePicker) return;
+    dateTimePicker.dates.setValue(
+      dateTimePicker.dates.parseInput(initialValue),
+    );
+  }, [initialValue, dateTimePicker]);
 
   return (
     <div id="htmlTarget">

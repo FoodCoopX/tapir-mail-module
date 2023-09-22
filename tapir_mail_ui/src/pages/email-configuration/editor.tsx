@@ -100,8 +100,6 @@ const EmailConfigurationEditor = () => {
         releaseStatus: newStatus,
       };
 
-      console.log("ON SAVE " + scheduledTime);
-
       if (id) {
         // UPDATE
         if (status === "released") {
@@ -290,6 +288,7 @@ const EmailConfigurationEditor = () => {
             <Form.Label>Versandzeitpunkt</Form.Label>
             <DateTimePicker
               onChange={(datetime) => setScheduledTime(datetime)}
+              initialValue={scheduledTime}
             />
           </Form.Group>
 

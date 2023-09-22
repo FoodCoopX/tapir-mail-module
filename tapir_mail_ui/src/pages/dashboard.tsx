@@ -150,7 +150,7 @@ const LastSendEmailConfigurationsCard = () => {
                     <td>
                       {emailConfigurationDispatch.recipients.map(
                         (recipient) => (
-                          <span>{recipient}</span>
+                          <div>{recipient}</div>
                         ),
                       )}
                     </td>
@@ -253,7 +253,7 @@ const NextSendsEmailConfigurationsCard = () => {
                     <td>
                       {emailConfigurationDispatch.recipients.map(
                         (recipient) => (
-                          <span>{recipient}</span>
+                          <div>{recipient}</div>
                         ),
                       )}
                     </td>
