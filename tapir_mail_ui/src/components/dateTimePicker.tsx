@@ -43,21 +43,12 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       <div
         ref={pickerRef}
         className="input-group"
-        data-td-target-input="nearest"
-        data-td-target-toggle="nearest"
-        id="datetimepicker1"
       >
         <input
           type="text"
           className="form-control"
-          data-td-target="#datetimepicker1"
-          id="datetimepicker1Input"
         />
-        <span
-          className="input-group-text"
-          data-td-target="#datetimepicker1"
-          data-td-toggle="datetimepicker"
-        >
+        <span className="input-group-text">
           <i className="fas fa-calendar"></i>
         </span>
       </div>
