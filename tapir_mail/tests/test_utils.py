@@ -24,6 +24,7 @@ class TapirIntegrationTest(TapirFactoryMixin, TestCase):
 
 class TapirUnitTest(TapirFactoryMixin, SimpleTestCase):
     def setUp(self) -> None:
+        super().setUp()
         self.factory_setup()
 
 
