@@ -11,4 +11,4 @@ jobs:
       - name: Generate api clients
         run: docker compose run django bash scripts/generate_api_clients.sh
       - name: Run tests
-        run: docker compose run -e CI=1 react npm run test
+        run: docker compose run -e CI=1 react npm install && npm run test
