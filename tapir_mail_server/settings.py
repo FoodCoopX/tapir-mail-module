@@ -219,12 +219,11 @@ MJML_EXEC_CMD = [
 ]
 
 CELERY_BROKER_URL = "redis://redis:6379"
-CELERY_RESULT_BACKEND = "redis://redis:6379"
 
 CELERY_BEAT_SCHEDULE = {
     "send_oldest_email_configuration_task": {
         "task": "tapir_mail.tasks.send_oldest_email_configuration_task",
-        "schedule": datetime.timedelta(seconds=5),
+        "schedule": datetime.timedelta(minutes=1),
     },
 }
 

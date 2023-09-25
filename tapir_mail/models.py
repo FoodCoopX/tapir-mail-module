@@ -92,7 +92,7 @@ class EmailConfigurationVersion(BaseModel):
         self.save()
 
     def __str__(self):
-        return self.name
+        return f"{self.email_configuration.name} ({self.status}) ({self.updated_at})"
 
 
 class EmailConfigurationDispatch(models.Model):

@@ -9,11 +9,11 @@ from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
     EmailConfigurationVersionSerializer,
 )
-from tapir_mail.tests.test_utils import TapirFactoryTestCase
+from tapir_mail.tests.test_utils import TapirUnitTest
 from tapir_mail.views import EmailConfigurationVersionViewSet
 
 
-class TestEmailConfigurationVersion(TapirFactoryTestCase):
+class TestEmailConfigurationVersion(TapirUnitTest):
     def test_getSerializerClass_updateAction_returnsCreateSerializer(self):
         viewset = EmailConfigurationVersionViewSet()
         viewset.action = "update"
