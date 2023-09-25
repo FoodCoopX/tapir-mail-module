@@ -21,7 +21,11 @@ with [Prettier](https://prettier.io/).
 ### Updating the API
 
 If you do any changes to the models or the API on the Django side, you'll want to update the JavaScript clients to see
-the changes on the React side. This is done with `scripts/generate_api_clients.sh`
+the changes on the React side. This is done with
+
+```shell
+docker compose exec django bash ./scripts/generate_api_clients.sh
+```
 
 ## Running the server
 

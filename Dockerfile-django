@@ -15,16 +15,6 @@ RUN apt update -y && apt upgrade -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY ./scripts ./scripts
-COPY ./pyproject.toml ./
-COPY ./poetry.lock ./
-RUN ./scripts/install.sh
-
-COPY ./LICENSE ./
+COPY . /app
 COPY ./.env.dist ./.env
-COPY ./openapitools.json ./
-COPY ./manage.py ./
-COPY ./README.md ./
-COPY ./tapir_mail ./tapir_mail
-COPY ./tapir_mail_server ./tapir_mail_server
-COPY ./tapir_mail_ui ./tapir_mail_ui
+RUN ./scripts/install.sh
