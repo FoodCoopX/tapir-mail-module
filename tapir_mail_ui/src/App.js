@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import React, { Suspense } from "react";
 import {
-  Route,
   BrowserRouter as Router,
+  Route,
   Routes,
   useLocation,
 } from "react-router-dom";
@@ -45,7 +45,10 @@ const InnerApp = () => {
 
 function App() {
   return (
-    <div className="App">
+    <div
+      className="App"
+      data-testid="App"
+    >
       <AlertProvider>
         <AnimatePresence mode="wait">
           <Router>
