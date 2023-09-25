@@ -8,7 +8,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Bundle
+      - name: Generate api clients
         run: docker compose run django bash scripts/generate_api_clients.sh
       - name: Run tests
         run: docker compose run -e CI=1 react npm run test
