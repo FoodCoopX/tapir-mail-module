@@ -115,6 +115,9 @@ class EmailConfigurationDispatch(models.Model):
         else:
             return self.recipients.split(",")
 
+    def __str__(self):
+        return f"{self.email_configuration_version} - {self.recipients} - {self.scheduled_time} - {self.is_sent}"
+
 
 class EmailDispatch(models.Model):
     """
@@ -132,4 +135,9 @@ class EmailDispatch(models.Model):
         unique_together = (
             "email_configuration_dispatch",
             "recipient",
+        )
+
+    def __str__(self):
+        return (
+            f"{self.email_configuration_dispatch} - {self.recipient} - {self.sent_time}"
         )

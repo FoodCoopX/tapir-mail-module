@@ -37,23 +37,24 @@ class SendOldestEmailConfiguration:
             if email.strip()
         ]
 
-        send_email(
-            mjml=config_dispatch.email_configuration_version.content,
-            subject=config_dispatch.email_configuration_version.subject,
-            subtitle=config_dispatch.email_configuration_version.subtitle,
-            recipients=recipients,
-        )
+        if recipients:
+            send_email(
+                mjml=config_dispatch.email_configuration_version.content,
+                subject=config_dispatch.email_configuration_version.subject,
+                subtitle=config_dispatch.email_configuration_version.subtitle,
+                recipients=recipients,
+            )
 
-        EmailDispatch.objects.bulk_create(
-            [
-                EmailDispatch(
-                    email_configuration_dispatch=config_dispatch,
-                    recipient=recipient,
-                    sent_time=timezone.now(),
-                )
-                for recipient in recipients
-            ]
-        )
+            EmailDispatch.objects.bulk_create(
+                [
+                    EmailDispatch(
+                        email_configuration_dispatch=config_dispatch,
+                        recipient=recipient,
+                        sent_time=timezone.now(),
+                    )
+                    for recipient in recipients
+                ]
+            )
 
         config_dispatch.is_sent = True
         config_dispatch.save()

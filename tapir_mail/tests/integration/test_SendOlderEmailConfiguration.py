@@ -11,7 +11,7 @@ from tapir_mail.tests.factories import EmailConfigurationDispatchFactory
 from tapir_mail.tests.test_utils import TapirIntegrationTest, mock_timezone_now
 
 
-class TestEmailConfigurationSendTestEmail(TapirIntegrationTest):
+class TestSendOldestEmailConfiguration(TapirIntegrationTest):
     NOW = datetime.datetime(
         year=2023, month=9, day=10, hour=12, minute=30, tzinfo=datetime.UTC
     )
@@ -21,8 +21,8 @@ class TestEmailConfigurationSendTestEmail(TapirIntegrationTest):
     SUBJECT = "Test subject"
 
     def setUp(self) -> None:
+        super().setUp()
         mock_timezone_now(self, self.NOW)
-        cache.clear()
 
     def test_scheduledTimeIsInThePast_emailGetsSentWithTheCorrectContent(self):
         config_dispatch = self.create_config_that_would_be_sent()
@@ -69,6 +69,7 @@ class TestEmailConfigurationSendTestEmail(TapirIntegrationTest):
 
     def test_default_lockIsReleasedAfterCall(self):
         SendOldestEmailConfiguration.send_oldest_email_configuration()
+
         self.assertFalse(cache.lock("send_oldest_email_configuration").locked())
 
     def test_severalConfigurationsCouldBeSent_oldestGetsSent(self):
@@ -76,6 +77,7 @@ class TestEmailConfigurationSendTestEmail(TapirIntegrationTest):
         older_config = self.create_config_that_would_be_sent()
         older_config.scheduled_time = self.NOW - datetime.timedelta(days=2)
         older_config.save()
+
         SendOldestEmailConfiguration.send_oldest_email_configuration()
 
         newer_config.refresh_from_db()

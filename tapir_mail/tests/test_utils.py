@@ -1,7 +1,9 @@
 import datetime
+import unittest
 from unittest.mock import patch
 
 import factory.random
+from django.core.cache import cache
 from django.test import TestCase, Client, SimpleTestCase
 from rest_framework.test import APIClient
 
@@ -17,6 +19,7 @@ class TapirIntegrationTest(TapirFactoryMixin, TestCase):
         self.factory_setup()
         self.client = Client()
         self.apiClient = APIClient()
+        cache.clear()
 
 
 class TapirUnitTest(TapirFactoryMixin, SimpleTestCase):
@@ -24,7 +27,7 @@ class TapirUnitTest(TapirFactoryMixin, SimpleTestCase):
         self.factory_setup()
 
 
-def mock_timezone_now(test: TestCase, now: datetime.datetime) -> None:
+def mock_timezone_now(test: unittest.TestCase, now: datetime.datetime) -> None:
     patcher = patch("django.utils.timezone.now")
     test.mock_now = patcher.start()
     test.addCleanup(patcher.stop)
