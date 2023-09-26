@@ -3,7 +3,7 @@ FROM node:20
 COPY ./tapir_mail_ui /app/tapir_mail_ui
 COPY ./tapir_mail_ui/.env.dist /app/tapir_mail_ui/.env
 
-WORKDIR /app/tapir_mail_ui
+WORKDIR /app
 
 RUN npm install -g @openapitools/openapi-generator-cli@2.7.0
 
@@ -11,6 +11,3 @@ RUN apt update -y && apt upgrade -y && \
     apt install -y default-jdk && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
-
-ENV HOST=0.0.0.0
-CMD ["npm", "start"]

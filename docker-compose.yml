@@ -17,7 +17,7 @@ services:
   react:
     build:
       dockerfile: Dockerfile-react
-    command: bash -c "npm install && npm start"
+    command: bash -c "cd tapir_mail_ui && npm install && npm start"
     volumes:
       - .:/app
     ports:
