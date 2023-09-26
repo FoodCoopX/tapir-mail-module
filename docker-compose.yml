@@ -17,6 +17,7 @@ services:
   react:
     build:
       dockerfile: Dockerfile-react
+    command: bash -c "npm install && npm start"
     volumes:
       - .:/app
     ports:
@@ -24,6 +25,7 @@ services:
     environment:
       VIRTUAL_HOST: localhost
       DEBUG: 1
+      HOST: 0.0.0.0
     stdin_open: true
 
   redis:
