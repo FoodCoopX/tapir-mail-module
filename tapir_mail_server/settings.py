@@ -124,7 +124,7 @@ elif EMAIL_ENV == "prod":
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "sqlite/db.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
