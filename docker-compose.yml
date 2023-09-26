@@ -24,8 +24,6 @@ services:
     environment:
       VIRTUAL_HOST: localhost
       DEBUG: 1
-    depends_on:
-      - django
     stdin_open: true
 
   redis:
