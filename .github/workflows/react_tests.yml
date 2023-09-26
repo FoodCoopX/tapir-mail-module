@@ -8,9 +8,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Build
-        run: docker compose build
-      - name: Bundle
-        run: docker compose run web ./bundle.sh
+      - name: Generate api clients
+        run: docker compose run react bash /app/scripts/generate_api_clients.sh
       - name: Run tests
-        run: docker compose run -w /app/tapir_mail_ui/ -e CI=1 web npm run test
+        run: docker compose run -w /app/tapir_mail_ui/ -e CI=1 react npm install-test
