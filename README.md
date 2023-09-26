@@ -21,13 +21,18 @@ with [Prettier](https://prettier.io/).
 ### Updating the API
 
 If you do any changes to the models or the API on the Django side, you'll want to update the JavaScript clients to see
-the changes on the React side. This is done with `scripts/generate_api_clients.sh`
+the changes on the React side. This is done with
+
+```shell
+docker compose run --rm react bash ./scripts/generate_api_clients.sh
+```
 
 ## Running the server
 
 ### Locally with Docker
 
-After cloning the repo, running `docker compose up` should be enough to get the Django and the React server running.
+After cloning the repo, you need to generate the API clients before starting the server. After
+that, `docker compose up` should be enough to get the Django and the React server running.
 The Django API is served on [http://localhost:8000](http://localhost:8000), the React UI dev server
 on [http://localhost:3000](http://localhost:3000).
 
@@ -35,7 +40,7 @@ The React content is not built automatically to reduce container start time. If 
 you want to access everything from the Django server, run
 
 ```shell
-docker compose exec django bash ./scripts/bundle.sh
+docker compose exec react bash ./scripts/bundle.sh
 ```
 
 ### Locally without docker or during deployment
