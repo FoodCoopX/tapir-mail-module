@@ -11,4 +11,4 @@ jobs:
       - name: Generate api clients
         run: docker compose run react bash /app/scripts/generate_api_clients.sh
       - name: Run tests
-        run: docker compose run -e CI=1 react cd tapir_mail_ui && npm install-test
+        run: docker compose run -w /app/tapir_mail_ui/ -e CI=1 react npm install-test
