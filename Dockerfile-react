@@ -5,7 +5,7 @@ COPY ./tapir_mail_ui/.env.dist /app/tapir_mail_ui/.env
 
 WORKDIR /app/tapir_mail_ui
 
-RUN npm install
+RUN npm install -g @openapitools/openapi-generator-cli@2.7.0
 
 ENV HOST=0.0.0.0
 CMD ["npm", "start"]

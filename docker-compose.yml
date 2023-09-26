@@ -3,7 +3,7 @@ services:
   django:
     build: &build-django
       dockerfile: Dockerfile-django
-    command: bash -c "scripts/generate_api_clients.sh && poetry run python manage.py migrate && poetry run python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "poetry run python manage.py migrate && poetry run python manage.py runserver 0.0.0.0:8000"
     volumes: &volumes-django
       - .:/app
     ports:
