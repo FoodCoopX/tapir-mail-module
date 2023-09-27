@@ -214,7 +214,7 @@ const NextSendsEmailConfigurationsCard = () => {
           >
             <thead>
               <tr>
-                <th>Email Konfiguration</th>
+                <th>Name des Mailings</th>
                 <th>Betreff</th>
                 <th>Gesendet am</th>
                 <th>Empfänger</th>
@@ -249,7 +249,7 @@ const NextSendsEmailConfigurationsCard = () => {
                       }
                     </td>
                     <td>
-                      {emailConfigurationDispatch.scheduledTime.toISOString()}
+                      {formatDate(emailConfigurationDispatch.scheduledTime)}
                     </td>
                     <td>
                       {emailConfigurationDispatch.recipients.map(
