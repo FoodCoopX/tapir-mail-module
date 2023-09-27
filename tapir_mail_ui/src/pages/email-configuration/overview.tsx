@@ -1,6 +1,6 @@
-import React, {useEffect, useLayoutEffect, useState} from "react";
-import {Button, Modal, Table} from "react-bootstrap";
-import {Link, useNavigate} from "react-router-dom";
+import React, { useEffect, useLayoutEffect, useState } from "react";
+import { Button, Modal, Table } from "react-bootstrap";
+import { Link, useNavigate } from "react-router-dom";
 import {
   EmailConfiguration,
   EmailConfigurationApi,
@@ -10,10 +10,10 @@ import {
 import EmailConfigurationVersionSelect from "../../components/emailConfigurationVersionSelect";
 import EmailInput from "../../components/emailInput";
 import Loading from "../../components/loading";
-import {useAlert} from "../../contexts/alerts";
-import {useApi} from "../../hooks/useApi";
+import { useAlert } from "../../contexts/alerts";
+import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
-import {formatDate} from "../../utils/formatDate";
+import { formatDate } from "../../utils/formatDate";
 
 const MailPlanningOverview = () => {
   const api = useApi(EmailConfigurationApi);
