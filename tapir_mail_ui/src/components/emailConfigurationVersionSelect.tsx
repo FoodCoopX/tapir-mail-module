@@ -3,6 +3,7 @@ import { Badge, Dropdown, Form } from "react-bootstrap";
 import { EmailConfigurationVersion } from "../api_client";
 import { mjmlToHtml } from "../utils/mjml";
 import HtmlInDiv from "./htmlInDiv";
+import { formatDate } from "../utils/formatDate";
 
 const EmailConfigurationVersionSelect = ({
   versions,
@@ -43,9 +44,9 @@ const EmailConfigurationVersionSelect = ({
               id="dropdown-custom-components"
             >
               {selectedVersion
-                ? `${
-                    STATUS_PROPS[selectedVersion.status!!].text
-                  } ${selectedVersion.updatedAt.toISOString()}`
+                ? `${STATUS_PROPS[selectedVersion.status!!].text} ${formatDate(
+                    selectedVersion.updatedAt,
+                  )}`
                 : "Select version"}
             </Dropdown.Toggle>
             <Dropdown.Menu style={{ width: "100%", textAlign: "center" }}>
@@ -57,7 +58,7 @@ const EmailConfigurationVersionSelect = ({
                   <Badge bg={STATUS_PROPS[v.status || "draft"].color}>
                     {STATUS_PROPS[v.status || "draft"].text}
                   </Badge>{" "}
-                  {v.updatedAt.toISOString()}
+                  {formatDate(v.updatedAt)}
                 </Dropdown.Item>
               ))}
             </Dropdown.Menu>
