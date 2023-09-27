@@ -4,6 +4,7 @@ import { EmailConfigurationVersion } from "../api_client";
 import { mjmlToHtml } from "../utils/mjml";
 import HtmlInDiv from "./htmlInDiv";
 import { formatDate } from "../utils/formatDate";
+import { EMAIL_CONFIGURATION_VERSION_STATUS_PROPS } from "../utils/emailConfigurationVersionStatusProps";
 
 const EmailConfigurationVersionSelect = ({
   versions,
@@ -16,12 +17,6 @@ const EmailConfigurationVersionSelect = ({
   preview?: boolean;
   onChange: (version: string) => void;
 }) => {
-  const STATUS_PROPS = {
-    released: { color: "success", text: "Veröffentlicht" },
-    draft: { color: "secondary", text: "Entwurf" },
-    archived: { color: "danger", text: "Archiviert" },
-  };
-
   const handleSelect = (key: any, event: any) => {
     onChange(key);
   };
@@ -38,15 +33,19 @@ const EmailConfigurationVersionSelect = ({
               variant={
                 "outline-" +
                 (selectedVersion
-                  ? STATUS_PROPS[selectedVersion!!.status || "draft"].color
+                  ? EMAIL_CONFIGURATION_VERSION_STATUS_PROPS[
+                      selectedVersion!!.status || "draft"
+                    ].color
                   : "primary")
               }
               id="dropdown-custom-components"
             >
               {selectedVersion
-                ? `${STATUS_PROPS[selectedVersion.status!!].text} ${formatDate(
-                    selectedVersion.updatedAt,
-                  )}`
+                ? `${
+                    EMAIL_CONFIGURATION_VERSION_STATUS_PROPS[
+                      selectedVersion.status!!
+                    ].text
+                  } ${formatDate(selectedVersion.updatedAt)}`
                 : "Select version"}
             </Dropdown.Toggle>
             <Dropdown.Menu style={{ width: "100%", textAlign: "center" }}>
@@ -55,8 +54,18 @@ const EmailConfigurationVersionSelect = ({
                   key={v.id}
                   eventKey={v.id}
                 >
-                  <Badge bg={STATUS_PROPS[v.status || "draft"].color}>
-                    {STATUS_PROPS[v.status || "draft"].text}
+                  <Badge
+                    bg={
+                      EMAIL_CONFIGURATION_VERSION_STATUS_PROPS[
+                        v.status || "draft"
+                      ].color
+                    }
+                  >
+                    {
+                      EMAIL_CONFIGURATION_VERSION_STATUS_PROPS[
+                        v.status || "draft"
+                      ].text
+                    }
                   </Badge>{" "}
                   {formatDate(v.updatedAt)}
                 </Dropdown.Item>

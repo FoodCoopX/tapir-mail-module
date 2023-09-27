@@ -331,8 +331,10 @@ class EmailConfigurationDispatchViewSet(viewsets.ModelViewSet):
     @action(detail=False)
     def next_sends(self, request):
         limit = int(request.query_params.get("limit", self.DEFAULT_LIMIT))
-        first_n_objects = EmailConfigurationDispatch.objects.filter(
-            is_sent=False, email_configuration_version__status=ReleaseStatus.RELEASED
-        ).order_by("scheduled_time")[:limit]
+        first_n_objects = (
+            EmailConfigurationDispatch.objects.filter(is_sent=False)
+            .exclude(email_configuration_version__status=ReleaseStatus.ARCHIVED)
+            .order_by("scheduled_time")[:limit]
+        )
         serializer = EmailConfigurationDispatchSerializer(first_n_objects, many=True)
         return Response(serializer.data)
