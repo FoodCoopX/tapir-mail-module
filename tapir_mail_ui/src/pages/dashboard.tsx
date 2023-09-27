@@ -12,6 +12,7 @@ import Loading from "../components/loading";
 import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
 import Paths from "../routing";
+import { formatDate } from "../utils/formatDate";
 
 function Dashboard() {
   return (
@@ -110,7 +111,7 @@ const LastSendEmailConfigurationsCard = () => {
           >
             <thead>
               <tr>
-                <th>Email Konfiguration</th>
+                <th>Name des Mailings</th>
                 <th>Betreff</th>
                 <th>Gesendet am</th>
                 <th>Empfänger</th>
@@ -145,7 +146,7 @@ const LastSendEmailConfigurationsCard = () => {
                       }
                     </td>
                     <td>
-                      {emailConfigurationDispatch.scheduledTime.toISOString()}
+                      {formatDate(emailConfigurationDispatch.scheduledTime)}
                     </td>
                     <td>
                       {emailConfigurationDispatch.recipients.map(
@@ -342,7 +343,7 @@ const TemplatesCard = () => {
                   }
                 >
                   <td>{template.name}</td>
-                  <td>{template.createdAt.toISOString()}</td>
+                  <td>{formatDate(template.createdAt)}</td>
                 </tr>
               ))}
             </tbody>
