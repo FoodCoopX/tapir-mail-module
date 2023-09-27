@@ -1,18 +1,14 @@
-import { PlusCircleIcon, QueueListIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
 import { Button, Card, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  EmailConfigurationDispatch,
-  EmailConfigurationDispatchApi,
-  EmailTemplate,
-  EmailTemplateApi,
-} from "../api_client";
+import { EmailTemplate, EmailTemplateApi } from "../api_client";
 import Loading from "../components/loading";
 import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
 import Paths from "../routing";
 import { formatDate } from "../utils/formatDate";
+import EmailConfigurationDispatchTable from "../components/EmailConfigurationDispatchTable";
 
 function Dashboard() {
   return (
@@ -35,131 +31,18 @@ function Dashboard() {
         }}
       >
         <TemplatesCard />
-        <LastSendEmailConfigurationsCard />
+        <EmailConfigurationDispatchTable
+          cardTitle="Zuletzt gesendete Emails"
+          content="last-sent"
+        />
+        <EmailConfigurationDispatchTable
+          cardTitle="Next sent Emails"
+          content="next-sends"
+        />
       </div>
     </>
   );
 }
-
-const LastSendEmailConfigurationsCard = () => {
-  const api = useApi(EmailConfigurationDispatchApi);
-  const showAlert = useAlert();
-  const navigate = useNavigate();
-
-  const [emailConfigurationDispatches, setEmailConfigurationDispatches] =
-    useState<EmailConfigurationDispatch[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    api
-      .emailConfigurationDispatchLastSentList({ limit: 10 })
-      .then(setEmailConfigurationDispatches)
-      .catch((err) => {
-        console.error(err);
-        showAlert("Fehler beim Laden der zuletzt gesendeten Emails", "danger");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  return (
-    <Card>
-      <Card.Header>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <h4>Zuletzt gesendete Emails</h4>
-          <div>
-            <Link to={Paths.emailConfigurationCreate}>
-              <PlusCircleIcon
-                title="Neue Email Konfiguration"
-                style={{
-                  width: "3em",
-                  padding: "0.25em",
-                  borderRadius: "50%",
-                  color: "green",
-                }}
-              />
-            </Link>
-            <Link to={Paths.emailConfiguration}>
-              <QueueListIcon
-                title="Alle Email Konfigurationen"
-                style={{
-                  width: "3em",
-                  padding: "0.25em",
-                  borderRadius: "50%",
-                  color: "primary",
-                }}
-              />
-            </Link>
-          </div>
-        </div>
-      </Card.Header>
-      <Card.Body style={{ padding: 0, border: "none" }}>
-        {loading ? (
-          <Loading />
-        ) : (
-          <Table
-            striped
-            hover
-            style={{ margin: "0" }}
-          >
-            <thead>
-              <tr>
-                <th>Name des Mailings</th>
-                <th>Betreff</th>
-                <th>Gesendet am</th>
-                <th>Empfänger</th>
-              </tr>
-            </thead>
-            <tbody>
-              {emailConfigurationDispatches.map(
-                (emailConfigurationDispatch) => (
-                  <tr
-                    style={{ cursor: "pointer" }}
-                    key={emailConfigurationDispatch.id}
-                    onClick={() =>
-                      navigate(
-                        Paths.emailConfigurationEdit.replace(
-                          ":id",
-                          emailConfigurationDispatch.emailConfigurationVersion
-                            .id!!,
-                        ),
-                      )
-                    }
-                  >
-                    <td>
-                      {
-                        emailConfigurationDispatch.emailConfigurationVersion
-                          .emailConfiguration.name
-                      }
-                    </td>
-                    <td>
-                      {
-                        emailConfigurationDispatch.emailConfigurationVersion
-                          .subject
-                      }
-                    </td>
-                    <td>
-                      {formatDate(emailConfigurationDispatch.scheduledTime)}
-                    </td>
-                    <td>
-                      {emailConfigurationDispatch.recipients?.split(",").length}
-                    </td>
-                  </tr>
-                ),
-              )}
-            </tbody>
-          </Table>
-        )}
-      </Card.Body>
-    </Card>
-  );
-};
 
 const TemplatesCard = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);

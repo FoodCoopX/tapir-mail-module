@@ -1,13 +1,12 @@
 import logging
-from datetime import datetime
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from tapir_mail.models import (
@@ -137,7 +136,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         email_configuration = version.email_configuration
 
         # Get existing dispatch instance
-        dispatch_instance = EmailConfigurationDispatch.objects.get_or_create(
+        (dispatch_instance, _) = EmailConfigurationDispatch.objects.get_or_create(
             email_configuration_version=version
         )
 
@@ -301,25 +300,41 @@ class EmailConfigurationDispatchViewSet(viewsets.ModelViewSet):
         "email_configuration_version"
     ).all()
     serializer_class = EmailConfigurationDispatchSerializer
+    DEFAULT_LIMIT = 10
+    API_PARAMETER_LIMIT = OpenApiParameter(
+        name="limit",
+        description="Number of email dispatches to retrieve",
+        required=False,
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        default=DEFAULT_LIMIT,
+    )
 
     @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="limit",
-                description="Number of last sent email dispatches to retrieve",
-                required=False,
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-            )
-        ],
+        parameters=[API_PARAMETER_LIMIT],
         responses={200: EmailConfigurationDispatchSerializer(many=True)},
     )
     @action(detail=False)
-    def last_sent(self, request):
-        limit = int(request.query_params.get("limit", 10))
-        now = timezone.now()
+    def last_sent(self, request: Request):
+        limit = int(request.query_params.get("limit", self.DEFAULT_LIMIT))
         last_n_objects = EmailConfigurationDispatch.objects.filter(
-            scheduled_time__lt=now
+            is_sent=True
         ).order_by("-scheduled_time")[:limit]
         serializer = EmailConfigurationDispatchSerializer(last_n_objects, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        parameters=[API_PARAMETER_LIMIT],
+        responses={200: EmailConfigurationDispatchSerializer(many=True)},
+        description="Returns the list of email config dispatch that will be sent next.",
+    )
+    @action(detail=False)
+    def next_sends(self, request):
+        limit = int(request.query_params.get("limit", self.DEFAULT_LIMIT))
+        first_n_objects = (
+            EmailConfigurationDispatch.objects.filter(is_sent=False)
+            .exclude(email_configuration_version__status=ReleaseStatus.ARCHIVED)
+            .order_by("scheduled_time")[:limit]
+        )
+        serializer = EmailConfigurationDispatchSerializer(first_n_objects, many=True)
         return Response(serializer.data)

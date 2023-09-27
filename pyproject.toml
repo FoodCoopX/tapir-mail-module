@@ -17,6 +17,9 @@ djangorestframework = "^3.14.0"
 drf-spectacular = "^0.26.4"
 nanoid = "^2.0.0"
 django-mjml = "^1.1"
+celery = "^5.3.4"
+redis = "^5.0.0"
+django-redis = "^5.3.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
@@ -24,6 +27,7 @@ pre-commit = "^3.3.3"
 pytest-django = "^4.5.2"
 factory-boy = "^3.3.0"
 django-extensions = "^3.2.3"
+flower = "^2.0.1"
 
 [build-system]
 requires = ["poetry-core"]

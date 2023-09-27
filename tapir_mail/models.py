@@ -92,7 +92,7 @@ class EmailConfigurationVersion(BaseModel):
         self.save()
 
     def __str__(self):
-        return self.name
+        return f"{self.email_configuration.name} ({self.status}) ({self.updated_at})"
 
 
 class EmailConfigurationDispatch(models.Model):
@@ -108,6 +108,15 @@ class EmailConfigurationDispatch(models.Model):
     recipients = models.TextField(null=True, blank=True)
     scheduled_time = models.DateTimeField(default=timezone.now)
     is_sent = models.BooleanField(default=False)
+
+    def get_recipient_list(self):
+        if self.is_sent:
+            return [dispatch.recipient for dispatch in self.emaildispatch_set.all()]
+        else:
+            return self.recipients.split(",")
+
+    def __str__(self):
+        return f"{self.email_configuration_version} - {self.recipients} - {self.scheduled_time} - {self.is_sent}"
 
 
 class EmailDispatch(models.Model):
@@ -126,4 +135,9 @@ class EmailDispatch(models.Model):
         unique_together = (
             "email_configuration_dispatch",
             "recipient",
+        )
+
+    def __str__(self):
+        return (
+            f"{self.email_configuration_dispatch} - {self.recipient} - {self.sent_time}"
         )

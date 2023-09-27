@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import datetime
 import os
 from pathlib import Path
 
@@ -216,3 +217,23 @@ MJML_EXEC_CMD = [
     "--config.minifyOptions",
     '{"removeComments": true}',
 ]
+
+CELERY_BROKER_URL = "redis://redis:6379"
+
+CELERY_BEAT_SCHEDULE = {
+    "send_oldest_email_configuration_task": {
+        "task": "tapir_mail.tasks.send_oldest_email_configuration_task",
+        "schedule": datetime.timedelta(minutes=1),
+    },
+}
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": CELERY_BROKER_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}

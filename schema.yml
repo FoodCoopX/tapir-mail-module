@@ -329,7 +329,33 @@ paths:
         name: limit
         schema:
           type: integer
-        description: Number of last sent email dispatches to retrieve
+          default: 10
+        description: Number of email dispatches to retrieve
+      tags:
+      - email_configuration_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmailConfigurationDispatch'
+          description: ''
+  /api/email_configuration_dispatch/next_sends/:
+    get:
+      operationId: email_configuration_dispatch_next_sends_list
+      description: Returns the list of email config dispatch that will be sent next.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 10
+        description: Number of email dispatches to retrieve
       tags:
       - email_configuration_dispatch
       security:
@@ -1370,11 +1396,14 @@ components:
           type: string
           format: date-time
         recipients:
-          type: string
-          nullable: true
+          type: array
+          items:
+            type: string
+            nullable: true
       required:
       - email_configuration_version
       - id
+      - recipients
       - scheduled_time
     EmailConfigurationVersion:
       type: object
@@ -1478,8 +1507,10 @@ components:
           type: string
           format: date-time
         recipients:
-          type: string
-          nullable: true
+          type: array
+          items:
+            type: string
+            nullable: true
     PatchedEmailConfigurationVersion:
       type: object
       properties:

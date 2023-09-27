@@ -11,6 +11,8 @@ services:
     environment:
       VIRTUAL_HOST: localhost
       DEBUG: 1
+    depends_on:
+      - redis
 
   react:
     build:
@@ -25,3 +27,35 @@ services:
       DEBUG: 1
       HOST: 0.0.0.0
     stdin_open: true
+
+  redis:
+    image: redis:alpine
+
+  celery:
+    build: *build-django
+    command: bash -c "poetry run celery -A tapir_mail_server worker -l info"
+    volumes: *volumes-django
+    environment:
+      DEBUG: 1
+    depends_on:
+      - redis
+
+  celery-beat:
+    build: *build-django
+    command: bash -c "poetry run celery -A tapir_mail_server beat -l info --schedule /tmp/celerybeat-schedule"
+    volumes: *volumes-django
+    environment:
+      DEBUG: 1
+    depends_on:
+      - redis
+
+  flower:
+    build: *build-django
+    command: bash -c "poetry run celery -A tapir_mail_server flower"
+    volumes: *volumes-django
+    environment:
+      DEBUG: 1
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis

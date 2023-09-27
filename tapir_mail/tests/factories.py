@@ -4,6 +4,8 @@ from tapir_mail.models import (
     EmailConfiguration,
     EmailConfigurationVersion,
     EmailTemplate,
+    EmailConfigurationDispatch,
+    RELEASE_STATUS_CHOICES,
 )
 
 
@@ -42,3 +44,20 @@ class EmailConfigurationVersionFactory(factory.django.DjangoModelFactory):
     subject = factory.Faker("sentence")
     subtitle = factory.Faker("sentence")
     email_configuration = factory.SubFactory(EmailConfigurationFactory)
+    status = factory.Faker(
+        "random_element", elements=[choice[0] for choice in RELEASE_STATUS_CHOICES]
+    )
+
+
+class EmailConfigurationDispatchFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EmailConfigurationDispatch
+
+    email_configuration_version = factory.SubFactory(EmailConfigurationVersionFactory)
+    recipients = factory.List([factory.Faker("email") for _ in range(3)])
+    scheduled_time = factory.Faker(
+        "date_this_decade",
+        before_today=True,
+        after_today=True,
+    )
+    is_sent = factory.Faker("pybool")

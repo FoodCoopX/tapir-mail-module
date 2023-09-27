@@ -14,6 +14,7 @@ import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
+import DateTimePicker from "../../components/dateTimePicker";
 
 const ID_NEW_TEMPLATE = "<new>";
 
@@ -27,6 +28,7 @@ const EmailConfigurationEditor = () => {
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
   const [recipients, setRecipients] = useState<string>("");
+  const [scheduledTime, setScheduledTime] = useState<Date>(new Date());
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
@@ -68,7 +70,7 @@ const EmailConfigurationEditor = () => {
           setStatus(data.releaseStatus || "draft");
           setMailingName(data.name || "");
           setRecipients(data.recipients || "");
-          console.log(typeof data.recipients, data.recipients);
+          setScheduledTime(data.scheduledTime);
         })
         .catch((err) => {
           console.error(err);
@@ -94,7 +96,7 @@ const EmailConfigurationEditor = () => {
         content: jsonToMjml(content),
         name: mailingName,
         recipients: recipients,
-        scheduledTime: new Date(),
+        scheduledTime: scheduledTime,
         releaseStatus: newStatus,
       };
 
@@ -284,14 +286,10 @@ const EmailConfigurationEditor = () => {
 
           <Form.Group>
             <Form.Label>Versandzeitpunkt</Form.Label>
-            <Form.Control
-              as="select"
-              value="now"
-              readOnly={true}
-              disabled={true}
-            >
-              <option value="now">Sofort</option>
-            </Form.Control>
+            <DateTimePicker
+              onChange={(datetime) => setScheduledTime(datetime)}
+              initialValue={scheduledTime}
+            />
           </Form.Group>
 
           <hr />
