@@ -1,13 +1,27 @@
 version: "3.9"
 services:
-  web:
-    build: .
-    command: bash -c "./bundle.sh && poetry run python manage.py runserver 0.0.0.0:8000 & (cd tapir_mail_ui && HOST=0.0.0.0 npm start) & wait"
-    volumes:
+  django:
+    build: &build-django
+      dockerfile: Dockerfile-django
+    command: bash -c "poetry run python manage.py migrate && poetry run python manage.py runserver 0.0.0.0:8000"
+    volumes: &volumes-django
       - .:/app
     ports:
       - "8000:8000"
+    environment:
+      VIRTUAL_HOST: localhost
+      DEBUG: 1
+
+  react:
+    build:
+      dockerfile: Dockerfile-react
+    command: bash -c "cd tapir_mail_ui && npm install && npm start"
+    volumes:
+      - .:/app
+    ports:
       - "3000:3000"
     environment:
       VIRTUAL_HOST: localhost
       DEBUG: 1
+      HOST: 0.0.0.0
+    stdin_open: true
