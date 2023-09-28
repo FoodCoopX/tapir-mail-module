@@ -1,12 +1,15 @@
 import { IPage } from "easy-email-core";
 import React, { useEffect, useState } from "react";
-import { Button, Form } from "react-bootstrap";
+import { Button, Form, Modal } from "react-bootstrap";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  EmailConfigurationVersion,
   EmailConfigurationVersionApi,
   EmailTemplate,
   EmailTemplateApi,
+  StatusEnum,
 } from "../../api_client";
+import DateTimePicker from "../../components/dateTimePicker";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
 import EmailInput from "../../components/emailInput";
 import Loading from "../../components/loading";
@@ -14,9 +17,19 @@ import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
-import DateTimePicker from "../../components/dateTimePicker";
+import { formatDate } from "../../utils/formatDate";
+import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
+import { Status } from "filepond";
+import { HomeIcon, ListBulletIcon } from "@heroicons/react/24/outline";
 
 const ID_NEW_TEMPLATE = "<new>";
+
+const stringToStatus = (status: string): StatusEnum => {
+  return StatusEnum[
+    (status.charAt(0).toUpperCase() +
+      status.slice(1)) as keyof typeof StatusEnum
+  ];
+};
 
 const EmailConfigurationEditor = () => {
   const { id } = useParams();
@@ -34,9 +47,10 @@ const EmailConfigurationEditor = () => {
     EMPTY_PAGE,
   );
   const [content, setContent] = useState<any | undefined>(undefined);
-  const [status, setStatus] = useState<string>("draft");
-
+  const [status, setStatus] = useState<StatusEnum>(StatusEnum.Draft);
+  const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
   const [lastSavedTime, setLastSavedTime] = useState(Date.now());
+  const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
 
   const showAlert = useAlert();
 
@@ -67,10 +81,11 @@ const EmailConfigurationEditor = () => {
           setSubject(data.subject);
           setSubtitle(data.subtitle || "");
           setLoadedContent(content);
-          setStatus(data.releaseStatus || "draft");
+          setStatus(stringToStatus(data.releaseStatus) || StatusEnum.Draft);
           setMailingName(data.name || "");
           setRecipients(data.recipients || "");
           setScheduledTime(data.scheduledTime);
+          setUpdatedAt(data.updatedAt || undefined);
         })
         .catch((err) => {
           console.error(err);
@@ -84,11 +99,9 @@ const EmailConfigurationEditor = () => {
     }
   }, [id]);
 
-  const saveVersion = (content: IPage, newStatus: string = status) => {
+  const saveVersion = (content: IPage, newStatus: StatusEnum = status) => {
     return new Promise<void>((resolve, reject) => {
       setLastSavedTime(Date.now());
-      setStatus(newStatus);
-
       const props = {
         description: "TODO",
         subject: subject,
@@ -102,7 +115,7 @@ const EmailConfigurationEditor = () => {
 
       if (id) {
         // UPDATE
-        if (status === "released") {
+        if (status === StatusEnum.Released) {
           // create new draft version
           api
             .emailConfigurationVersionCreate({
@@ -111,7 +124,6 @@ const EmailConfigurationEditor = () => {
               },
             })
             .then((data) => {
-              console.log(data);
               navigate(Paths.emailConfigurationEdit.replace(":id", data.id));
               resolve();
             })
@@ -123,7 +135,9 @@ const EmailConfigurationEditor = () => {
               id: id!!,
               bundledEmailConfiguration: props,
             })
-            .then(() => {
+            .then((data) => {
+              setUpdatedAt(data.updatedAt || new Date());
+              setStatus(stringToStatus(data.releaseStatus));
               setLoadedContent(content);
               resolve();
             })
@@ -154,7 +168,7 @@ const EmailConfigurationEditor = () => {
       currentTime - lastSavedTime >= 1000 &&
       content !== loadedContent
     ) {
-      saveVersion(content);
+      saveVersion(content, StatusEnum.Draft);
     }
   };
 
@@ -186,7 +200,10 @@ const EmailConfigurationEditor = () => {
 
   const handleRelease = () =>
     saveVersion(content, "released")
-      .then(() => showAlert("Email Konfiguration veröffentlicht!", "success"))
+      .then(() => {
+        showAlert("Email Konfiguration veröffentlicht!", "success");
+        navigate(Paths.emailConfiguration);
+      })
       .catch(() =>
         showAlert("Beim Veröffentlichen ist ein Fehler aufgetreten.", "danger"),
       );
@@ -195,6 +212,7 @@ const EmailConfigurationEditor = () => {
     saveVersion(content, "draft")
       .then(() => {
         showAlert("Email Konfiguration gespeichert!", "success");
+        navigate(Paths.emailConfiguration);
       })
       .catch(() =>
         showAlert("Beim Speichern ist ein Fehler aufgetreten.", "danger"),
@@ -205,121 +223,183 @@ const EmailConfigurationEditor = () => {
   return loading ? (
     <Loading />
   ) : (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 5fr" }}>
-      <div style={{ margin: "1em" }}>
-        <Link to={Paths.emailConfiguration}>
-          <Button
-            size="sm"
-            style={{ width: "100%" }}
-            variant="secondary"
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 5fr" }}>
+        <div style={{ margin: "1em", height: "100%" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gridGap: "1em",
+            }}
           >
-            &lt;&lt;&nbsp;&nbsp;&nbsp;Zurück zur Übersicht
-          </Button>
-        </Link>
-        <hr />
-        <Form>
-          <Form.Group>
-            <Form.Label>Name für das Mailing</Form.Label>
-            <Form.Control
-              required={true}
-              className={mailingName ? "" : "is-invalid"}
-              type="text"
-              value={mailingName}
-              onChange={(e) => setMailingName(e.target.value)}
-            />
-          </Form.Group>
-          <br />
-
-          <Form.Group>
-            <Form.Label>Betreff</Form.Label>
-            <Form.Control
-              required={true}
-              className={subject ? "" : "is-invalid"}
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-            />
-          </Form.Group>
-          <br />
-
-          <Form.Group>
-            <Form.Label>Untertitel (2. Betreffzeile)</Form.Label>
-            <Form.Control
-              type="text"
-              value={subtitle}
-              onChange={(e) => setSubtitle(e.target.value)}
-            />
-          </Form.Group>
-          <br />
-
-          {!id && (
-            <>
-              <Form.Group>
-                <Form.Label>Template auswählen</Form.Label>
-                <Form.Control
-                  as="select"
-                  value={selectedTemplate || ID_NEW_TEMPLATE}
-                  onChange={handleSelectTemplate}
-                >
-                  <option value={ID_NEW_TEMPLATE}>Keine Vorlage</option>
-                  {templates.map((t: EmailTemplate) => (
-                    <option
-                      key={t.id}
-                      value={t.id}
-                    >
-                      {t.name}
-                    </option>
-                  ))}
-                </Form.Control>
-              </Form.Group>
-              <br />
-            </>
-          )}
-
-          <Form.Label>Empfänger</Form.Label>
-          <EmailInput
-            initialValue={recipients.split(",")}
-            onEmailListChange={(emails) => setRecipients(emails.join(","))}
-            autoFocus={false}
-          />
-          <br />
-
-          <Form.Group>
-            <Form.Label>Versandzeitpunkt</Form.Label>
-            <DateTimePicker
-              onChange={(datetime) => setScheduledTime(datetime)}
-              initialValue={scheduledTime}
-            />
-          </Form.Group>
-
+            <Link to={Paths.dashboard}>
+              <Button
+                size="sm"
+                style={{ width: "100%" }}
+                variant="outline-primary"
+              >
+                <HomeIcon width={18} />
+                &nbsp;&nbsp;Dashboard
+              </Button>
+            </Link>
+            <Link to={Paths.emailConfiguration}>
+              <Button
+                size="sm"
+                style={{ width: "100%" }}
+                variant="outline-primary"
+              >
+                <ListBulletIcon width="18" />
+                &nbsp;&nbsp;&nbsp;Übersicht
+              </Button>
+            </Link>
+          </div>
           <hr />
+          <Form style={{ maxHeight: "100vh" }}>
+            <Form.Group>
+              <Form.Label>Name für das Mailing</Form.Label>
+              <Form.Control
+                required={true}
+                className={mailingName ? "" : "is-invalid"}
+                type="text"
+                value={mailingName}
+                onChange={(e) => setMailingName(e.target.value)}
+              />
+            </Form.Group>
+            <br />
+
+            <Form.Group>
+              <Form.Label>Betreff</Form.Label>
+              <Form.Control
+                required={true}
+                className={subject ? "" : "is-invalid"}
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+              />
+            </Form.Group>
+            <br />
+
+            <Form.Group>
+              <Form.Label>Untertitel (2. Betreffzeile)</Form.Label>
+              <Form.Control
+                type="text"
+                value={subtitle}
+                onChange={(e) => setSubtitle(e.target.value)}
+              />
+            </Form.Group>
+            <br />
+
+            {!id && (
+              <>
+                <Form.Group>
+                  <Form.Label>Template auswählen</Form.Label>
+                  <Form.Control
+                    as="select"
+                    value={selectedTemplate || ID_NEW_TEMPLATE}
+                    onChange={handleSelectTemplate}
+                  >
+                    <option value={ID_NEW_TEMPLATE}>Keine Vorlage</option>
+                    {templates.map((t: EmailTemplate) => (
+                      <option
+                        key={t.id}
+                        value={t.id}
+                      >
+                        {t.name}
+                      </option>
+                    ))}
+                  </Form.Control>
+                </Form.Group>
+                <br />
+              </>
+            )}
+
+            <Form.Label>Empfänger</Form.Label>
+            <EmailInput
+              initialValue={recipients.split(",")}
+              onEmailListChange={(emails) => setRecipients(emails.join(","))}
+              autoFocus={false}
+            />
+            <br />
+
+            <Form.Group>
+              <Form.Label>Versandzeitpunkt</Form.Label>
+              <DateTimePicker
+                onChange={(datetime) => setScheduledTime(datetime)}
+                initialValue={scheduledTime}
+              />
+            </Form.Group>
+
+            <hr />
+            <Button
+              disabled={saveButtonDisabled}
+              variant={saveButtonDisabled ? "disabled" : "primary"}
+              style={{ width: "100%", marginBottom: "1em" }}
+              onClick={() => setReleaseModalOpen(true)}
+            >
+              Veröffentlichen & senden
+            </Button>
+            <Button
+              disabled={saveButtonDisabled}
+              variant={saveButtonDisabled ? "disabled" : "success"}
+              style={{ width: "100%" }}
+              onClick={handleSaveDraft}
+            >
+              Als Entwurf speichern & schließen
+            </Button>
+
+            <hr />
+            <div>
+              <small>
+                Zuletzt gespeichert: {formatDate(updatedAt)}
+                <br />
+                <EmailConfigurationVersionStatusBadge status={status} />
+              </small>
+            </div>
+          </Form>
+        </div>
+        <div>
+          <Editor
+            content={loadedContent}
+            subject={subject}
+            subtitle={subtitle}
+            onContentChange={(values) => handleEditorChange(values.content)}
+          />
+        </div>
+      </div>
+      <Modal
+        show={releaseModalOpen}
+        onHide={() => setReleaseModalOpen(false)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Veröffentlichen</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Möchtest du die Email&nbsp;<strong>{mailingName}</strong>
+          &nbsp;veröffentlichen? Sie wird zum festgelegten Zeitpunkt an die
+          Empfänger versendet.
+        </Modal.Body>
+        <Modal.Footer
+          style={{ display: "flex", justifyContent: "space-between" }}
+        >
           <Button
-            disabled={saveButtonDisabled}
-            variant={saveButtonDisabled ? "disabled" : "primary"}
-            style={{ width: "100%", marginBottom: "1em" }}
-            onClick={handleRelease}
+            variant="secondary"
+            onClick={() => setReleaseModalOpen(false)}
           >
-            Email Konfiguration veröffentlichen
+            Abbrechen
           </Button>
           <Button
-            disabled={saveButtonDisabled}
-            variant={saveButtonDisabled ? "disabled" : "success"}
-            style={{ width: "100%" }}
-            onClick={handleSaveDraft}
+            variant="success"
+            onClick={() => {
+              setReleaseModalOpen(false);
+              handleRelease();
+            }}
           >
-            Als Entwurf speichern
+            Veröffentlichen & senden
           </Button>
-        </Form>
-      </div>
-      <div>
-        <Editor
-          content={loadedContent}
-          subject={subject}
-          subtitle={subtitle}
-          onContentChange={(values) => handleEditorChange(values.content)}
-        />
-      </div>
-    </div>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 };
 
