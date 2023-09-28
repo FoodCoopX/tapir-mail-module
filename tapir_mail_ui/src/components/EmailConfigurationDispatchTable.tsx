@@ -5,12 +5,13 @@ import {
   EmailConfigurationDispatchApi,
 } from "../api_client";
 import { useAlert } from "../contexts/alerts";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, Table } from "react-bootstrap";
 import Loading from "./loading";
 import Paths from "../routing";
 import { formatDate } from "../utils/formatDate";
 import EmailConfigurationVersionStatusBadge from "./emailConfigurationVersionStatusBadge";
+import { PlusCircleIcon, QueueListIcon } from "@heroicons/react/24/outline";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -63,6 +64,30 @@ const EmailConfigurationDispatchTable: React.FC<
           }}
         >
           <h4>{cardTitle}</h4>
+          <div>
+            <Link to={Paths.emailConfigurationCreate}>
+              <PlusCircleIcon
+                title="Neue Email Konfiguration"
+                style={{
+                  width: "3em",
+                  padding: "0.25em",
+                  borderRadius: "50%",
+                  color: "green",
+                }}
+              />
+            </Link>
+            <Link to={Paths.emailConfiguration}>
+              <QueueListIcon
+                title="Alle Email Konfigurationen"
+                style={{
+                  width: "3em",
+                  padding: "0.25em",
+                  borderRadius: "50%",
+                  color: "primary",
+                }}
+              />
+            </Link>
+          </div>
         </div>
       </Card.Header>
       <Card.Body style={{ padding: 0, border: "none" }}>
