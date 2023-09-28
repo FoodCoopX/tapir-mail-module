@@ -1,5 +1,6 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
-import { Button, Modal, Table } from "react-bootstrap";
+import { HomeIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
+import React, { ReactNode, useEffect, useState } from "react";
+import { Button, Card, Modal, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import {
   EmailConfiguration,
@@ -8,6 +9,7 @@ import {
   EmailConfigurationVersionApi,
 } from "../../api_client";
 import EmailConfigurationVersionSelect from "../../components/emailConfigurationVersionSelect";
+import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
 import EmailInput from "../../components/emailInput";
 import Loading from "../../components/loading";
 import { useAlert } from "../../contexts/alerts";
@@ -17,34 +19,18 @@ import { formatDate } from "../../utils/formatDate";
 
 const MailPlanningOverview = () => {
   const api = useApi(EmailConfigurationApi);
-  const showAlert = useAlert();
 
-  const [emailConfigurations, setEmailConfigurations] = useState<
-    EmailConfiguration[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [sendModalOpen, setSendModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedEmailConfiguration, setSelectedEmailConfiguration] = useState<
     EmailConfiguration | undefined
   >(undefined);
 
-  useLayoutEffect(() => {
-    api
-      .emailConfigurationList()
-      .then((data) => {
-        setEmailConfigurations(data);
-      })
-      .catch((err) => {
-        showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  const handleCloseSendModal = () => setSendModalOpen(false);
   const handleCloseEditModal = () => setEditModalOpen(false);
+  const handleSelectEmailConfiguration = (ec: EmailConfiguration) => {
+    setSelectedEmailConfiguration(ec);
+    setEditModalOpen(true);
+  };
+
   return (
     <div className="container">
       <div
@@ -56,72 +42,114 @@ const MailPlanningOverview = () => {
         }}
       >
         <Link to={Paths.dashboard}>
-          <Button variant="secondary">Zurück</Button>
+          <Button variant="outline-primary">
+            <HomeIcon width={18} />
+            &nbsp;&nbsp;Dashboard
+          </Button>
         </Link>
         <h3>
           <strong>Geplante Emails</strong>
         </h3>
         <Link to={Paths.emailConfigurationCreate}>
-          <Button>Neu anlegen</Button>
+          <Button variant="success">
+            <PlusCircleIcon width={20} />
+            &nbsp;&nbsp;Neu anlegen
+          </Button>
         </Link>
       </div>
-      {loading ? (
-        <Loading />
-      ) : (
-        <Table
-          striped
-          bordered
-          hover
-        >
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Created</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {emailConfigurations.map((ec) => (
-              <tr
-                key={ec.id}
-                style={{ cursor: "pointer" }}
-                onClick={() => {
-                  setSelectedEmailConfiguration(ec);
-                  setEditModalOpen(true);
-                }}
-              >
-                <td>{ec.name}</td>
-                <td>{formatDate(ec.createdAt)}</td>
-                <td
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSendModalOpen(true);
-                    setSelectedEmailConfiguration(ec);
-                  }}
-                >
-                  <Button
-                    size="sm"
-                    variant="warning"
-                  >
-                    Senden
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
-      <SelectVersionModal
-        open={editModalOpen}
-        emailConfiguration={selectedEmailConfiguration!!}
-        onClose={handleCloseEditModal}
-      />
-      <SendTestMailModal
-        open={sendModalOpen}
-        emailConfiguration={selectedEmailConfiguration!!}
-        onClose={handleCloseSendModal}
-      />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gridGap: "1em",
+        }}
+      >
+        <EmailConfigurationTable
+          title={<EmailConfigurationVersionStatusBadge status="released" />}
+          apiCall={() => api.emailConfigurationReleasedList()}
+          onSelectEmailConfiguration={handleSelectEmailConfiguration}
+        />
+        <EmailConfigurationTable
+          title={<EmailConfigurationVersionStatusBadge status="draft" />}
+          apiCall={() => api.emailConfigurationList()}
+          onSelectEmailConfiguration={handleSelectEmailConfiguration}
+        />
+
+        <SelectVersionModal
+          open={editModalOpen}
+          emailConfiguration={selectedEmailConfiguration!!}
+          onClose={handleCloseEditModal}
+        />
+      </div>
     </div>
+  );
+};
+
+const EmailConfigurationTable = ({
+  title,
+  apiCall,
+  onSelectEmailConfiguration,
+}: {
+  title: string | ReactNode;
+  apiCall: () => Promise<EmailConfiguration[]>;
+  onSelectEmailConfiguration: (ec: EmailConfiguration) => void;
+}) => {
+  const showAlert = useAlert();
+  const [loading, setLoading] = useState(true);
+  const [emailConfigurations, setEmailConfigurations] = useState<
+    EmailConfiguration[]
+  >([]);
+
+  useEffect(() => {
+    apiCall()
+      .then((data) => {
+        setEmailConfigurations(data);
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <Card>
+      <Card.Header>
+        <h5>{title}</h5>
+      </Card.Header>
+      <Card.Body style={{ padding: 0 }}>
+        {loading ? (
+          <Loading />
+        ) : (
+          <Table
+            striped
+            bordered
+            hover
+          >
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Erstellt am</th>
+              </tr>
+            </thead>
+            <tbody>
+              {emailConfigurations.map((ec) => (
+                <tr
+                  key={ec.id}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => onSelectEmailConfiguration(ec)}
+                >
+                  <td>{ec.name}</td>
+                  <td>{formatDate(ec.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </Card.Body>
+    </Card>
   );
 };
 
@@ -138,8 +166,11 @@ const SelectVersionModal = ({
   const showAlert = useAlert();
   const navigate = useNavigate();
 
+  const [sendModalOpen, setSendModalOpen] = useState(false);
   const [versions, setVersions] = useState<EmailConfigurationVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string>("");
+
+  const selectedVersion = versions.find((v) => v.id === selectedVersionId);
 
   useEffect(() => {
     if (emailConfiguration) {
@@ -159,62 +190,78 @@ const SelectVersionModal = ({
     }
   }, [emailConfiguration]);
 
+  const handleCloseSendModal = () => setSendModalOpen(false);
   const handleEdit = () => {
     onClose();
     navigate(Paths.emailConfigurationEdit.replace(":id", selectedVersionId));
   };
 
   return (
-    <Modal
-      show={Boolean(open)}
-      onHide={onClose}
-      dialogClassName="preview-modal"
-    >
-      <Modal.Header closeButton>
-        <Modal.Title>Email Konfiguration editieren</Modal.Title>
-      </Modal.Header>
-      {emailConfiguration && (
-        <Modal.Body>
-          Welche Version möchtest du editieren?
-          <br />
-          <EmailConfigurationVersionSelect
-            preview={true}
-            versions={versions}
-            selectedVersionId={selectedVersionId}
-            onChange={(id: string) => setSelectedVersionId(id)}
-          />
-        </Modal.Body>
-      )}
-      <Modal.Footer
-        style={{ display: "flex", justifyContent: "space-between" }}
+    <>
+      <Modal
+        show={Boolean(open) && !sendModalOpen}
+        onHide={onClose}
+        dialogClassName="preview-modal"
       >
-        <Button
-          variant="success"
-          onClick={onClose}
+        <Modal.Header closeButton>
+          <Modal.Title>Email Konfiguration editieren</Modal.Title>
+        </Modal.Header>
+        {emailConfiguration && (
+          <Modal.Body>
+            Welche Version möchtest du editieren?
+            <br />
+            <EmailConfigurationVersionSelect
+              preview={true}
+              versions={versions}
+              selectedVersionId={selectedVersionId}
+              onChange={(id: string) => setSelectedVersionId(id)}
+            />
+          </Modal.Body>
+        )}
+        <Modal.Footer
+          style={{ display: "flex", justifyContent: "space-between" }}
         >
-          Abbrechen
-        </Button>
-        <Button
-          variant="primary"
-          onClick={handleEdit}
-        >
-          Editieren
-        </Button>
-      </Modal.Footer>
-    </Modal>
+          <Button
+            variant="success"
+            onClick={onClose}
+          >
+            Abbrechen
+          </Button>
+          <div>
+            <Button
+              variant="warning"
+              onClick={() => setSendModalOpen(true)}
+              style={{ marginRight: "1em" }}
+            >
+              Testmail senden
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleEdit}
+            >
+              Editieren
+            </Button>
+          </div>
+        </Modal.Footer>
+      </Modal>
+      <SendTestMailModal
+        open={sendModalOpen}
+        emailConfigurationVersion={selectedVersion!!}
+        onClose={handleCloseSendModal}
+      />
+    </>
   );
 };
 
 const SendTestMailModal = ({
-  emailConfiguration,
+  emailConfigurationVersion,
   open,
   onClose,
 }: {
-  emailConfiguration: EmailConfiguration;
+  emailConfigurationVersion: EmailConfigurationVersion;
   open: boolean;
   onClose: () => void;
 }) => {
-  const configApi = useApi(EmailConfigurationApi);
   const versionApi = useApi(EmailConfigurationVersionApi);
   const showAlert = useAlert();
 
@@ -223,42 +270,21 @@ const SendTestMailModal = ({
     setRecipients(emails);
   };
 
-  const [versions, setVersions] = useState<EmailConfigurationVersion[]>([]);
-  const [selectedVersionId, setSelectedVersionId] = useState<string>("");
-
   const handleSendEmail = () => {
     onClose();
     versionApi
       .emailConfigurationVersionSendTestEmail({
-        id: selectedVersionId!!,
+        id: emailConfigurationVersion.id!!,
         recipient: { recipients: recipients },
       })
       .then(() => {
-        showAlert("Email wurde versendet!", "success");
+        showAlert("Test-Email wurde versendet!", "success");
       })
       .catch((err) => {
         console.error(err);
         showAlert("Beim Versenden ist ein Fehler aufgetreten.", "danger");
       });
   };
-
-  useEffect(() => {
-    if (emailConfiguration) {
-      configApi
-        .emailConfigurationVersionsList({
-          id: emailConfiguration!!.id!!,
-        })
-        .then((data) => {
-          setVersions(data);
-          data.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-          setSelectedVersionId(data[0].id!!);
-        })
-        .catch((err) => {
-          console.error(err);
-          showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
-        });
-    }
-  }, [emailConfiguration]);
 
   return (
     <Modal
@@ -269,19 +295,13 @@ const SendTestMailModal = ({
       <Modal.Header closeButton>
         <Modal.Title>Testmail senden</Modal.Title>
       </Modal.Header>
-      {emailConfiguration && (
+      {emailConfigurationVersion && (
         <Modal.Body>
-          Möchtest du die Email <strong>{emailConfiguration!!.name}</strong> als
-          Testmail versenden?
+          Möchtest du die Email&nbsp;
+          <strong>{emailConfigurationVersion?.emailConfiguration?.name}</strong>
+          &nbsp; als Testmail versenden?
           <br />
           <EmailInput onEmailListChange={handleRecipientsChange} />
-          <br />
-          <EmailConfigurationVersionSelect
-            preview={true}
-            versions={versions}
-            selectedVersionId={selectedVersionId}
-            onChange={(id: string) => setSelectedVersionId(id)}
-          />
         </Modal.Body>
       )}
       <Modal.Footer

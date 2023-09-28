@@ -65,6 +65,18 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
         serializer = EmailConfigurationVersionSerializer(versions, many=True)
         return Response(serializer.data)
 
+    # FIXME: it would be cleaner to use filters, but I don't know how yet
+    @extend_schema(
+        responses={200: EmailConfigurationSerializer(many=True)},
+    )
+    @action(detail=False, methods=["GET"])
+    def released(self, request):
+        released_configurations = self.queryset.filter(
+            versions__status=ReleaseStatus.RELEASED
+        ).distinct()
+        serializer = EmailConfigurationSerializer(released_configurations, many=True)
+        return Response(serializer.data)
+
 
 @extend_schema_view(
     send_email=extend_schema(
@@ -204,6 +216,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "content": version.content,
             "subject": version.subject,
             "subtitle": version.subtitle,
+            "updated_at": version.updated_at,
             "release_status": version.status,
             "recipients": dispatch_instance.recipients
             if dispatch_instance and dispatch_instance.recipients

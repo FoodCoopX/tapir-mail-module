@@ -66,6 +66,7 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
           left: "50%",
           transform: "translateX(-50%)",
           whiteSpace: "pre",
+          zIndex: 999999,
         }}
         hidden={!show}
         variant={variant}

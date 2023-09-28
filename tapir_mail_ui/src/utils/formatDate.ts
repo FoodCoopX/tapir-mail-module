@@ -1,4 +1,7 @@
-export function formatDate(date: Date): string {
+export function formatDate(date: Date | undefined | null): string {
+  if (!date) {
+    return "";
+  }
   return date.toLocaleDateString("de-DE", {
     year: "2-digit",
     month: "2-digit",

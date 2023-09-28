@@ -74,6 +74,7 @@ class BundledEmailConfigurationSerializer(serializers.Serializer):
     subject = serializers.CharField()
     subtitle = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     release_status = serializers.CharField()
+    updated_at = serializers.DateTimeField(allow_null=True, required=False)
 
     # EmailConfigurationDispatch fields
     scheduled_time = serializers.DateTimeField()
