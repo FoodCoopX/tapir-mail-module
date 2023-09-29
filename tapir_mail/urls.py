@@ -11,6 +11,7 @@ router.register("email_template", views.EmailTemplateViewSet)
 router.register("email_configuration", views.EmailConfigurationViewSet)
 router.register("email_configuration_version", views.EmailConfigurationVersionViewSet)
 router.register("email_configuration_dispatch", views.EmailConfigurationDispatchViewSet)
+router.register(r"segment", views.SegmentAndFilterViewSet, basename="segment")
 
 urlpatterns = [
     re_path(

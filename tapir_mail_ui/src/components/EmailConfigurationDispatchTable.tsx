@@ -140,11 +140,8 @@ const EmailConfigurationDispatchTable: React.FC<
                       {formatDate(emailConfigurationDispatch.scheduledTime)}
                     </td>
                     <td>
-                      {emailConfigurationDispatch.recipients.map(
-                        (recipient) => (
-                          <div>{recipient}</div>
-                        ),
-                      )}
+                      {/* FIXME: */}
+                      {JSON.stringify(emailConfigurationDispatch.segmentData)}
                     </td>
                     <td>
                       <EmailConfigurationVersionStatusBadge

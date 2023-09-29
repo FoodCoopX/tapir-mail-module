@@ -1,12 +1,13 @@
 import { HomeIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import React, { ReactNode, useEffect, useState } from "react";
-import { Button, Card, Modal, Table } from "react-bootstrap";
+import { Button, Card, Form, Modal, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import {
   EmailConfiguration,
   EmailConfigurationApi,
   EmailConfigurationVersion,
   EmailConfigurationVersionApi,
+  SegmentApi,
 } from "../../api_client";
 import EmailConfigurationVersionSelect from "../../components/emailConfigurationVersionSelect";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
@@ -66,12 +67,16 @@ const MailPlanningOverview = () => {
       >
         <EmailConfigurationTable
           title={<EmailConfigurationVersionStatusBadge status="released" />}
-          apiCall={() => api.emailConfigurationReleasedList()}
+          apiCall={() =>
+            api.emailConfigurationList({ versionsStatus: "released" })
+          }
           onSelectEmailConfiguration={handleSelectEmailConfiguration}
         />
         <EmailConfigurationTable
           title={<EmailConfigurationVersionStatusBadge status="draft" />}
-          apiCall={() => api.emailConfigurationList()}
+          apiCall={() =>
+            api.emailConfigurationList({ versionsStatus: "draft" })
+          }
           onSelectEmailConfiguration={handleSelectEmailConfiguration}
         />
 
@@ -101,6 +106,8 @@ const EmailConfigurationTable = ({
   >([]);
 
   useEffect(() => {
+    if (!apiCall || !showAlert) return;
+
     apiCall()
       .then((data) => {
         setEmailConfigurations(data);
@@ -112,7 +119,7 @@ const EmailConfigurationTable = ({
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [apiCall, showAlert]);
 
   return (
     <Card>
@@ -173,22 +180,22 @@ const SelectVersionModal = ({
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
 
   useEffect(() => {
-    if (emailConfiguration) {
-      configApi
-        .emailConfigurationVersionsList({
-          id: emailConfiguration!!.id!!,
-        })
-        .then((data) => {
-          setVersions(data);
-          data.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-          setSelectedVersionId(data[0].id!!);
-        })
-        .catch((err) => {
-          console.error(err);
-          showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
-        });
-    }
-  }, [emailConfiguration]);
+    if (!emailConfiguration || !configApi || !emailConfiguration) return;
+
+    configApi
+      .emailConfigurationVersionsList({
+        id: emailConfiguration!!.id!!,
+      })
+      .then((data) => {
+        setVersions(data);
+        data.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        setSelectedVersionId(data[0].id!!);
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
+      });
+  }, [configApi, showAlert, emailConfiguration]);
 
   const handleCloseSendModal = () => setSendModalOpen(false);
   const handleEdit = () => {
@@ -263,12 +270,23 @@ const SendTestMailModal = ({
   onClose: () => void;
 }) => {
   const versionApi = useApi(EmailConfigurationVersionApi);
+  const segmentApi = useApi(SegmentApi);
   const showAlert = useAlert();
 
+  const [staticSegments, setStaticSegments] = useState<string[]>([]);
+  const [selectedSegment, setSelectedSegment] = useState<string | undefined>(
+    undefined,
+  );
   const [recipients, setRecipients] = useState<string[]>([]);
   const handleRecipientsChange = (emails: string[]) => {
     setRecipients(emails);
   };
+
+  useEffect(() => {
+    segmentApi.segmentAvailableSegmentsRetrieve().then(({ staticSegments }) => {
+      setStaticSegments(staticSegments || []);
+    });
+  }, []);
 
   const handleSendEmail = () => {
     onClose();
@@ -286,6 +304,36 @@ const SendTestMailModal = ({
       });
   };
 
+  const handleAddSegment = () => {
+    if (!selectedSegment) return;
+
+    segmentApi
+      .segmentCombineCreate({
+        segmentData: {
+          staticSegments: [selectedSegment],
+        },
+      })
+      .then((data) => {
+        if (!data.recipients) throw new Error("No recipients returned");
+
+        const newEmails = data.recipients!!.map((r) => r.email!!);
+        if (recipients) {
+          newEmails.push(...recipients);
+        }
+
+        handleRecipientsChange(newEmails);
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert(
+          "Beim Auflösen des Segments ist ein Fehler aufgetreten.",
+          "danger",
+        );
+      });
+    setRecipients([...recipients, selectedSegment]);
+    setSelectedSegment(undefined);
+  };
+
   return (
     <Modal
       show={Boolean(open)}
@@ -299,9 +347,34 @@ const SendTestMailModal = ({
         <Modal.Body>
           Möchtest du die Email&nbsp;
           <strong>{emailConfigurationVersion?.emailConfiguration?.name}</strong>
-          &nbsp; als Testmail versenden?
+          &nbsp;als Testmail versenden?
           <br />
-          <EmailInput onEmailListChange={handleRecipientsChange} />
+          <EmailInput
+            initialValue={recipients}
+            onEmailListChange={handleRecipientsChange}
+          />
+          <span style={{ display: "flex", marginTop: "1em" }}>
+            <Form.Select
+              onChange={(e) => setSelectedSegment(e.target.value)}
+              style={{ marginRight: "0.5em" }}
+            >
+              <option value="">Segment auswählen</option>
+              {staticSegments.map((segment) => (
+                <option
+                  key={segment}
+                  value={segment}
+                >
+                  {segment}
+                </option>
+              ))}
+            </Form.Select>
+            <Button
+              onClick={handleAddSegment}
+              disabled={!selectedSegment}
+            >
+              +
+            </Button>
+          </span>
         </Modal.Body>
       )}
       <Modal.Footer
