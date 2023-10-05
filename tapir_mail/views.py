@@ -27,6 +27,7 @@ from tapir_mail.serializers import (
     RecipientSerializer,
 )
 from tapir_mail.service.email import send_email
+from tapir_mail.service.triggers import trigger_registry
 
 LOG = logging.getLogger(__name__)
 
@@ -351,3 +352,19 @@ class EmailConfigurationDispatchViewSet(viewsets.ModelViewSet):
         )
         serializer = EmailConfigurationDispatchSerializer(first_n_objects, many=True)
         return Response(serializer.data)
+
+
+class TriggerListView(viewsets.ViewSet):
+    @extend_schema(
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "triggers": {"type": "array", "items": {"type": "string"}}
+                },
+            }
+        },
+        description="Get a list of available triggers.",
+    )
+    def list(self, request):
+        return Response(trigger_registry)

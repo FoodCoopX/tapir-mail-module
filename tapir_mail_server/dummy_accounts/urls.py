@@ -13,4 +13,9 @@ urlpatterns = [
         views.DummyTapirUserCreateView.as_view(),
         name="dummy_tapir_user_create_view",
     ),
+    path(
+        "dummy_tapir_user_update_view/<int:pk>",
+        views.DummyTapirUserUpdateView.as_view(),
+        name="dummy_tapir_user_update_view",
+    ),
 ]

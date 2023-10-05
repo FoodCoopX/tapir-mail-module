@@ -30,12 +30,21 @@
             <tr>
               <th>ID</th>
               <th>E-Mail</th>
+              <th>Actions</th>
             </tr>
           </thead>
           {% for dummy_tapir_user in object_list %}
           <tr>
             <td class="align-middle">{{ dummy_tapir_user.id }}</td>
             <td class="align-middle">{{ dummy_tapir_user.email }}</td>
+            <td>
+              <a
+                class="btn tapir-btn btn-outline-primary"
+                href="{% url 'dummy_tapir_user_update_view' dummy_tapir_user.id %}"
+              >
+                Edit
+              </a>
+            </td>
           </tr>
           {% endfor %}
         </table>
