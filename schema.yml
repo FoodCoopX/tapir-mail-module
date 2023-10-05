@@ -41,13 +41,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationCreate'
+              $ref: '#/components/schemas/EmailConfigurationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationCreate'
+              $ref: '#/components/schemas/EmailConfigurationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationCreate'
+              $ref: '#/components/schemas/EmailConfigurationRequest'
         required: true
       security:
       - tokenAuth: []
@@ -57,7 +57,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailConfigurationCreate'
+                $ref: '#/components/schemas/EmailConfiguration'
           description: ''
   /api/email_configuration/{id}/:
     get:
@@ -96,13 +96,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationCreate'
+              $ref: '#/components/schemas/EmailConfigurationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationCreate'
+              $ref: '#/components/schemas/EmailConfigurationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationCreate'
+              $ref: '#/components/schemas/EmailConfigurationRequest'
         required: true
       security:
       - tokenAuth: []
@@ -112,7 +112,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailConfigurationCreate'
+                $ref: '#/components/schemas/EmailConfiguration'
           description: ''
     patch:
       operationId: email_configuration_partial_update
@@ -129,13 +129,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedEmailConfiguration'
+              $ref: '#/components/schemas/PatchedEmailConfigurationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedEmailConfiguration'
+              $ref: '#/components/schemas/PatchedEmailConfigurationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedEmailConfiguration'
+              $ref: '#/components/schemas/PatchedEmailConfigurationRequest'
       security:
       - tokenAuth: []
       - {}
@@ -224,13 +224,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationDispatch'
+              $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationDispatch'
+              $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationDispatch'
+              $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
         required: true
       security:
       - tokenAuth: []
@@ -279,13 +279,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationDispatch'
+              $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationDispatch'
+              $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmailConfigurationDispatch'
+              $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
         required: true
       security:
       - tokenAuth: []
@@ -312,13 +312,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedEmailConfigurationDispatch'
+              $ref: '#/components/schemas/PatchedEmailConfigurationDispatchRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedEmailConfigurationDispatch'
+              $ref: '#/components/schemas/PatchedEmailConfigurationDispatchRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedEmailConfigurationDispatch'
+              $ref: '#/components/schemas/PatchedEmailConfigurationDispatchRequest'
       security:
       - tokenAuth: []
       - {}
@@ -410,7 +410,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/EmailConfigurationVersion'
+                  $ref: '#/components/schemas/BundledEmailConfiguration'
           description: ''
     post:
       operationId: email_configuration_version_create
@@ -420,13 +420,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BundledEmailConfiguration'
+              $ref: '#/components/schemas/BundledEmailConfigurationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/BundledEmailConfiguration'
+              $ref: '#/components/schemas/BundledEmailConfigurationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BundledEmailConfiguration'
+              $ref: '#/components/schemas/BundledEmailConfigurationRequest'
         required: true
       security:
       - tokenAuth: []
@@ -459,7 +459,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailConfigurationVersion'
+                $ref: '#/components/schemas/BundledEmailConfiguration'
           description: ''
     put:
       operationId: email_configuration_version_update
@@ -476,13 +476,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BundledEmailConfiguration'
+              $ref: '#/components/schemas/BundledEmailConfigurationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/BundledEmailConfiguration'
+              $ref: '#/components/schemas/BundledEmailConfigurationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BundledEmailConfiguration'
+              $ref: '#/components/schemas/BundledEmailConfigurationRequest'
         required: true
       security:
       - tokenAuth: []
@@ -509,13 +509,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedEmailConfigurationVersion'
+              $ref: '#/components/schemas/PatchedBundledEmailConfigurationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedEmailConfigurationVersion'
+              $ref: '#/components/schemas/PatchedBundledEmailConfigurationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedEmailConfigurationVersion'
+              $ref: '#/components/schemas/PatchedBundledEmailConfigurationRequest'
       security:
       - tokenAuth: []
       - {}
@@ -524,7 +524,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailConfigurationVersion'
+                $ref: '#/components/schemas/BundledEmailConfiguration'
           description: ''
     delete:
       operationId: email_configuration_version_destroy
@@ -650,13 +650,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Recipient'
+              $ref: '#/components/schemas/RecipientRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Recipient'
+              $ref: '#/components/schemas/RecipientRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Recipient'
+              $ref: '#/components/schemas/RecipientRequest'
         required: true
       security:
       - tokenAuth: []
@@ -694,13 +694,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailTemplateCreate'
+              $ref: '#/components/schemas/EmailTemplateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmailTemplateCreate'
+              $ref: '#/components/schemas/EmailTemplateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmailTemplateCreate'
+              $ref: '#/components/schemas/EmailTemplateRequest'
         required: true
       security:
       - tokenAuth: []
@@ -710,7 +710,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailTemplateCreate'
+                $ref: '#/components/schemas/EmailTemplate'
           description: ''
   /api/email_template/{id}/:
     get:
@@ -749,13 +749,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailTemplateCreate'
+              $ref: '#/components/schemas/EmailTemplateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmailTemplateCreate'
+              $ref: '#/components/schemas/EmailTemplateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmailTemplateCreate'
+              $ref: '#/components/schemas/EmailTemplateRequest'
         required: true
       security:
       - tokenAuth: []
@@ -765,7 +765,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailTemplateCreate'
+                $ref: '#/components/schemas/EmailTemplate'
           description: ''
     patch:
       operationId: email_template_partial_update
@@ -782,13 +782,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedEmailTemplate'
+              $ref: '#/components/schemas/PatchedEmailTemplateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedEmailTemplate'
+              $ref: '#/components/schemas/PatchedEmailTemplateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedEmailTemplate'
+              $ref: '#/components/schemas/PatchedEmailTemplateRequest'
       security:
       - tokenAuth: []
       - {}
@@ -930,13 +930,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StoredUpload'
+              $ref: '#/components/schemas/StoredUploadRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/StoredUpload'
+              $ref: '#/components/schemas/StoredUploadRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/StoredUpload'
+              $ref: '#/components/schemas/StoredUploadRequest'
         required: true
       security:
       - tokenAuth: []
@@ -985,13 +985,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StoredUpload'
+              $ref: '#/components/schemas/StoredUploadRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/StoredUpload'
+              $ref: '#/components/schemas/StoredUploadRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/StoredUpload'
+              $ref: '#/components/schemas/StoredUploadRequest'
         required: true
       security:
       - tokenAuth: []
@@ -1018,13 +1018,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedStoredUpload'
+              $ref: '#/components/schemas/PatchedStoredUploadRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedStoredUpload'
+              $ref: '#/components/schemas/PatchedStoredUploadRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedStoredUpload'
+              $ref: '#/components/schemas/PatchedStoredUploadRequest'
       security:
       - tokenAuth: []
       - {}
@@ -1077,13 +1077,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TemporaryUpload'
+              $ref: '#/components/schemas/TemporaryUploadRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TemporaryUpload'
+              $ref: '#/components/schemas/TemporaryUploadRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TemporaryUpload'
+              $ref: '#/components/schemas/TemporaryUploadRequest'
         required: true
       security:
       - tokenAuth: []
@@ -1132,13 +1132,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TemporaryUpload'
+              $ref: '#/components/schemas/TemporaryUploadRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TemporaryUpload'
+              $ref: '#/components/schemas/TemporaryUploadRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TemporaryUpload'
+              $ref: '#/components/schemas/TemporaryUploadRequest'
         required: true
       security:
       - tokenAuth: []
@@ -1165,13 +1165,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedTemporaryUpload'
+              $ref: '#/components/schemas/PatchedTemporaryUploadRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedTemporaryUpload'
+              $ref: '#/components/schemas/PatchedTemporaryUploadRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedTemporaryUpload'
+              $ref: '#/components/schemas/PatchedTemporaryUploadRequest'
       security:
       - tokenAuth: []
       - {}
@@ -1397,13 +1397,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SegmentData'
+              $ref: '#/components/schemas/SegmentDataRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SegmentData'
+              $ref: '#/components/schemas/SegmentDataRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/SegmentData'
+              $ref: '#/components/schemas/SegmentDataRequest'
       security:
       - tokenAuth: []
       - {}
@@ -1462,6 +1462,43 @@ components:
       - name
       - release_status
       - scheduled_time
+    BundledEmailConfigurationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+        content:
+          type: string
+          minLength: 1
+        subject:
+          type: string
+          nullable: true
+        subtitle:
+          type: string
+          nullable: true
+        release_status:
+          type: string
+          minLength: 1
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        scheduled_time:
+          type: string
+          format: date-time
+        segment_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
+      required:
+      - content
+      - name
+      - release_status
+      - scheduled_time
     EmailConfiguration:
       type: object
       properties:
@@ -1486,20 +1523,6 @@ components:
       - created_at
       - name
       - updated_at
-    EmailConfigurationCreate:
-      type: object
-      properties:
-        id:
-          type: string
-          maxLength: 10
-        name:
-          type: string
-          maxLength: 255
-        description:
-          type: string
-          nullable: true
-      required:
-      - name
     EmailConfigurationDispatch:
       type: object
       properties:
@@ -1518,6 +1541,41 @@ components:
       - email_configuration_version
       - id
       - scheduled_time
+    EmailConfigurationDispatchRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+        email_configuration_version:
+          $ref: '#/components/schemas/EmailConfigurationVersionRequest'
+        scheduled_time:
+          type: string
+          format: date-time
+        segment_data:
+          allOf:
+          - $ref: '#/components/schemas/SegmentDataRequest'
+          nullable: true
+      required:
+      - email_configuration_version
+      - id
+      - scheduled_time
+    EmailConfigurationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+      required:
+      - name
     EmailConfigurationVersion:
       type: object
       properties:
@@ -1551,6 +1609,32 @@ components:
       - email_configuration
       - subject
       - updated_at
+    EmailConfigurationVersionRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        email_configuration:
+          $ref: '#/components/schemas/EmailConfigurationRequest'
+        content:
+          type: string
+          nullable: true
+          minLength: 1
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 255
+        subtitle:
+          type: string
+          nullable: true
+          maxLength: 255
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+      required:
+      - email_configuration
+      - subject
     EmailTemplate:
       type: object
       properties:
@@ -1575,152 +1659,144 @@ components:
       - created_at
       - name
       - updated_at
-    EmailTemplateCreate:
+    EmailTemplateRequest:
       type: object
       properties:
         id:
           type: string
+          minLength: 1
           maxLength: 10
         name:
           type: string
+          minLength: 1
           maxLength: 255
         content:
           type: string
+          minLength: 1
       required:
       - content
       - name
-    PatchedEmailConfiguration:
+    PatchedBundledEmailConfigurationRequest:
       type: object
       properties:
-        id:
-          type: string
-          maxLength: 10
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
         name:
           type: string
-          maxLength: 255
+          minLength: 1
         description:
           type: string
           nullable: true
-    PatchedEmailConfigurationDispatch:
+        content:
+          type: string
+          minLength: 1
+        subject:
+          type: string
+          nullable: true
+        subtitle:
+          type: string
+          nullable: true
+        release_status:
+          type: string
+          minLength: 1
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        scheduled_time:
+          type: string
+          format: date-time
+        segment_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
+    PatchedEmailConfigurationDispatchRequest:
       type: object
       properties:
         id:
           type: string
+          minLength: 1
         email_configuration_version:
-          $ref: '#/components/schemas/EmailConfigurationVersion'
+          $ref: '#/components/schemas/EmailConfigurationVersionRequest'
         scheduled_time:
           type: string
           format: date-time
         segment_data:
           allOf:
-          - $ref: '#/components/schemas/SegmentData'
+          - $ref: '#/components/schemas/SegmentDataRequest'
           nullable: true
-    PatchedEmailConfigurationVersion:
+    PatchedEmailConfigurationRequest:
       type: object
       properties:
         id:
           type: string
+          minLength: 1
           maxLength: 10
-        email_configuration:
-          $ref: '#/components/schemas/EmailConfiguration'
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-        content:
-          type: string
-          nullable: true
-        subject:
-          type: string
-          maxLength: 255
-        subtitle:
-          type: string
-          nullable: true
-          maxLength: 255
-        status:
-          $ref: '#/components/schemas/StatusEnum'
-    PatchedEmailTemplate:
-      type: object
-      properties:
-        id:
-          type: string
-          maxLength: 10
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
         name:
           type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+    PatchedEmailTemplateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        name:
+          type: string
+          minLength: 1
           maxLength: 255
         content:
           type: string
-    PatchedStoredUpload:
+          minLength: 1
+    PatchedStoredUploadRequest:
       type: object
       properties:
         upload_id:
           type: string
-          maxLength: 22
           minLength: 22
+          maxLength: 22
         file_name:
           type: string
+          minLength: 1
         file:
           type: string
-          format: uri
+          format: binary
         uploaded:
           type: string
           format: date-time
-        stored:
-          type: string
-          format: date-time
-          readOnly: true
         uploaded_by:
           type: integer
           nullable: true
-    PatchedTemporaryUpload:
+    PatchedTemporaryUploadRequest:
       type: object
       properties:
         upload_id:
           type: string
-          maxLength: 22
           minLength: 22
+          maxLength: 22
         file_name:
           type: string
+          minLength: 1
         file_id:
           type: string
-          maxLength: 22
           minLength: 22
+          maxLength: 22
         file:
           type: string
-          format: uri
+          format: binary
         upload_name:
           type: string
+          minLength: 1
           maxLength: 512
-        uploaded:
-          type: string
-          format: date-time
-          readOnly: true
         upload_type:
           $ref: '#/components/schemas/UploadTypeEnum'
         uploaded_by:
           type: integer
           nullable: true
-    Recipient:
+    RecipientRequest:
       type: object
       properties:
         recipients:
@@ -1728,6 +1804,7 @@ components:
           items:
             type: string
             format: email
+            minLength: 1
       required:
       - recipients
     SegmentData:
@@ -1749,6 +1826,29 @@ components:
           type: array
           items:
             type: string
+    SegmentDataRequest:
+      type: object
+      properties:
+        add_segments:
+          type: array
+          items:
+            type: string
+            minLength: 1
+        static_segments:
+          type: array
+          items:
+            type: string
+            minLength: 1
+        remove_segments:
+          type: array
+          items:
+            type: string
+            minLength: 1
+        filter_list:
+          type: array
+          items:
+            type: string
+            minLength: 1
     StatusEnum:
       enum:
       - draft
@@ -1787,6 +1887,30 @@ components:
       - stored
       - upload_id
       - uploaded
+    StoredUploadRequest:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          minLength: 22
+          maxLength: 22
+        file_name:
+          type: string
+          minLength: 1
+        file:
+          type: string
+          format: binary
+        uploaded:
+          type: string
+          format: date-time
+        uploaded_by:
+          type: integer
+          nullable: true
+      required:
+      - file
+      - file_name
+      - upload_id
+      - uploaded
     TemporaryUpload:
       type: object
       properties:
@@ -1823,6 +1947,39 @@ components:
       - upload_name
       - upload_type
       - uploaded
+    TemporaryUploadRequest:
+      type: object
+      properties:
+        upload_id:
+          type: string
+          minLength: 22
+          maxLength: 22
+        file_name:
+          type: string
+          minLength: 1
+        file_id:
+          type: string
+          minLength: 22
+          maxLength: 22
+        file:
+          type: string
+          format: binary
+        upload_name:
+          type: string
+          minLength: 1
+          maxLength: 512
+        upload_type:
+          $ref: '#/components/schemas/UploadTypeEnum'
+        uploaded_by:
+          type: integer
+          nullable: true
+      required:
+      - file
+      - file_id
+      - file_name
+      - upload_id
+      - upload_name
+      - upload_type
     UploadTypeEnum:
       enum:
       - F

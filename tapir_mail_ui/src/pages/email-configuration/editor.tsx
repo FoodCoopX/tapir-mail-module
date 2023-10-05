@@ -122,7 +122,7 @@ const EmailConfigurationEditor = () => {
           // create new draft version
           api
             .emailConfigurationVersionCreate({
-              bundledEmailConfiguration: {
+              bundledEmailConfigurationRequest: {
                 ...props,
               },
             })
@@ -136,7 +136,7 @@ const EmailConfigurationEditor = () => {
           api
             .emailConfigurationVersionUpdate({
               id: id!!,
-              bundledEmailConfiguration: props,
+              bundledEmailConfigurationRequest: props,
             })
             .then((data) => {
               setUpdatedAt(data.updatedAt || new Date());
@@ -150,7 +150,7 @@ const EmailConfigurationEditor = () => {
         // CREATE
         api
           .emailConfigurationVersionCreate({
-            bundledEmailConfiguration: {
+            bundledEmailConfigurationRequest: {
               ...props,
             },
           })

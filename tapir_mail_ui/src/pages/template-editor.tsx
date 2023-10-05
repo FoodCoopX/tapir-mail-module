@@ -51,7 +51,7 @@ const TemplateEditor = () => {
 
   const handleSave = (values: IEmailTemplate) => {
     const props = {
-      emailTemplateCreate: {
+      emailTemplateRequest: {
         name: name,
         content: jsonToMjml(values.content),
       },
