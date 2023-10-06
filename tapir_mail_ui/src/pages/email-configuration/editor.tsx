@@ -3,13 +3,11 @@ import React, { useEffect, useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  EmailConfigurationVersion,
   EmailConfigurationVersionApi,
   EmailTemplate,
   EmailTemplateApi,
   StatusEnum,
 } from "../../api_client";
-import DateTimePicker from "../../components/dateTimePicker";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
 import EmailInput from "../../components/emailInput";
 import Loading from "../../components/loading";
@@ -19,8 +17,8 @@ import Paths from "../../routing";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
 import { formatDate } from "../../utils/formatDate";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
-import { Status } from "filepond";
 import { HomeIcon, ListBulletIcon } from "@heroicons/react/24/outline";
+import TriggerDropdown from "../../components/triggerDropdown";
 
 const ID_NEW_TEMPLATE = "<new>";
 
@@ -41,7 +39,8 @@ const EmailConfigurationEditor = () => {
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
   const [recipients, setRecipients] = useState<string>("");
-  const [scheduledTime, setScheduledTime] = useState<Date>(new Date());
+  const [scheduledTime, setScheduledTime] = useState(new Date());
+  const [triggerId, setTriggerId] = useState("");
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
@@ -51,7 +50,7 @@ const EmailConfigurationEditor = () => {
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
   const [lastSavedTime, setLastSavedTime] = useState(Date.now());
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
-
+  const [triggers, setTriggers] = useState([]);
   const showAlert = useAlert();
 
   const templateApi = useApi(EmailTemplateApi);
@@ -323,10 +322,10 @@ const EmailConfigurationEditor = () => {
             <br />
 
             <Form.Group>
-              <Form.Label>Versandzeitpunkt</Form.Label>
-              <DateTimePicker
-                onChange={(datetime) => setScheduledTime(datetime)}
-                initialValue={scheduledTime}
+              <Form.Label>Trigger</Form.Label>
+              <TriggerDropdown
+                selectedTriggerId={triggerId}
+                onChange={setTriggerId}
               />
             </Form.Group>
 

@@ -91,3 +91,8 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
         child=serializers.CharField(allow_null=True, allow_blank=True),
         source="get_recipient_list",
     )
+
+
+class TriggerSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    name = serializers.CharField()

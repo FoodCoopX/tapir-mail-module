@@ -25,6 +25,7 @@ from tapir_mail.serializers import (
     EmailTemplateCreateSerializer,
     EmailTemplateSerializer,
     RecipientSerializer,
+    TriggerSerializer,
 )
 from tapir_mail.service.email import send_email
 from tapir_mail.service.triggers import trigger_registry
@@ -357,14 +358,16 @@ class EmailConfigurationDispatchViewSet(viewsets.ModelViewSet):
 class TriggerListView(viewsets.ViewSet):
     @extend_schema(
         responses={
-            200: {
-                "type": "object",
-                "properties": {
-                    "triggers": {"type": "array", "items": {"type": "string"}}
-                },
-            }
+            200: TriggerSerializer,
         },
         description="Get a list of available triggers.",
     )
     def list(self, request):
-        return Response(trigger_registry)
+        serializer = TriggerSerializer(
+            [
+                {"id": trigger_id, "name": trigger_name}
+                for trigger_id, trigger_name in trigger_registry.items()
+            ],
+            many=True,
+        )
+        return Response(serializer.data)

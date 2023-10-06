@@ -61,3 +61,10 @@ class EmailConfigurationDispatchFactory(factory.django.DjangoModelFactory):
         after_today=True,
     )
     is_sent = factory.Faker("pybool")
+
+
+class TestFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EmailConfigurationVersion
+
+    content = {"static_segments": [factory.Faker("email")]}

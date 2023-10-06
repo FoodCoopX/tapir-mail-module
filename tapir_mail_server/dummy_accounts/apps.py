@@ -11,5 +11,5 @@ class DummyAccountsConfig(AppConfig):
     name = "tapir_mail_server.dummy_accounts"
 
     def ready(self):
-        register_trigger(TRIGGER_NAME_ON_DUMMY_ACCOUNT_CREATED)
-        register_trigger(TRIGGER_NAME_ON_DUMMY_ACCOUNT_UPDATED)
+        register_trigger(TRIGGER_NAME_ON_DUMMY_ACCOUNT_CREATED, "On account created")
+        register_trigger(TRIGGER_NAME_ON_DUMMY_ACCOUNT_UPDATED, "On account updated")

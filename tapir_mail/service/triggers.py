@@ -1,8 +1,8 @@
 trigger_registry = {}
 
 
-def register_trigger(name):
-    trigger_registry[name] = True
+def register_trigger(trigger_id, name):
+    trigger_registry[trigger_id] = name
 
 
 def fire_trigger(name):
