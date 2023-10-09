@@ -12,26 +12,27 @@ const DummyTapirUserForm: React.FC<DummyTapirUserFormProps> = ({
   user,
   onSave,
 }) => {
+  interface FormGroupProps {
+    label: string;
+    type: string;
+    field: string;
+  }
+
+  const formGroups: FormGroupProps[] = [
+    { label: "E-Mail", type: "email", field: "email" },
+    { label: "First name", type: "text", field: "firstName" },
+    { label: "Last name", type: "text", field: "lastName" },
+  ];
   return (
-    <Form>
-      <TapirMailFormGroup
-        label="E-Mail"
-        type="email"
-        object={user}
-        objectField="email"
-      />
-      <TapirMailFormGroup
-        label="First name"
-        type="text"
-        object={user}
-        objectField="firstName"
-      />
-      <TapirMailFormGroup
-        label="Last name"
-        type="text"
-        object={user}
-        objectField="lastName"
-      />
+    <Form style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+      {formGroups.map((formGroup) => (
+        <TapirMailFormGroup
+          label={formGroup.label}
+          type={formGroup.type}
+          object={user}
+          objectField={formGroup.field}
+        />
+      ))}
       <Button
         variant="primary"
         onClick={onSave}

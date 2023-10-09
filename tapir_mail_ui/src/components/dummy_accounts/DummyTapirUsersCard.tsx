@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import { DummyAccountsApi, DummyTapirUser } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
-import { Card, Table } from "react-bootstrap";
+import { Button, Card, Table } from "react-bootstrap";
 import Loading from "../loading";
 import Paths from "../../routing";
 import { Link, useNavigate } from "react-router-dom";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 const DummyTapirUsersCard = () => {
   const [users, setUsers] = useState<DummyTapirUser[]>([]);
@@ -28,6 +28,28 @@ const DummyTapirUsersCard = () => {
         setLoading(false);
       });
   }, []);
+
+  function handleDelete(
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    userId: number,
+  ) {
+    event.stopPropagation();
+
+    setLoading(true);
+    api
+      .dummyAccountsDummyTapirUserDestroy({ id: userId })
+      .then(() => {
+        showAlert("User deleted", "success");
+        setUsers(users.filter((user) => user.id !== userId));
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim Löschen der Users", "danger");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }
 
   return (
     <Card>
@@ -66,6 +88,7 @@ const DummyTapirUsersCard = () => {
                 <th>Email</th>
                 <th>First name</th>
                 <th>Last name</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -85,6 +108,22 @@ const DummyTapirUsersCard = () => {
                   <td>{user.email}</td>
                   <td>{user.firstName}</td>
                   <td>{user.lastName}</td>
+                  <td>
+                    <Button
+                      variant="danger"
+                      onClick={(event) => handleDelete(event, user.id)}
+                    >
+                      <TrashIcon
+                        title="Delete"
+                        style={{
+                          width: "2em",
+                          padding: "0.25em",
+                          borderRadius: "50%",
+                          color: "white",
+                        }}
+                      />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>

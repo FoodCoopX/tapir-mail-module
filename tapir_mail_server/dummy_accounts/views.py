@@ -18,6 +18,6 @@ class DummyTapirUserViewSet(viewsets.ModelViewSet):
         return result
 
     def update(self, request, *args, **kwargs):
-        result = super().create(request, *args, **kwargs)
+        result = super().update(request, *args, **kwargs)
         OnAccountUpdatedTrigger.fire(result.data["email"])
         return result

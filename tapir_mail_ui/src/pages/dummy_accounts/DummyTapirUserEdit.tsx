@@ -13,8 +13,8 @@ const DummyTapirUserEdit = () => {
 
   const [user, setUser] = useState<DummyTapirUser>({
     id: 0,
-    firstName: "FN",
-    lastName: "LN",
+    firstName: "",
+    lastName: "",
   });
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -23,6 +23,11 @@ const DummyTapirUserEdit = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
     api
       .dummyAccountsDummyTapirUserRetrieve({ id: parseInt(id!) })
       .then(setUser)
@@ -37,10 +42,21 @@ const DummyTapirUserEdit = () => {
 
   function handleSave() {
     setLoading(true);
-    api
-      .dummyAccountsDummyTapirUserUpdate({ id: user.id, dummyTapirUser: user })
+
+    let apiCall;
+    if (id) {
+      apiCall = api.dummyAccountsDummyTapirUserUpdate({
+        id: user.id,
+        dummyTapirUser: user,
+      });
+    } else {
+      apiCall = api.dummyAccountsDummyTapirUserCreate({ dummyTapirUser: user });
+    }
+
+    apiCall
       .then(() => {
-        showAlert("Saved", "success");
+        showAlert("Save successful", "success");
+        navigate(Paths.dummyAccounts);
       })
       .catch((err) => {
         console.error(err);
