@@ -26,6 +26,14 @@ function Dashboard() {
           Medien verwalten
         </Button>
       </Link>
+      <Link to={Paths.dummyAccounts}>
+        <Button
+          variant="primary"
+          style={{ margin: "1em", width: "20em" }}
+        >
+          Users
+        </Button>
+      </Link>
 
       <div
         style={{

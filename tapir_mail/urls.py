@@ -16,7 +16,7 @@ router.register("triggers", views.TriggerListView, basename="Triggers")
 
 urlpatterns = [
     re_path(
-        r"^(?!(api|dummy_accounts)/).*$",
+        r"^(?!(api)/).*$",
         TemplateView.as_view(template_name="index.html"),
     ),  # React index.html
     path("api/media_library/", include("tapir_mail.media_library.urls")),
