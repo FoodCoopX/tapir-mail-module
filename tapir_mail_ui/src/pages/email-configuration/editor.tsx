@@ -9,7 +9,6 @@ import {
   StatusEnum,
 } from "../../api_client";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
-import EmailInput from "../../components/emailInput";
 import Loading from "../../components/loading";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
@@ -38,9 +37,7 @@ const EmailConfigurationEditor = () => {
   const [subtitle, setSubtitle] = useState("");
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
-  const [recipients, setRecipients] = useState<string>("");
-  const [scheduledTime, setScheduledTime] = useState(new Date());
-  const [triggerId, setTriggerId] = useState("");
+  const [triggerId, setTriggerId] = useState<string | null>("");
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
@@ -50,7 +47,6 @@ const EmailConfigurationEditor = () => {
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
   const [lastSavedTime, setLastSavedTime] = useState(Date.now());
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
-  const [triggers, setTriggers] = useState([]);
   const showAlert = useAlert();
 
   const templateApi = useApi(EmailTemplateApi);
@@ -64,7 +60,7 @@ const EmailConfigurationEditor = () => {
       .then((data) => {
         setTemplates(data);
       })
-      .catch((err) => {
+      .catch(() => {
         showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
       });
 
@@ -82,9 +78,8 @@ const EmailConfigurationEditor = () => {
           setLoadedContent(content);
           setStatus(stringToStatus(data.releaseStatus) || StatusEnum.Draft);
           setMailingName(data.name || "");
-          setRecipients(data.recipients || "");
-          setScheduledTime(data.scheduledTime);
           setUpdatedAt(data.updatedAt || undefined);
+          setTriggerId(data.trigger || null);
         })
         .catch((err) => {
           console.error(err);
@@ -107,9 +102,8 @@ const EmailConfigurationEditor = () => {
         subtitle: subtitle,
         content: jsonToMjml(content),
         name: mailingName,
-        recipients: recipients,
-        scheduledTime: scheduledTime,
         releaseStatus: newStatus,
+        trigger: triggerId,
       };
 
       if (id) {
@@ -180,7 +174,7 @@ const EmailConfigurationEditor = () => {
           setLoadedContent(mjmlToJson(data.content));
           setSelectedTemplate(id);
         })
-        .catch((err) => {
+        .catch(() => {
           setSelectedTemplate(ID_NEW_TEMPLATE);
           showAlert(
             "Beim Laden des Templates ist ein Fehler aufgetreten.",
@@ -312,14 +306,6 @@ const EmailConfigurationEditor = () => {
                 <br />
               </>
             )}
-
-            <Form.Label>Empfänger</Form.Label>
-            <EmailInput
-              initialValue={recipients.split(",")}
-              onEmailListChange={(emails) => setRecipients(emails.join(","))}
-              autoFocus={false}
-            />
-            <br />
 
             <Form.Group>
               <Form.Label>Trigger</Form.Label>

@@ -7,7 +7,7 @@ import { Trigger, TriggersApi } from "../api_client";
 import { useApi } from "../hooks/useApi";
 
 interface TriggerDropdownProps {
-  selectedTriggerId: string;
+  selectedTriggerId: string | null;
   onChange: (version: string) => void;
 }
 
@@ -25,7 +25,7 @@ const TriggerDropdown: React.FC<TriggerDropdownProps> = ({
     triggersApi.triggersList().then((triggers) => {
       setTriggers(triggers);
     });
-  }, [triggersApi]);
+  }, []);
 
   return (
     <DropdownButton

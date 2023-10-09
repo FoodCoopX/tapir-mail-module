@@ -76,6 +76,7 @@ class EmailConfigurationVersion(BaseModel):
         choices=RELEASE_STATUS_CHOICES,
         default=ReleaseStatus.DRAFT,
     )
+    trigger = models.CharField(max_length=255, null=True)
 
     @transaction.atomic
     def release(self):
@@ -99,10 +100,11 @@ class EmailConfigurationDispatch(models.Model):
     """
     This represents an email that has been scheduled to be sent to a list of recipients.
 
-    TODO: we need to replace the recipients field with the segmenting logic. The recipients need to be fetched from the segment at send time.
+    TODO: we need to replace the recipients field with the segmenting logic.
+    The recipients need to be fetched from the segment at send time.
     """
 
-    email_configuration_version = models.OneToOneField(
+    email_configuration_version = models.ForeignKey(
         EmailConfigurationVersion, on_delete=models.CASCADE
     )
     recipients = models.TextField(null=True, blank=True)

@@ -1,12 +1,12 @@
+from django.forms import Form
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView
 
-from tapir_mail.service.triggers import fire_trigger
-from tapir_mail_server.dummy_accounts.apps import (
-    TRIGGER_NAME_ON_DUMMY_ACCOUNT_CREATED,
-    TRIGGER_NAME_ON_DUMMY_ACCOUNT_UPDATED,
-)
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
+from tapir_mail_server.dummy_accounts.triggers import (
+    OnAccountCreatedTrigger,
+    OnAccountUpdatedTrigger,
+)
 
 
 class DummyTapirUserListView(ListView):
@@ -20,8 +20,8 @@ class DummyTapirUserCreateView(CreateView):
     fields = ["email"]
     success_url = reverse_lazy("dummy_tapir_user_list_view")
 
-    def form_valid(self, form):
-        fire_trigger(TRIGGER_NAME_ON_DUMMY_ACCOUNT_CREATED)
+    def form_valid(self, form: Form):
+        OnAccountCreatedTrigger.fire(form.data["email"])
         return super().form_valid(form)
 
 
@@ -32,5 +32,5 @@ class DummyTapirUserUpdateView(UpdateView):
     success_url = reverse_lazy("dummy_tapir_user_list_view")
 
     def form_valid(self, form):
-        fire_trigger(TRIGGER_NAME_ON_DUMMY_ACCOUNT_UPDATED)
+        OnAccountUpdatedTrigger.fire(form.data["email"])
         return super().form_valid(form)
