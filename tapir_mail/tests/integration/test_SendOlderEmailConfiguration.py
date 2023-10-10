@@ -3,7 +3,13 @@ import datetime
 from django.core import mail
 from django.core.cache import cache
 
-from tapir_mail.models import ReleaseStatus, EmailConfigurationDispatch, EmailDispatch
+from tapir_mail.models import (
+    ReleaseStatus,
+    EmailConfigurationDispatch,
+    EmailDispatch,
+    StaticSegment,
+    StaticSegmentRecipient,
+)
 from tapir_mail.service.send_oldest_email_configuration import (
     SendOldestEmailConfiguration,
 )
@@ -15,14 +21,23 @@ class TestSendOldestEmailConfiguration(TapirIntegrationTest):
     NOW = datetime.datetime(
         year=2023, month=9, day=10, hour=12, minute=30, tzinfo=datetime.UTC
     )
-    RECIPIENT_1 = "test1@test2.com"
-    RECIPIENT_2 = "test3@test4.net"
+    RECIPIENT_1 = "test1@example.com"
+    RECIPIENT_2 = "test3@example.com"
     RECIPIENTS = [RECIPIENT_1, RECIPIENT_2]
     SUBJECT = "Test subject"
+    SEGMENT_NAME = "Test segment"
+    SEGMENT_DATA = {"staticSegments": [SEGMENT_NAME]}
 
     def setUp(self) -> None:
         super().setUp()
         mock_timezone_now(self, self.NOW)
+        segment = StaticSegment.objects.create(name=self.SEGMENT_NAME)
+        StaticSegmentRecipient.objects.bulk_create(
+            [
+                StaticSegmentRecipient(segment=segment, email=self.RECIPIENT_1),
+                StaticSegmentRecipient(segment=segment, email=self.RECIPIENT_2),
+            ]
+        )
 
     def test_scheduledTimeIsInThePast_emailGetsSentWithTheCorrectContent(self):
         config_dispatch = self.create_config_that_would_be_sent()
@@ -87,9 +102,9 @@ class TestSendOldestEmailConfiguration(TapirIntegrationTest):
 
     def create_config_that_would_be_sent(self) -> EmailConfigurationDispatch:
         return EmailConfigurationDispatchFactory.create(
-            recipients=f"{self.RECIPIENT_1},{self.RECIPIENT_2}",
             scheduled_time=self.NOW - datetime.timedelta(days=1),
             is_sent=False,
+            segment_data=self.SEGMENT_DATA,
             email_configuration_version__status=ReleaseStatus.RELEASED,
             email_configuration_version__subject=self.SUBJECT,
             email_configuration_version__content="<mjml><mj-body><mj-text>Test content</mj-text></mj-body></mjml>",

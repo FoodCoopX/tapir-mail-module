@@ -53,6 +53,8 @@ const TemplatesCard = () => {
   const api = useApi(EmailTemplateApi);
 
   useEffect(() => {
+    if (!api || !showAlert) return;
+
     api
       .emailtemplatesList()
       .then(setTemplates)
@@ -63,7 +65,7 @@ const TemplatesCard = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [api, showAlert]);
 
   return (
     <Card>

@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import send_email
+from tapir_mail.service.segment import combine_segments_with_filters
 from tapir_mail_server.celery import app
 
 
@@ -31,10 +32,17 @@ class SendOldestEmailConfiguration:
 
     @staticmethod
     def _send_email_configuration_dispatch(config_dispatch: EmailConfigurationDispatch):
+        if not config_dispatch.segment_data:
+            raise ValueError("Segment data is required to send an email!")
+
         recipients = [
-            email.strip()
-            for email in config_dispatch.recipients.split(",")
-            if email.strip()
+            r.email
+            for r in combine_segments_with_filters(
+                add_segments=config_dispatch.segment_data.get("addSegments", []),
+                static_segments=config_dispatch.segment_data.get("staticSegments", []),
+                remove_segments=config_dispatch.segment_data.get("removeSegments", []),
+                filter_list=config_dispatch.segment_data.get("filterList", []),
+            )
         ]
 
         if recipients:
