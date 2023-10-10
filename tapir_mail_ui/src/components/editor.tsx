@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-wrap-multilines */
-import React from "react";
+import React, { FC, useEffect } from "react";
 
 import {
   EmailEditor,
@@ -9,6 +9,7 @@ import {
 import "easy-email-editor/lib/style.css";
 
 import "@arco-themes/react-easy-email-theme/css/arco.css";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { AdvancedType, BasicType, BlockManager } from "easy-email-core";
 import { ExtensionProps, StandardLayout } from "easy-email-extensions";
 import "easy-email-extensions/lib/style.css";
@@ -115,10 +116,6 @@ const Editor: React.FC<EditorProps> = ({
   subtitle,
   content = EMPTY_PAGE,
 }) => {
-  const { width } = useWindowSize();
-
-  const smallScene = width < 1400;
-
   const handleUploadImage = async (file: Blob) => {
     return new Promise<string>((resolve, reject) => {
       startUpload();
@@ -192,100 +189,118 @@ const Editor: React.FC<EditorProps> = ({
           // onRemoveCollection={(collection) => console.log(collection)}  <--- allows to remove blocks from a collection
           // mergeTags={mergeTags} // <--- allows to add tokens to the editor
         >
-          {({ values }, { submit }) => {
-            if (onContentChange) {
-              onContentChange(values);
-            }
-            const saveDisabled =
-              templateName.length === 0 || content === values.content;
-            return (
-              <>
-                <StandardLayout
-                  compact={!smallScene}
-                  categories={categories}
-                  // showSourceCode=true is needed to have a back button to see the block selection...
-                  showSourceCode
-                  jsonReadOnly
-                  mjmlReadOnly
-                >
-                  {onTemplateNameChange && (
-                    <Form.Control
-                      placeholder="Template Name"
-                      aria-label="Template Name"
-                      required
-                      style={{ borderRadius: "0" }}
-                      className={templateName ? "" : "is-invalid"}
-                      disabled={!onTemplateNameChange}
-                      onChange={
-                        onTemplateNameChange
-                          ? (e) => onTemplateNameChange(e.target.value)
-                          : (e) => null
-                      }
-                      value={templateName}
-                    />
-                  )}
-                  <EmailEditor />
-                  {onTemplateNameChange && templateName.length === 0 && (
-                    <Alert variant="warning">
-                      <small>
-                        <svg
-                          style={{ height: "1.5em" }}
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="w-6 h-6"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-                          />
-                        </svg>
-                        &nbsp;&nbsp;&nbsp;Bitte gib einen Namen für das Template
-                        ein!
-                      </small>
-                    </Alert>
-                  )}
-                  {(onGoBack || onSave) && (
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        margin: "1em",
-                      }}
-                    >
-                      {onGoBack ? (
-                        <Button
-                          variant="secondary"
-                          onClick={() => onGoBack(values)}
-                        >
-                          Zurück
-                        </Button>
-                      ) : (
-                        <div />
-                      )}
-                      {onSave ? (
-                        <Button
-                          disabled={saveDisabled}
-                          variant={saveDisabled ? "disabled" : "success"}
-                          onClick={() => onSave(values)}
-                        >
-                          Template Speichern
-                        </Button>
-                      ) : (
-                        <div />
-                      )}
-                    </div>
-                  )}
-                </StandardLayout>
-              </>
-            );
-          }}
+          {({ values }, { submit }) => (
+            <CustomEmailEditor
+              onContentChange={onContentChange}
+              values={values}
+              templateName={templateName}
+              onTemplateNameChange={onTemplateNameChange}
+              onGoBack={onGoBack}
+              onSave={onSave}
+              content={content}
+            />
+          )}
         </EmailEditorProvider>
       </div>
     </>
   );
 };
 export default Editor;
+
+type CustomEmailEditorProps = {
+  onContentChange?: (values: IEmailTemplate) => void;
+  values: IEmailTemplate;
+  content?: any;
+  templateName?: string;
+  onTemplateNameChange?: (name: string) => void;
+  onGoBack?: (values: IEmailTemplate) => void;
+  onSave?: (values: IEmailTemplate) => void;
+};
+const CustomEmailEditor: FC<CustomEmailEditorProps> = ({
+  onContentChange,
+  values,
+  content = EMPTY_PAGE,
+  templateName = "",
+  onTemplateNameChange,
+  onGoBack,
+  onSave,
+}) => {
+  const { width } = useWindowSize();
+
+  const smallScene = width < 1400;
+
+  useEffect(() => {
+    if (onContentChange) {
+      onContentChange(values);
+    }
+  }, [values, onContentChange]);
+
+  const saveDisabled = templateName.length === 0 || content === values.content;
+  return (
+    <>
+      <StandardLayout
+        compact={!smallScene}
+        categories={categories}
+        // showSourceCode=true is needed to have a back button to see the block selection...
+        showSourceCode
+        jsonReadOnly
+        mjmlReadOnly
+      >
+        {onTemplateNameChange && (
+          <Form.Control
+            placeholder="Template Name"
+            aria-label="Template Name"
+            required
+            style={{ borderRadius: "0" }}
+            className={templateName ? "" : "is-invalid"}
+            disabled={!onTemplateNameChange}
+            onChange={
+              onTemplateNameChange
+                ? (e) => onTemplateNameChange(e.target.value)
+                : (e) => null
+            }
+            value={templateName}
+          />
+        )}
+        <EmailEditor />
+        {onTemplateNameChange && templateName.length === 0 && (
+          <Alert variant="warning">
+            <ExclamationTriangleIcon width={24} />
+            &nbsp;&nbsp;&nbsp;Bitte gib oben einen Namen für das Template ein!
+          </Alert>
+        )}
+        {(onGoBack || onSave) && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              margin: "1em",
+            }}
+          >
+            {onGoBack ? (
+              <Button
+                variant="secondary"
+                onClick={() => onGoBack(values)}
+              >
+                Zurück
+              </Button>
+            ) : (
+              <div />
+            )}
+            {onSave ? (
+              <Button
+                disabled={saveDisabled}
+                variant={saveDisabled ? "disabled" : "success"}
+                onClick={() => onSave(values)}
+              >
+                Template Speichern
+              </Button>
+            ) : (
+              <div />
+            )}
+          </div>
+        )}
+      </StandardLayout>
+    </>
+  );
+};

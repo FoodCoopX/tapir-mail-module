@@ -1,10 +1,10 @@
 import React from "react";
 import { Badge, Dropdown, Form } from "react-bootstrap";
-import { EmailConfigurationVersion } from "../api_client";
+import { EmailConfigurationVersion, StatusEnum } from "../api_client";
+import { EMAIL_CONFIGURATION_VERSION_STATUS_PROPS } from "../utils/emailConfigurationVersionStatusProps";
+import { formatDate } from "../utils/formatDate";
 import { mjmlToHtml } from "../utils/mjml";
 import HtmlInDiv from "./htmlInDiv";
-import { formatDate } from "../utils/formatDate";
-import { EMAIL_CONFIGURATION_VERSION_STATUS_PROPS } from "../utils/emailConfigurationVersionStatusProps";
 
 const EmailConfigurationVersionSelect = ({
   versions,
@@ -34,7 +34,7 @@ const EmailConfigurationVersionSelect = ({
                 "outline-" +
                 (selectedVersion
                   ? EMAIL_CONFIGURATION_VERSION_STATUS_PROPS[
-                      selectedVersion!!.status || "draft"
+                      (selectedVersion!!.status || "draft") as StatusEnum
                     ].color
                   : "primary")
               }
@@ -43,7 +43,7 @@ const EmailConfigurationVersionSelect = ({
               {selectedVersion
                 ? `${
                     EMAIL_CONFIGURATION_VERSION_STATUS_PROPS[
-                      selectedVersion.status!!
+                      selectedVersion.status!! as StatusEnum
                     ].text
                   } ${formatDate(selectedVersion.updatedAt)}`
                 : "Select version"}
@@ -57,13 +57,13 @@ const EmailConfigurationVersionSelect = ({
                   <Badge
                     bg={
                       EMAIL_CONFIGURATION_VERSION_STATUS_PROPS[
-                        v.status || "draft"
+                        (v.status || "draft") as StatusEnum
                       ].color
                     }
                   >
                     {
                       EMAIL_CONFIGURATION_VERSION_STATUS_PROPS[
-                        v.status || "draft"
+                        (v.status || "draft") as StatusEnum
                       ].text
                     }
                   </Badge>{" "}

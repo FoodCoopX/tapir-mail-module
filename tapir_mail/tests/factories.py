@@ -1,4 +1,5 @@
 import factory
+from faker import Faker as FakerClass
 
 from tapir_mail.models import (
     EmailConfiguration,
@@ -54,10 +55,13 @@ class EmailConfigurationDispatchFactory(factory.django.DjangoModelFactory):
         model = EmailConfigurationDispatch
 
     email_configuration_version = factory.SubFactory(EmailConfigurationVersionFactory)
-    recipients = factory.List([factory.Faker("email") for _ in range(3)])
     scheduled_time = factory.Faker(
         "date_this_decade",
         before_today=True,
         after_today=True,
     )
     is_sent = factory.Faker("pybool")
+
+    @factory.lazy_attribute
+    def segment_data(self):
+        return FakerClass().json(default='{"static_segments": ["test"]}')

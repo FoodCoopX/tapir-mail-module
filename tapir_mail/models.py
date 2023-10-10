@@ -4,6 +4,8 @@ from django.db import models, transaction
 from django.utils import timezone
 from nanoid import generate
 
+from tapir_mail.service.segment import combine_segments_with_filters
+
 ID_LENGTH = 10
 
 
@@ -98,22 +100,27 @@ class EmailConfigurationVersion(BaseModel):
 class EmailConfigurationDispatch(models.Model):
     """
     This represents an email that has been scheduled to be sent to a list of recipients.
-
-    TODO: we need to replace the recipients field with the segmenting logic. The recipients need to be fetched from the segment at send time.
     """
 
     email_configuration_version = models.OneToOneField(
         EmailConfigurationVersion, on_delete=models.CASCADE
     )
-    recipients = models.TextField(null=True, blank=True)
+    segment_data = models.JSONField(null=True, blank=True)
     scheduled_time = models.DateTimeField(default=timezone.now)
     is_sent = models.BooleanField(default=False)
 
     def get_recipient_list(self):
         if self.is_sent:
             return [dispatch.recipient for dispatch in self.emaildispatch_set.all()]
+        elif self.segment_data is not None:
+            return combine_segments_with_filters(
+                add_segments=self.segment_data.get("addSegments", []),
+                static_segments=self.segment_data.get("staticSegments", []),
+                remove_segments=self.segment_data.get("removeSegments", []),
+                filter_list=self.segment_data.get("filterList", []),
+            )
         else:
-            return self.recipients.split(",")
+            return []
 
     def __str__(self):
         return f"{self.email_configuration_version} - {self.recipients} - {self.scheduled_time} - {self.is_sent}"
@@ -141,3 +148,20 @@ class EmailDispatch(models.Model):
         return (
             f"{self.email_configuration_dispatch} - {self.recipient} - {self.sent_time}"
         )
+
+
+class StaticSegment(models.Model):
+    name = models.CharField(max_length=255)
+
+
+class StaticSegmentRecipient(models.Model):
+    segment = models.ForeignKey(
+        StaticSegment, related_name="recipients", on_delete=models.CASCADE
+    )
+    first_name = models.CharField(max_length=255, null=True)
+    last_name = models.CharField(max_length=255, null=True)
+    email = models.EmailField()
+    custom_data = models.JSONField(null=True)  # For additional fields, tokens etc.
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} <{self.email}>"

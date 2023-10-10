@@ -6,7 +6,6 @@ from tapir_mail.models import (
     EmailTemplate,
 )
 
-
 # TODO: Is there a better way to exclude the automatically filled fields? Whatever I tried, I couldn't get the fields to be required=False in the schema.
 
 
@@ -67,27 +66,35 @@ class RecipientSerializer(serializers.Serializer):
 class BundledEmailConfigurationSerializer(serializers.Serializer):
     # EmailConfiguration fields
     name = serializers.CharField()
-    description = serializers.CharField()
+    description = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False
+    )
 
     # EmailConfigurationVersion fields
     content = serializers.CharField()
-    subject = serializers.CharField()
+    subject = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     subtitle = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     release_status = serializers.CharField()
     updated_at = serializers.DateTimeField(allow_null=True, required=False)
 
     # EmailConfigurationDispatch fields
     scheduled_time = serializers.DateTimeField()
-    recipients = serializers.CharField(
-        allow_null=True, allow_blank=True, required=False
+    segment_data = serializers.JSONField(allow_null=True, required=False)
+
+
+class SegmentDataSerializer(serializers.Serializer):
+    add_segments = serializers.ListField(child=serializers.CharField(), required=False)
+    static_segments = serializers.ListField(
+        child=serializers.CharField(), required=False
     )
+    remove_segments = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+    filter_list = serializers.ListField(child=serializers.CharField(), required=False)
 
 
 class EmailConfigurationDispatchSerializer(serializers.Serializer):
     id = serializers.CharField()
     email_configuration_version = EmailConfigurationVersionSerializer()
     scheduled_time = serializers.DateTimeField()
-    recipients = serializers.ListField(
-        child=serializers.CharField(allow_null=True, allow_blank=True),
-        source="get_recipient_list",
-    )
+    segment_data = SegmentDataSerializer(allow_null=True, required=False)

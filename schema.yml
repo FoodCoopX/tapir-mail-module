@@ -6,6 +6,19 @@ paths:
   /api/email_configuration/:
     get:
       operationId: email_configuration_list
+      parameters:
+      - in: query
+        name: versions__status
+        schema:
+          type: string
+          enum:
+          - archived
+          - draft
+          - released
+        description: |-
+          * `draft` - Draft
+          * `released` - Released
+          * `archived` - Archived
       tags:
       - email_configuration
       security:
@@ -160,6 +173,18 @@ paths:
           type: string
         description: A unique value identifying this email configuration.
         required: true
+      - in: query
+        name: versions__status
+        schema:
+          type: string
+          enum:
+          - archived
+          - draft
+          - released
+        description: |-
+          * `draft` - Draft
+          * `released` - Released
+          * `archived` - Archived
       tags:
       - email_configuration
       security:
@@ -173,23 +198,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EmailConfigurationVersion'
-          description: ''
-  /api/email_configuration/released/:
-    get:
-      operationId: email_configuration_released_list
-      tags:
-      - email_configuration
-      security:
-      - tokenAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmailConfiguration'
           description: ''
   /api/email_configuration_dispatch/:
     get:
@@ -1333,6 +1341,91 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/segment/available_filters/:
+    get:
+      operationId: segment_available_filters_retrieve
+      description: Get a list of available filters.
+      tags:
+      - segment
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filters:
+                    type: array
+                    items:
+                      type: string
+          description: ''
+  /api/segment/available_segments/:
+    get:
+      operationId: segment_available_segments_retrieve
+      description: Get a list of available segments.
+      tags:
+      - segment
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  segments:
+                    type: array
+                    items:
+                      type: string
+                  staticSegments:
+                    type: array
+                    items:
+                      type: string
+          description: ''
+  /api/segment/combine/:
+    post:
+      operationId: segment_combine_create
+      description: Combine segments and filters and get the result.
+      tags:
+      - segment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SegmentData'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SegmentData'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SegmentData'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  recipients:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        email:
+                          type: string
+          description: ''
 components:
   schemas:
     BundledEmailConfiguration:
@@ -1342,10 +1435,12 @@ components:
           type: string
         description:
           type: string
+          nullable: true
         content:
           type: string
         subject:
           type: string
+          nullable: true
         subtitle:
           type: string
           nullable: true
@@ -1358,16 +1453,15 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        recipients:
-          type: string
+        segment_data:
+          type: object
+          additionalProperties: {}
           nullable: true
       required:
       - content
-      - description
       - name
       - release_status
       - scheduled_time
-      - subject
     EmailConfiguration:
       type: object
       properties:
@@ -1416,15 +1510,13 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        recipients:
-          type: array
-          items:
-            type: string
-            nullable: true
+        segment_data:
+          allOf:
+          - $ref: '#/components/schemas/SegmentData'
+          nullable: true
       required:
       - email_configuration_version
       - id
-      - recipients
       - scheduled_time
     EmailConfigurationVersion:
       type: object
@@ -1527,11 +1619,10 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        recipients:
-          type: array
-          items:
-            type: string
-            nullable: true
+        segment_data:
+          allOf:
+          - $ref: '#/components/schemas/SegmentData'
+          nullable: true
     PatchedEmailConfigurationVersion:
       type: object
       properties:
@@ -1639,6 +1730,25 @@ components:
             format: email
       required:
       - recipients
+    SegmentData:
+      type: object
+      properties:
+        add_segments:
+          type: array
+          items:
+            type: string
+        static_segments:
+          type: array
+          items:
+            type: string
+        remove_segments:
+          type: array
+          items:
+            type: string
+        filter_list:
+          type: array
+          items:
+            type: string
     StatusEnum:
       enum:
       - draft
