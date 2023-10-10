@@ -293,7 +293,7 @@ const SendTestMailModal = ({
     versionApi
       .emailConfigurationVersionSendTestEmail({
         id: emailConfigurationVersion.id!!,
-        recipient: { recipients: recipients },
+        recipientRequest: { recipients: recipients },
       })
       .then(() => {
         showAlert("Test-Email wurde versendet!", "success");
@@ -309,7 +309,7 @@ const SendTestMailModal = ({
 
     segmentApi
       .segmentCombineCreate({
-        segmentData: {
+        segmentDataRequest: {
           staticSegments: [selectedSegment],
         },
       })

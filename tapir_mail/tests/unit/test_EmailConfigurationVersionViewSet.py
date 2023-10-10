@@ -5,10 +5,6 @@ from django.http import Http404
 from rest_framework.response import Response
 
 from tapir_mail.models import EmailConfigurationVersion
-from tapir_mail.serializers import (
-    BundledEmailConfigurationSerializer,
-    EmailConfigurationVersionSerializer,
-)
 from tapir_mail.tests.test_utils import TapirUnitTest
 from tapir_mail.views import EmailConfigurationVersionViewSet
 

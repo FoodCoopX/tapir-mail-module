@@ -19,11 +19,9 @@ from tapir_mail.models import (
 )
 from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
-    EmailConfigurationCreateSerializer,
     EmailConfigurationDispatchSerializer,
     EmailConfigurationSerializer,
     EmailConfigurationVersionSerializer,
-    EmailTemplateCreateSerializer,
     EmailTemplateSerializer,
     RecipientSerializer,
     SegmentDataSerializer,
@@ -47,21 +45,13 @@ LOG = logging.getLogger(__name__)
 )
 class EmailTemplateViewSet(viewsets.ModelViewSet):
     queryset = EmailTemplate.objects.all()
-
-    def get_serializer_class(self):
-        if self.action in ["create", "update"]:
-            return EmailTemplateCreateSerializer
-        return EmailTemplateSerializer
+    serializer_class = EmailTemplateSerializer
 
 
 class EmailConfigurationViewSet(viewsets.ModelViewSet):
     queryset = EmailConfiguration.objects.all().distinct()
     filterset_fields = ["versions__status"]
-
-    def get_serializer_class(self):
-        if self.action in ["create", "update"]:
-            return EmailConfigurationCreateSerializer
-        return EmailConfigurationSerializer
+    serializer_class = EmailConfigurationSerializer
 
     @extend_schema(
         responses={200: EmailConfigurationVersionSerializer(many=True)},
@@ -91,11 +81,7 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
 )
 class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
     queryset = EmailConfigurationVersion.objects.all()
-
-    def get_serializer_class(self):
-        if self.action in ["create", "update"]:
-            return BundledEmailConfigurationSerializer
-        return EmailConfigurationVersionSerializer
+    serializer_class = BundledEmailConfigurationSerializer
 
     @extend_schema(responses={200: OpenApiTypes.OBJECT})
     @transaction.atomic

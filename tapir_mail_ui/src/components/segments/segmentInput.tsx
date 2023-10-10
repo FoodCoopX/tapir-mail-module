@@ -109,7 +109,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
 
     segmentApi
       .segmentCombineCreate({
-        segmentData: {
+        segmentDataRequest: {
           addSegments: segmentsToAdd,
           staticSegments: staticSegmentsToAdd,
           removeSegments: segmentsToRemove,
