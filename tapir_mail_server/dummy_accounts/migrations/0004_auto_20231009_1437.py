@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("dummy_accounts", "0001_initial"),
+        ("dummy_accounts", "0003_dummytapiruser_pickup_location"),
     ]
 
     operations = [
