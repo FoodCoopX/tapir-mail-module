@@ -1,8 +1,9 @@
 version: "3.9"
 services:
   django:
-    build: &build-django
+    build:
       dockerfile: Dockerfile-django
+    image: &django-image tapir-mail-module-django
     command: bash -c "poetry run python manage.py migrate && poetry run python manage.py runserver 0.0.0.0:8000"
     volumes: &volumes-django
       - .:/app
@@ -32,7 +33,7 @@ services:
     image: redis:alpine
 
   celery:
-    build: *build-django
+    image: *django-image
     command: bash -c "poetry run celery -A tapir_mail_server worker -l info"
     volumes: *volumes-django
     environment:
@@ -41,7 +42,7 @@ services:
       - redis
 
   celery-beat:
-    build: *build-django
+    image: *django-image
     command: bash -c "poetry run celery -A tapir_mail_server beat -l info --schedule /tmp/celerybeat-schedule"
     volumes: *volumes-django
     environment:
@@ -50,7 +51,7 @@ services:
       - redis
 
   flower:
-    build: *build-django
+    image: *django-image
     command: bash -c "poetry run celery -A tapir_mail_server flower"
     volumes: *volumes-django
     environment:
