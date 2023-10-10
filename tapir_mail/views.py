@@ -16,21 +16,26 @@ from tapir_mail.models import (
     EmailTemplate,
     ReleaseStatus,
     EmailDispatch,
+    StaticSegment,
 )
 from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
-    EmailConfigurationCreateSerializer,
     EmailConfigurationDispatchSerializer,
     EmailConfigurationSerializer,
     EmailConfigurationVersionSerializer,
-    EmailTemplateCreateSerializer,
     EmailTemplateSerializer,
     RecipientSerializer,
     TriggerSerializer,
     EmailDispatchSerializer,
+    SegmentDataSerializer,
 )
 from tapir_mail.service.email import send_email
 from tapir_mail.service.triggers import trigger_registry
+from tapir_mail.service.segment import (
+    combine_segments_with_filters,
+    filter_registry,
+    segment_registry,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -44,20 +49,13 @@ LOG = logging.getLogger(__name__)
 )
 class EmailTemplateViewSet(viewsets.ModelViewSet):
     queryset = EmailTemplate.objects.all()
-
-    def get_serializer_class(self):
-        if self.action in ["create", "update"]:
-            return EmailTemplateCreateSerializer
-        return EmailTemplateSerializer
+    serializer_class = EmailTemplateSerializer
 
 
 class EmailConfigurationViewSet(viewsets.ModelViewSet):
-    queryset = EmailConfiguration.objects.all()
-
-    def get_serializer_class(self):
-        if self.action in ["create", "update"]:
-            return EmailConfigurationCreateSerializer
-        return EmailConfigurationSerializer
+    queryset = EmailConfiguration.objects.all().distinct()
+    filterset_fields = ["versions__status"]
+    serializer_class = EmailConfigurationSerializer
 
     @extend_schema(
         responses={200: EmailConfigurationVersionSerializer(many=True)},
@@ -67,18 +65,6 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
         email_configuration = get_object_or_404(EmailConfiguration, id=pk)
         versions = email_configuration.versions.all()
         serializer = EmailConfigurationVersionSerializer(versions, many=True)
-        return Response(serializer.data)
-
-    # FIXME: it would be cleaner to use filters, but I don't know how yet
-    @extend_schema(
-        responses={200: EmailConfigurationSerializer(many=True)},
-    )
-    @action(detail=False, methods=["GET"])
-    def released(self, request):
-        released_configurations = self.queryset.filter(
-            versions__status=ReleaseStatus.RELEASED
-        ).distinct()
-        serializer = EmailConfigurationSerializer(released_configurations, many=True)
         return Response(serializer.data)
 
 
@@ -99,11 +85,7 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
 )
 class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
     queryset = EmailConfigurationVersion.objects.all()
-
-    def get_serializer_class(self):
-        if self.action in ["create", "update"]:
-            return BundledEmailConfigurationSerializer
-        return EmailConfigurationVersionSerializer
+    serializer_class = BundledEmailConfigurationSerializer
 
     @extend_schema(responses={200: OpenApiTypes.OBJECT})
     @transaction.atomic
@@ -123,8 +105,8 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version = EmailConfigurationVersion.objects.create(
             email_configuration=email_configuration,
             content=serializer.validated_data["content"],
-            subject=serializer.validated_data["subject"],
-            subtitle=serializer.validated_data["subtitle"],
+            subject=serializer.validated_data.get("subject", None),
+            subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
             trigger=serializer.validated_data["trigger"],
         )
@@ -134,6 +116,18 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
             ).exclude(id=version.id).update(status=ReleaseStatus.ARCHIVED)
+
+        # Create EmailConfigurationDispatch
+        email_config_dispatch = EmailConfigurationDispatch.objects.get_or_create(
+            email_configuration_version=version,
+        )[0]
+        email_config_dispatch.segment_data = serializer.validated_data.get(
+            "segment_data", None
+        )
+        email_config_dispatch.scheduled_time = serializer.validated_data[
+            "scheduled_time"
+        ]
+        email_config_dispatch.save()
 
         return Response({"id": version.id}, status=status.HTTP_201_CREATED)
 
@@ -149,6 +143,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "subject": version.subject,
             "subtitle": version.subtitle,
             "release_status": version.status,
+            "segment_data": dispatch_instance.segment_data,
         }
         serializer = BundledEmailConfigurationSerializer(
             data=request.data, initial=initial_data
@@ -159,13 +154,15 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
 
         # Update EmailConfiguration
         email_configuration.name = serializer.validated_data["name"]
-        email_configuration.description = serializer.validated_data["description"]
+        email_configuration.description = serializer.validated_data.get(
+            "description", None
+        )
         email_configuration.save()
 
         # Update EmailConfigurationVersion
         version.content = serializer.validated_data["content"]
-        version.subject = serializer.validated_data["subject"]
-        version.subtitle = serializer.validated_data["subtitle"]
+        version.subject = serializer.validated_data.get("subject", None)
+        version.subtitle = serializer.validated_data.get("subtitle", None)
         version.status = serializer.validated_data["release_status"]
         version.trigger = serializer.validated_data["trigger"]
         version.save()
@@ -175,6 +172,13 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
             ).exclude(id=version.id).update(status=ReleaseStatus.ARCHIVED)
+
+        # Update EmailConfigurationDispatch
+        dispatch_instance.scheduled_time = serializer.validated_data["scheduled_time"]
+        dispatch_instance.segment_data = serializer.validated_data.get(
+            "segment_data", None
+        )
+        dispatch_instance.save()
 
         return Response(serializer.data)
 
@@ -192,6 +196,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "subtitle": version.subtitle,
             "updated_at": version.updated_at,
             "release_status": version.status,
+            "segment_data": dispatch_instance.segment_data,
             "trigger": version.trigger,
         }
 
@@ -343,3 +348,95 @@ class TriggerListView(viewsets.ViewSet):
 class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = EmailDispatch.objects.all().order_by("-sent_time")
     serializer_class = EmailDispatchSerializer
+
+
+class SegmentAndFilterViewSet(viewsets.ViewSet):
+    @extend_schema(
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "filters": {"type": "array", "items": {"type": "string"}}
+                },
+            }
+        },
+        description="Get a list of available filters.",
+    )
+    @action(detail=False, methods=["GET"])
+    def available_filters(self, request):
+        available_filters = list(filter_registry.keys())
+        return Response({"filters": available_filters})
+
+    @extend_schema(
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "segments": {"type": "array", "items": {"type": "string"}},
+                    "staticSegments": {"type": "array", "items": {"type": "string"}},
+                },
+            }
+        },
+        description="Get a list of available segments.",
+    )
+    @action(detail=False, methods=["GET"])
+    def available_segments(self, request):
+        static_segments = [
+            x["name"]
+            for x in StaticSegment.objects.filter(recipients__isnull=False).values(
+                "name"
+            )
+        ]
+
+        available_segments = list(segment_registry.keys())
+        return Response(
+            {"segments": available_segments, "staticSegments": static_segments}
+        )
+
+    @extend_schema(
+        request=SegmentDataSerializer,
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "count": {"type": "integer"},
+                    "recipients": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "email": {"type": "string"},
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        description="Combine segments and filters and get the result.",
+    )
+    @action(detail=False, methods=["POST"])
+    def combine(self, request):
+        add_segments = request.data.get("add_segments", [])
+        static_segments = request.data.get("static_segments", [])
+        remove_segments = request.data.get("remove_segments", [])
+        filter_list = request.data.get("filter_list", [])
+
+        try:
+            combined = combine_segments_with_filters(
+                add_segments=add_segments,
+                static_segments=static_segments,
+                remove_segments=remove_segments,
+                filter_list=filter_list,
+            )
+            return Response(
+                {
+                    "count": len(combined),
+                    "recipients": [
+                        {"name": f"{r}", "email": r.email} for r in combined
+                    ],
+                },
+                status=status.HTTP_200_OK,
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

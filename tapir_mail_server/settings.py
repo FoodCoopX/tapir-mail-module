@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_filters",
     "mjml",
 ]
 DEPENDENCIES_APPS = [
@@ -57,6 +58,7 @@ DEPENDENCIES_APPS = [
     "django_extensions",
 ]
 TAPIR_MAIL_APPS = [
+    "tapir_mail_server",
     "tapir_mail_server.dummy_accounts",
     "tapir_mail",
     "tapir_mail.core",
@@ -187,7 +189,11 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
+SPECTACULAR_SETTINGS = {"COMPONENT_SPLIT_REQUEST": True}
+
+
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -236,4 +242,14 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
     }
+}
+
+STATIC_SEGMENTS = {
+    "Tapir Mail Team": [
+        {
+            "email": "tapirmailtest@mkleimann.com",
+            "first_name": "M",
+            "last_name": "K",
+        },
+    ]
 }

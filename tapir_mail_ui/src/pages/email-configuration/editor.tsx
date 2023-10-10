@@ -1,3 +1,4 @@
+import { HomeIcon, ListBulletIcon } from "@heroicons/react/24/outline";
 import { IPage } from "easy-email-core";
 import React, { useEffect, useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
@@ -6,15 +7,18 @@ import {
   EmailConfigurationVersionApi,
   EmailTemplate,
   EmailTemplateApi,
+  SegmentCombineCreateRequest,
+  SegmentData,
   StatusEnum,
 } from "../../api_client";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
 import Loading from "../../components/loading";
+import SegmentInput from "../../components/segments/segmentInput";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
-import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
 import { formatDate } from "../../utils/formatDate";
+import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
 import { HomeIcon, ListBulletIcon } from "@heroicons/react/24/outline";
 import TriggerDropdown from "../../components/triggerDropdown";
@@ -42,6 +46,9 @@ const EmailConfigurationEditor = () => {
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
   );
+  const [segmentData, setSegmentData] = useState<SegmentData | undefined>(
+    undefined,
+  );
   const [content, setContent] = useState<any | undefined>(undefined);
   const [status, setStatus] = useState<StatusEnum>(StatusEnum.Draft);
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
@@ -60,7 +67,8 @@ const EmailConfigurationEditor = () => {
       .then((data) => {
         setTemplates(data);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error(err);
         showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
       });
 
@@ -73,8 +81,9 @@ const EmailConfigurationEditor = () => {
         .then((data) => {
           const content = data.content ? mjmlToJson(data.content) : EMPTY_PAGE;
 
-          setSubject(data.subject);
+          setSubject(data.subject || "");
           setSubtitle(data.subtitle || "");
+          setSegmentData(data.segmentData || undefined);
           setLoadedContent(content);
           setStatus(stringToStatus(data.releaseStatus) || StatusEnum.Draft);
           setMailingName(data.name || "");
@@ -104,6 +113,7 @@ const EmailConfigurationEditor = () => {
         name: mailingName,
         releaseStatus: newStatus,
         trigger: triggerId,
+        segmentData: segmentData,
       };
 
       if (id) {
@@ -112,7 +122,7 @@ const EmailConfigurationEditor = () => {
           // create new draft version
           api
             .emailConfigurationVersionCreate({
-              bundledEmailConfiguration: {
+              bundledEmailConfigurationRequest: {
                 ...props,
               },
             })
@@ -126,7 +136,7 @@ const EmailConfigurationEditor = () => {
           api
             .emailConfigurationVersionUpdate({
               id: id!!,
-              bundledEmailConfiguration: props,
+              bundledEmailConfigurationRequest: props,
             })
             .then((data) => {
               setUpdatedAt(data.updatedAt || new Date());
@@ -140,7 +150,7 @@ const EmailConfigurationEditor = () => {
         // CREATE
         api
           .emailConfigurationVersionCreate({
-            bundledEmailConfiguration: {
+            bundledEmailConfigurationRequest: {
               ...props,
             },
           })
@@ -211,8 +221,18 @@ const EmailConfigurationEditor = () => {
         showAlert("Beim Speichern ist ein Fehler aufgetreten.", "danger"),
       );
 
+  const handleSegmentChange = (segmentData: SegmentData) => {
+    setSegmentData(segmentData);
+  };
+
   const saveButtonDisabled =
-    !mailingName || !subject || (id !== undefined && content !== loadedContent);
+    !mailingName || (id !== undefined && content !== loadedContent);
+  const segmentChoosen =
+    segmentData &&
+    ((segmentData.addSegments?.length || 0) > 0 ||
+      (segmentData.staticSegments?.length || 0) > 0);
+  const releaseButtonDisabled =
+    saveButtonDisabled || !subject || !segmentChoosen;
   return loading ? (
     <Loading />
   ) : (
@@ -307,6 +327,27 @@ const EmailConfigurationEditor = () => {
               </>
             )}
 
+            <div
+              style={{
+                backgroundColor: "var(--color-neutral-1)",
+                padding: "1em",
+                marginLeft: "-0.5em",
+                marginRight: "-0.5em",
+                borderRadius: "6px",
+                border:
+                  "1px solid " +
+                  (segmentChoosen
+                    ? "var(--color-neutral-3)"
+                    : "var(--bs-form-invalid-border-color)"),
+              }}
+            >
+              <SegmentInput
+                initialData={segmentData}
+                onChange={handleSegmentChange}
+              />
+            </div>
+            <br />
+
             <Form.Group>
               <Form.Label>Trigger</Form.Label>
               <TriggerDropdown
@@ -317,8 +358,8 @@ const EmailConfigurationEditor = () => {
 
             <hr />
             <Button
-              disabled={saveButtonDisabled}
-              variant={saveButtonDisabled ? "disabled" : "primary"}
+              disabled={releaseButtonDisabled}
+              variant={releaseButtonDisabled ? "disabled" : "primary"}
               style={{ width: "100%", marginBottom: "1em" }}
               onClick={() => setReleaseModalOpen(true)}
             >

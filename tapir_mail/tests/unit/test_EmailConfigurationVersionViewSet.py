@@ -5,36 +5,11 @@ from django.http import Http404
 from rest_framework.response import Response
 
 from tapir_mail.models import EmailConfigurationVersion
-from tapir_mail.serializers import (
-    BundledEmailConfigurationSerializer,
-    EmailConfigurationVersionSerializer,
-)
 from tapir_mail.tests.test_utils import TapirUnitTest
 from tapir_mail.views import EmailConfigurationVersionViewSet
 
 
 class TestEmailConfigurationVersion(TapirUnitTest):
-    def test_getSerializerClass_updateAction_returnsCreateSerializer(self):
-        viewset = EmailConfigurationVersionViewSet()
-        viewset.action = "update"
-        self.assertEqual(
-            BundledEmailConfigurationSerializer, viewset.get_serializer_class()
-        )
-
-    def test_getSerializerClass_createAction_returnsCreateSerializer(self):
-        viewset = EmailConfigurationVersionViewSet()
-        viewset.action = "create"
-        self.assertEqual(
-            BundledEmailConfigurationSerializer, viewset.get_serializer_class()
-        )
-
-    def test_getSerializerClass_otherAction_returnsCreateSerializer(self):
-        viewset = EmailConfigurationVersionViewSet()
-        viewset.action = "delete"
-        self.assertEqual(
-            EmailConfigurationVersionSerializer, viewset.get_serializer_class()
-        )
-
     @patch("tapir_mail.views.get_object_or_404")
     def test_sendTestEmail_emailConfigurationDoesntExist_throwsException(
         self, mock_get_object_or_404: Mock

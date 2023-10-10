@@ -1,0 +1,402 @@
+import {
+  CheckBadgeIcon,
+  ExclamationTriangleIcon,
+  MinusCircleIcon,
+  PlusCircleIcon,
+} from "@heroicons/react/24/outline";
+import React, { FC, useEffect, useState } from "react";
+import { Accordion, Badge, Form } from "react-bootstrap";
+import { SegmentData } from "../../api_client";
+import { SegmentApi } from "../../api_client/apis/SegmentApi";
+import { useAlert } from "../../contexts/alerts";
+import { useApi } from "../../hooks/useApi";
+import AccordionToggleCompact from "../accordionToggleCompact";
+import { getBorderRadiusByIdx, guessElementType } from "./common";
+import FilterDisplay from "./filterDisplay";
+import FilterInput, { FilterElement } from "./filterInput";
+
+type SegmentInputProps = {
+  initialData?: SegmentData;
+  onChange: (data: SegmentData) => void;
+};
+
+const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
+  const segmentApi = useApi(SegmentApi);
+  const showAlert = useAlert();
+
+  const [availableSegments, setAvailableSegments] = useState<string[]>([]);
+  const [availableStaticSegments, setAvailableStaticSegments] = useState<
+    string[]
+  >([]);
+  const [availableFilters, setAvailableFilters] = useState<string[]>([]);
+
+  const [selectedSegment, setSelectedSegment] = useState<string>("");
+
+  const [segmentsToAdd, setSegmentsToAdd] = useState<string[]>([]);
+  const [staticSegmentsToAdd, setStaticSegmentsToAdd] = useState<string[]>([]);
+  const [segmentsToRemove, setSegmentsToRemove] = useState<string[]>([]);
+  const [complexFilter, setComplexFilter] = useState<FilterElement[]>([]);
+
+  const [resultCount, setResultCount] = useState<number>(0);
+  const [resultRecipients, setResultRecipients] = useState<any[]>([]);
+
+  const [isFilterValid, setIsFilterValid] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (isFilterValid) {
+      onChange({
+        addSegments: segmentsToAdd,
+        staticSegments: staticSegmentsToAdd,
+        removeSegments: segmentsToRemove,
+        filterList: complexFilter.map((c) => c.value),
+      });
+    } else {
+      onChange({});
+    }
+  }, [
+    segmentsToAdd,
+    staticSegmentsToAdd,
+    segmentsToRemove,
+    complexFilter,
+    isFilterValid,
+  ]);
+
+  useEffect(() => {
+    segmentApi
+      .segmentAvailableSegmentsRetrieve()
+      .then(({ segments, staticSegments }) => {
+        setAvailableSegments(segments!!);
+        setAvailableStaticSegments(staticSegments!!);
+
+        if (initialData) {
+          initialData.addSegments && setSegmentsToAdd(initialData.addSegments);
+          initialData.staticSegments &&
+            setStaticSegmentsToAdd(initialData.staticSegments);
+          initialData.removeSegments &&
+            setSegmentsToRemove(initialData.removeSegments);
+          initialData.filterList &&
+            setComplexFilter(
+              initialData.filterList.map((f: string) => ({
+                value: f,
+                elementType: guessElementType(f),
+              })),
+            );
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim laden der Segmente!", "danger");
+      });
+
+    segmentApi
+      .segmentAvailableFiltersRetrieve()
+      .then(({ filters }) => setAvailableFilters(filters || []))
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim laden der Filter!", "danger");
+      });
+  }, []);
+
+  useEffect(() => {
+    if (
+      !isFilterValid ||
+      segmentsToAdd.length + staticSegmentsToAdd.length < 1
+    ) {
+      setResultCount(0);
+      setResultRecipients([]);
+      return;
+    }
+
+    segmentApi
+      .segmentCombineCreate({
+        segmentDataRequest: {
+          addSegments: segmentsToAdd,
+          staticSegments: staticSegmentsToAdd,
+          removeSegments: segmentsToRemove,
+          filterList: complexFilter.map((el) => el.value),
+        },
+      })
+      .then(({ count, recipients }) => {
+        setResultCount(count!!);
+        setResultRecipients(recipients!!.map((r) => r.name));
+      });
+  }, [
+    segmentsToAdd,
+    staticSegmentsToAdd,
+    segmentsToRemove,
+    complexFilter,
+    isFilterValid,
+  ]);
+
+  const handleAddSegment = () => {
+    if (selectedSegment === "") return;
+    if (availableStaticSegments.includes(selectedSegment)) {
+      setStaticSegmentsToAdd((prev) => [...prev, selectedSegment]);
+    } else {
+      setSegmentsToAdd((prev) => [...prev, selectedSegment]);
+    }
+    setSelectedSegment("");
+  };
+
+  const handleRemoveSegment = () => {
+    if (selectedSegment === "") return;
+
+    setSegmentsToRemove((prev) => [...prev, selectedSegment]);
+    setSelectedSegment("");
+  };
+
+  const segmentOptions = availableSegments.filter(
+    (s) => !segmentsToAdd.includes(s) && !segmentsToRemove.includes(s),
+  );
+
+  const staticSegmentOptions = availableStaticSegments.filter(
+    (s) => !segmentsToAdd.includes(s),
+  );
+
+  const handleFilterChange = (filter: FilterElement[]) => {
+    setComplexFilter(filter);
+  };
+
+  const plusSegmentButtonDisabled = !selectedSegment || selectedSegment === "";
+  const minusSegmentButtonDisabled =
+    plusSegmentButtonDisabled ||
+    segmentsToAdd.length === 0 ||
+    availableStaticSegments.includes(selectedSegment);
+
+  return (
+    <div>
+      <Form.Label>Segmente</Form.Label>
+      {(segmentsToAdd.length > 0 || staticSegmentsToAdd.length > 0) && (
+        <div style={{ marginBottom: "1em" }}>
+          <h6>
+            {segmentsToAdd.map((segment, idx) => (
+              <>
+                {idx > 0 && (
+                  <Badge
+                    bg="dark"
+                    style={{ borderRadius: 0, userSelect: "none" }}
+                  >
+                    +
+                  </Badge>
+                )}
+                <Badge
+                  key={idx}
+                  style={{
+                    cursor: "pointer",
+                    ...getBorderRadiusByIdx(
+                      idx,
+                      segmentsToAdd.length,
+                      true,
+                      segmentsToRemove.length === 0 &&
+                        staticSegmentsToAdd.length === 0,
+                    ),
+                  }}
+                  onClick={() => {
+                    const newSegmentsToAdd = [
+                      ...segmentsToAdd.filter((s) => s !== segment),
+                    ];
+                    setSegmentsToAdd(newSegmentsToAdd);
+                    if (newSegmentsToAdd.length === 0) {
+                      setSegmentsToRemove([]);
+                      setComplexFilter([]);
+                    }
+                  }}
+                  bg="success"
+                >
+                  {segment}
+                </Badge>
+              </>
+            ))}
+            {segmentsToRemove.map((segment, idx) => (
+              <>
+                <Badge
+                  bg="dark"
+                  style={{ borderRadius: 0, userSelect: "none" }}
+                >
+                  -
+                </Badge>
+                <Badge
+                  key={idx}
+                  style={{
+                    cursor: "pointer",
+                    ...getBorderRadiusByIdx(
+                      idx,
+                      segmentsToRemove.length,
+                      false,
+                      staticSegmentsToAdd.length === 0,
+                    ),
+                  }}
+                  onClick={() =>
+                    setSegmentsToRemove([
+                      ...segmentsToRemove.filter((s) => s !== segment),
+                    ])
+                  }
+                  bg="danger"
+                >
+                  {segment}
+                </Badge>
+              </>
+            ))}
+            {staticSegmentsToAdd.map((segment, idx) => (
+              <>
+                {(segmentsToAdd.length > 0 || idx > 0) && (
+                  <Badge
+                    bg="dark"
+                    style={{ borderRadius: 0, userSelect: "none" }}
+                  >
+                    +
+                  </Badge>
+                )}
+                <Badge
+                  key={idx}
+                  style={{
+                    cursor: "pointer",
+                    ...getBorderRadiusByIdx(
+                      idx,
+                      staticSegmentsToAdd.length,
+                      segmentsToAdd.length === 0,
+                    ),
+                  }}
+                  onClick={() =>
+                    setStaticSegmentsToAdd([
+                      ...staticSegmentsToAdd.filter((s) => s !== segment),
+                    ])
+                  }
+                >
+                  {segment}
+                </Badge>
+              </>
+            ))}
+          </h6>
+        </div>
+      )}
+      <div style={{ display: "flex" }}>
+        <Form.Select
+          onChange={(e) => setSelectedSegment(e.currentTarget.value)}
+          value={selectedSegment || ""}
+        >
+          <option
+            value=""
+            disabled
+          >
+            Segment auswählen
+          </option>
+          {segmentOptions.map((segment) => (
+            <option key={segment}>{segment}</option>
+          ))}
+          {staticSegmentOptions.map((segment) => (
+            <option
+              style={{ color: "blue" }}
+              key={segment}
+            >
+              {segment}
+            </option>
+          ))}
+        </Form.Select>
+        <PlusCircleIcon
+          style={{
+            marginLeft: "0.5em",
+            cursor: plusSegmentButtonDisabled ? "not-allowed" : "pointer",
+          }}
+          color={plusSegmentButtonDisabled ? "lightgrey" : "green"}
+          onClick={plusSegmentButtonDisabled ? undefined : handleAddSegment}
+          width="3em"
+        />
+        <MinusCircleIcon
+          style={{
+            cursor: minusSegmentButtonDisabled ? "not-allowed" : "pointer",
+          }}
+          color={minusSegmentButtonDisabled ? "lightgrey" : "red"}
+          onClick={minusSegmentButtonDisabled ? undefined : handleRemoveSegment}
+          width="3em"
+        />
+      </div>
+
+      {(segmentsToAdd.length > 0 || staticSegmentsToAdd.length > 0) && (
+        <>
+          <Accordion style={{ marginTop: "0.5em" }}>
+            <Accordion.Item eventKey="0">
+              <AccordionToggleCompact eventKey="0">
+                Erweiterte Filter&nbsp;&nbsp;
+                {complexFilter.length > 0 ? (
+                  isFilterValid ? (
+                    <CheckBadgeIcon
+                      style={{
+                        float: "right",
+                        marginRight: "1em",
+                        color: "green",
+                      }}
+                      width={20}
+                    />
+                  ) : (
+                    <ExclamationTriangleIcon
+                      style={{
+                        float: "right",
+                        marginRight: "1em",
+                        color: "red",
+                      }}
+                      width={20}
+                    />
+                  )
+                ) : (
+                  <span
+                    style={{ width: 20, float: "right", marginRight: "1em" }}
+                  >
+                    &nbsp;
+                  </span>
+                )}
+              </AccordionToggleCompact>
+              <Accordion.Body style={{ padding: "1em", paddingTop: 0 }}>
+                {complexFilter.length > 0 && (
+                  <FilterDisplay filter={complexFilter} />
+                )}
+                <FilterInput
+                  availableFilters={availableFilters}
+                  initialFilter={complexFilter}
+                  onFilterChange={handleFilterChange}
+                  onValidationChange={setIsFilterValid}
+                />
+                {isFilterValid || (
+                  <Badge
+                    style={{ marginTop: "1em" }}
+                    bg={"danger"}
+                  >
+                    Ungültiger Filter
+                  </Badge>
+                )}
+              </Accordion.Body>
+            </Accordion.Item>
+          </Accordion>
+
+          {isFilterValid && (
+            <Accordion style={{ marginTop: "1em" }}>
+              <Accordion.Item eventKey="0">
+                <Accordion.Header>
+                  <span style={{ width: "100%" }}>
+                    Empfänger Vorschau&nbsp;
+                    <Badge
+                      style={{ float: "right", marginRight: "1em" }}
+                      bg="success"
+                    >
+                      {resultCount}
+                    </Badge>
+                  </span>
+                </Accordion.Header>
+                <Accordion.Body>
+                  {resultRecipients.map((recipient) => (
+                    <span key={recipient}>
+                      <small>{recipient}</small>
+                      <br />
+                    </span>
+                  ))}
+                </Accordion.Body>
+              </Accordion.Item>
+            </Accordion>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export default SegmentInput;

@@ -1,5 +1,5 @@
 import { IEmailTemplate } from "easy-email-editor";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Modal } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import { EmailTemplateApi } from "../api_client";
@@ -22,23 +22,23 @@ const TemplateEditor = () => {
   const [showSaveGateModal, setShowSaveGateModal] = useState(false);
   const [loading, setLoading] = useState(Boolean(id));
 
-  useLayoutEffect(() => {
-    if (id) {
-      setLoading(true);
-      api
-        .emailtemplatesRetrieve({ id: id })
-        .then((data) => {
-          setId(data.id);
-          setName(data.name);
-          setContent(mjmlToJson(data.content));
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
-          navigate("/");
-        });
-    }
+  useEffect(() => {
+    if (!id || !api || !showAlert || !navigate) return;
+
+    setLoading(true);
+    api
+      .emailtemplatesRetrieve({ id: id })
+      .then((data) => {
+        setId(data.id);
+        setName(data.name);
+        setContent(mjmlToJson(data.content));
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
+        navigate("/");
+      });
   }, [id]);
 
   const handleBack = (values: IEmailTemplate) => {
@@ -51,7 +51,7 @@ const TemplateEditor = () => {
 
   const handleSave = (values: IEmailTemplate) => {
     const props = {
-      emailTemplateCreate: {
+      emailTemplateRequest: {
         name: name,
         content: jsonToMjml(values.content),
       },

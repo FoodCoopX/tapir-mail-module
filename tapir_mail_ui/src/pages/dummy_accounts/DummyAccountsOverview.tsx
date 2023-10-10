@@ -3,6 +3,7 @@ import DummyTapirUsersCard from "../../components/dummy_accounts/DummyTapirUsers
 import { Link } from "react-router-dom";
 import Paths from "../../routing";
 import { Button, Container } from "react-bootstrap";
+import DummyContractsCard from "../../components/dummy_accounts/DummyContractsCard";
 
 function DummyAccountsOverview() {
   return (
@@ -24,8 +25,10 @@ function DummyAccountsOverview() {
         }}
       >
         <DummyTapirUsersCard />
+        <DummyContractsCard />
       </div>
     </Container>
   );
 }
+
 export default DummyAccountsOverview;

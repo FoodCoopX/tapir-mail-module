@@ -13,8 +13,8 @@ class TestSendOldestEmailConfiguration(TapirUnitTest):
     NOW = datetime.datetime(
         year=2023, month=9, day=10, hour=12, minute=30, tzinfo=datetime.UTC
     )
-    RECIPIENT_1 = "recipient1@test.com"
-    RECIPIENT_2 = "recipient2@test.net"
+    RECIPIENT_1 = "recipient1@example.com"
+    RECIPIENT_2 = "recipient2@example.com"
     CONTENT = "Test content"
     SUBJECT = "Test subject"
     SUBTITLE = "Test subtitle"
@@ -37,54 +37,14 @@ class TestSendOldestEmailConfiguration(TapirUnitTest):
         )
         self.assertIs(mock_dispatch_queryset.filter.return_value, result)
 
-    @patch.object(EmailDispatch, "objects")
-    @patch("tapir_mail.service.send_oldest_email_configuration.send_email")
-    def test_sendEmailConfigurationDispatch_noValidRecipients_mailNotSent(
-        self, mock_send_mail: Mock, mock_email_dispatch_queryset: Mock
-    ):
-        config_dispatch = EmailConfigurationDispatchFactory.build(recipients="  , \n")
+    def test_sendEmailConfigurationDispatch_noSegmentData_exceptionThrown(self):
+        config_dispatch = EmailConfigurationDispatchFactory.build(segment_data=None)
         config_dispatch.save = Mock()
 
-        SendOldestEmailConfiguration._send_email_configuration_dispatch(config_dispatch)
-
-        mock_send_mail.assert_not_called()
-        self.assertEqual(0, len(mock_email_dispatch_queryset.mock_calls))
-
-        self.assertTrue(config_dispatch.is_sent)
-        config_dispatch.save.assert_called_once()
-
-    @patch.object(EmailDispatch, "objects")
-    @patch("tapir_mail.service.send_oldest_email_configuration.send_email")
-    def test_sendEmailConfigurationDispatch_hasValidRecipients_mailSentToValidRecipients(
-        self, mock_send_mail: Mock, mock_email_dispatch_queryset: Mock
-    ):
-        config_dispatch = EmailConfigurationDispatchFactory.build(
-            recipients=f"\n,{self.RECIPIENT_1},{self.RECIPIENT_2}",
-            email_configuration_version__content=self.CONTENT,
-            email_configuration_version__subject=self.SUBJECT,
-            email_configuration_version__subtitle=self.SUBTITLE,
-        )
-        config_dispatch.save = Mock()
-        mock_timezone_now(self, self.NOW)
-
-        SendOldestEmailConfiguration._send_email_configuration_dispatch(config_dispatch)
-
-        valid_recipients = [self.RECIPIENT_1, self.RECIPIENT_2]
-        mock_send_mail.assert_called_once_with(
-            mjml=self.CONTENT,
-            subject=self.SUBJECT,
-            subtitle=self.SUBTITLE,
-            recipients=valid_recipients,
-        )
-
-        mock_email_dispatch_queryset.bulk_create.assert_called_once()
-        bulk_create_args = mock_email_dispatch_queryset.bulk_create.call_args.args[0]
-        for index, recipient in enumerate(valid_recipients):
-            dispatch = bulk_create_args[index]
-            self.assertEqual(recipient, dispatch.recipient)
-
-        config_dispatch.is_sent = True
-        config_dispatch.save.assert_called_once_with()
+        with self.assertRaises(ValueError):
+            SendOldestEmailConfiguration._send_email_configuration_dispatch(
+                config_dispatch
+            )
 
     def given_lock(self, can_lock: bool):
         patcher = patch("tapir_mail.service.send_oldest_email_configuration.cache.lock")
