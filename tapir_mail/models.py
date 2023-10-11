@@ -79,6 +79,7 @@ class EmailConfigurationVersion(BaseModel):
         default=ReleaseStatus.DRAFT,
     )
     trigger = models.CharField(max_length=255, null=True)
+    segment_data = models.JSONField(null=True, blank=True)
 
     @transaction.atomic
     def release(self):
@@ -106,22 +107,34 @@ class EmailConfigurationDispatch(models.Model):
     email_configuration_version = models.ForeignKey(
         EmailConfigurationVersion, on_delete=models.CASCADE
     )
-    segment_data = models.JSONField(null=True, blank=True)
     scheduled_time = models.DateTimeField(default=timezone.now)
     is_sent = models.BooleanField(default=False)
+    override_recipients = models.JSONField(null=True)
 
     def get_recipient_list(self):
         if self.is_sent:
             return [dispatch.recipient for dispatch in self.emaildispatch_set.all()]
-        elif self.segment_data is not None:
+
+        if self.override_recipients:
+            return self.override_recipients
+
+        if self.email_configuration_version.segment_data is not None:
             return combine_segments_with_filters(
-                add_segments=self.segment_data.get("addSegments", []),
-                static_segments=self.segment_data.get("staticSegments", []),
-                remove_segments=self.segment_data.get("removeSegments", []),
-                filter_list=self.segment_data.get("filterList", []),
+                add_segments=self.email_configuration_version.segment_data.get(
+                    "addSegments", []
+                ),
+                static_segments=self.email_configuration_version.segment_data.get(
+                    "staticSegments", []
+                ),
+                remove_segments=self.email_configuration_version.segment_data.get(
+                    "removeSegments", []
+                ),
+                filter_list=self.email_configuration_version.segment_data.get(
+                    "filterList", []
+                ),
             )
-        else:
-            return []
+
+        return []
 
     def __str__(self):
         return f"{self.email_configuration_version} - {self.recipients} - {self.scheduled_time} - {self.is_sent}"

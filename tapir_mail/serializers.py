@@ -43,6 +43,17 @@ class RecipientSerializer(serializers.Serializer):
     recipients = serializers.ListField(child=serializers.EmailField(), required=True)
 
 
+class SegmentDataSerializer(serializers.Serializer):
+    add_segments = serializers.ListField(child=serializers.CharField(), required=False)
+    static_segments = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+    remove_segments = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+    filter_list = serializers.ListField(child=serializers.CharField(), required=False)
+
+
 class BundledEmailConfigurationSerializer(
     TriggerValidationMixin, serializers.Serializer
 ):
@@ -59,21 +70,7 @@ class BundledEmailConfigurationSerializer(
     release_status = serializers.CharField()
     updated_at = serializers.DateTimeField(allow_null=True, required=False)
     trigger = serializers.CharField(allow_null=True, required=False)
-
-    # EmailConfigurationDispatch fields
-    scheduled_time = serializers.DateTimeField()
-    segment_data = serializers.JSONField(allow_null=True, required=False)
-
-
-class SegmentDataSerializer(serializers.Serializer):
-    add_segments = serializers.ListField(child=serializers.CharField(), required=False)
-    static_segments = serializers.ListField(
-        child=serializers.CharField(), required=False
-    )
-    remove_segments = serializers.ListField(
-        child=serializers.CharField(), required=False
-    )
-    filter_list = serializers.ListField(child=serializers.CharField(), required=False)
+    segment_data = SegmentDataSerializer(allow_null=True, required=False)
 
 
 class EmailConfigurationDispatchSerializer(serializers.Serializer):

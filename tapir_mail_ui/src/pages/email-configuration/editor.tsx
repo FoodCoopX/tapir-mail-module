@@ -7,7 +7,6 @@ import {
   EmailConfigurationVersionApi,
   EmailTemplate,
   EmailTemplateApi,
-  SegmentCombineCreateRequest,
   SegmentData,
   StatusEnum,
 } from "../../api_client";
@@ -20,7 +19,6 @@ import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
-import { HomeIcon, ListBulletIcon } from "@heroicons/react/24/outline";
 import TriggerDropdown from "../../components/triggerDropdown";
 
 const ID_NEW_TEMPLATE = "<new>";

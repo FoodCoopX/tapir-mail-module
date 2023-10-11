@@ -6,7 +6,7 @@ from tapir_mail.service.triggers import Trigger
 
 class OnAccountCreatedTrigger(Trigger):
     @classmethod
-    def get_recipients(
+    def get_recipients_override(
         cls, version: EmailConfigurationVersion, email_of_created_account: str
     ):
         return [email_of_created_account]
@@ -26,7 +26,7 @@ class OnAccountCreatedTrigger(Trigger):
 
 class OnAccountUpdatedTrigger(Trigger):
     @classmethod
-    def get_recipients(
+    def get_recipients_override(
         cls, version: EmailConfigurationVersion, email_of_updated_account: str
     ):
         return [email_of_updated_account]

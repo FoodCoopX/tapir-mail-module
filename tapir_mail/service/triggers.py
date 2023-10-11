@@ -11,7 +11,7 @@ class Trigger(ABC):
 
             EmailConfigurationDispatch.objects.create(
                 email_configuration_version=version,
-                recipients=cls.get_recipients(version, data),
+                override_recipients=cls.get_recipients_override(version, data),
                 scheduled_time=cls.get_scheduled_date(version),
                 is_sent=False,
             )
@@ -31,9 +31,8 @@ class Trigger(ABC):
         pass
 
     @classmethod
-    @abstractmethod
-    def get_recipients(cls, email_configuration_version, data) -> [str]:
-        pass
+    def get_recipients_override(cls, email_configuration_version, data) -> [str]:
+        return None
 
     @classmethod
     @abstractmethod

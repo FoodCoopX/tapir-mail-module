@@ -79,8 +79,17 @@ def _apply_complex_filters(queryset, filter_list):
 
 
 def combine_segments_with_filters(
-    add_segments=[], static_segments=[], remove_segments=[], filter_list=[]
+    add_segments=None, static_segments=None, remove_segments=None, filter_list=None
 ):
+    if filter_list is None:
+        filter_list = []
+    if remove_segments is None:
+        remove_segments = []
+    if static_segments is None:
+        static_segments = []
+    if add_segments is None:
+        add_segments = []
+
     from tapir_mail.models import StaticSegment
 
     if not add_segments and not static_segments:

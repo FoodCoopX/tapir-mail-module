@@ -47,10 +47,12 @@ const DummyTapirUserEdit = () => {
     if (id) {
       apiCall = api.dummyAccountsDummyTapirUserUpdate({
         id: user.id,
-        dummyTapirUser: user,
+        dummyTapirUserRequest: user,
       });
     } else {
-      apiCall = api.dummyAccountsDummyTapirUserCreate({ dummyTapirUser: user });
+      apiCall = api.dummyAccountsDummyTapirUserCreate({
+        dummyTapirUserRequest: user,
+      });
     }
 
     apiCall

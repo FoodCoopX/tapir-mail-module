@@ -30,12 +30,12 @@ from tapir_mail.serializers import (
     SegmentDataSerializer,
 )
 from tapir_mail.service.email import send_email
-from tapir_mail.service.triggers import trigger_registry
 from tapir_mail.service.segment import (
     combine_segments_with_filters,
     filter_registry,
     segment_registry,
 )
+from tapir_mail.service.triggers import trigger_registry
 
 LOG = logging.getLogger(__name__)
 
@@ -109,6 +109,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
             trigger=serializer.validated_data["trigger"],
+            segment_data=serializer.validated_data["segment_data"],
         )
 
         if version.status == ReleaseStatus.RELEASED:
@@ -116,18 +117,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
             ).exclude(id=version.id).update(status=ReleaseStatus.ARCHIVED)
-
-        # Create EmailConfigurationDispatch
-        email_config_dispatch = EmailConfigurationDispatch.objects.get_or_create(
-            email_configuration_version=version,
-        )[0]
-        email_config_dispatch.segment_data = serializer.validated_data.get(
-            "segment_data", None
-        )
-        email_config_dispatch.scheduled_time = serializer.validated_data[
-            "scheduled_time"
-        ]
-        email_config_dispatch.save()
 
         return Response({"id": version.id}, status=status.HTTP_201_CREATED)
 
@@ -143,7 +132,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "subject": version.subject,
             "subtitle": version.subtitle,
             "release_status": version.status,
-            "segment_data": dispatch_instance.segment_data,
+            "segment_data": version.segment_data,
         }
         serializer = BundledEmailConfigurationSerializer(
             data=request.data, initial=initial_data
@@ -165,6 +154,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version.subtitle = serializer.validated_data.get("subtitle", None)
         version.status = serializer.validated_data["release_status"]
         version.trigger = serializer.validated_data["trigger"]
+        version.segment_data = serializer.validated_data["segment_data"]
         version.save()
 
         if version.status == ReleaseStatus.RELEASED:
@@ -172,13 +162,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
             ).exclude(id=version.id).update(status=ReleaseStatus.ARCHIVED)
-
-        # Update EmailConfigurationDispatch
-        dispatch_instance.scheduled_time = serializer.validated_data["scheduled_time"]
-        dispatch_instance.segment_data = serializer.validated_data.get(
-            "segment_data", None
-        )
-        dispatch_instance.save()
 
         return Response(serializer.data)
 
@@ -196,7 +179,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "subtitle": version.subtitle,
             "updated_at": version.updated_at,
             "release_status": version.status,
-            "segment_data": dispatch_instance.segment_data,
+            "segment_data": version.segment_data,
             "trigger": version.trigger,
         }
 

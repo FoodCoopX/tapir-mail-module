@@ -195,7 +195,7 @@ const SelectVersionModal = ({
         console.error(err);
         showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
       });
-  }, [configApi, showAlert, emailConfiguration]);
+  }, [emailConfiguration]);
 
   const handleCloseSendModal = () => setSendModalOpen(false);
   const handleEdit = () => {
