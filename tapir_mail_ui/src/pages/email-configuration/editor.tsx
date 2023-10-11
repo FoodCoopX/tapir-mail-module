@@ -19,7 +19,7 @@ import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
-import TriggerDropdown from "../../components/triggerDropdown";
+import TriggerInput from "../../components/triggerInput";
 
 const ID_NEW_TEMPLATE = "<new>";
 
@@ -40,6 +40,9 @@ const EmailConfigurationEditor = () => {
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
   const [triggerId, setTriggerId] = useState<string | null>("");
+  const [triggerData, setTriggerData] = useState<Record<string, any> | null>(
+    {},
+  );
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
@@ -87,6 +90,7 @@ const EmailConfigurationEditor = () => {
           setMailingName(data.name || "");
           setUpdatedAt(data.updatedAt || undefined);
           setTriggerId(data.trigger || null);
+          setTriggerData(data.triggerData || {});
         })
         .catch((err) => {
           console.error(err);
@@ -111,6 +115,7 @@ const EmailConfigurationEditor = () => {
         name: mailingName,
         releaseStatus: newStatus,
         trigger: triggerId,
+        triggerData: triggerData,
         segmentData: segmentData,
       };
 
@@ -346,13 +351,11 @@ const EmailConfigurationEditor = () => {
             </div>
             <br />
 
-            <Form.Group>
-              <Form.Label>Trigger</Form.Label>
-              <TriggerDropdown
-                selectedTriggerId={triggerId}
-                onChange={setTriggerId}
-              />
-            </Form.Group>
+            <TriggerInput
+              selectedTriggerId={triggerId}
+              onTriggerSelected={setTriggerId}
+              triggerData={triggerData}
+            />
 
             <hr />
             <Button

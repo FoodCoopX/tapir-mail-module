@@ -8,6 +8,7 @@ from tapir_mail_server.dummy_accounts.serializers import (
 from tapir_mail_server.dummy_accounts.triggers import (
     OnAccountCreatedTrigger,
     OnAccountUpdatedTrigger,
+    SimpleAccountTriggerData,
 )
 
 
@@ -17,12 +18,16 @@ class DummyTapirUserViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         result = super().create(request, *args, **kwargs)
-        OnAccountCreatedTrigger.fire(result.data["email"])
+        OnAccountCreatedTrigger.fire_all_released_configs(
+            SimpleAccountTriggerData(target_email=result.data["email"])
+        )
         return result
 
     def update(self, request, *args, **kwargs):
         result = super().update(request, *args, **kwargs)
-        OnAccountUpdatedTrigger.fire(result.data["email"])
+        OnAccountUpdatedTrigger.fire_all_released_configs(
+            SimpleAccountTriggerData(target_email=result.data["email"])
+        )
         return result
 
 

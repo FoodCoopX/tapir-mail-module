@@ -35,7 +35,7 @@ from tapir_mail.service.segment import (
     filter_registry,
     segment_registry,
 )
-from tapir_mail.service.triggers import trigger_registry
+from tapir_mail.service.triggers import trigger_registry, Trigger
 
 LOG = logging.getLogger(__name__)
 
@@ -109,10 +109,12 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
             trigger=serializer.validated_data["trigger"],
+            trigger_data=serializer.validated_data["trigger_data"],
             segment_data=serializer.validated_data["segment_data"],
         )
 
         if version.status == ReleaseStatus.RELEASED:
+            Trigger.on_create(version.trigger, version.trigger_data)
             EmailConfigurationVersion.objects.filter(
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
@@ -133,6 +135,8 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "subtitle": version.subtitle,
             "release_status": version.status,
             "segment_data": version.segment_data,
+            "trigger": version.trigger,
+            "trigger_data": version.trigger_data,
         }
         serializer = BundledEmailConfigurationSerializer(
             data=request.data, initial=initial_data
@@ -154,6 +158,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version.subtitle = serializer.validated_data.get("subtitle", None)
         version.status = serializer.validated_data["release_status"]
         version.trigger = serializer.validated_data["trigger"]
+        version.trigger_data = serializer.validated_data["trigger_data"]
         version.segment_data = serializer.validated_data["segment_data"]
         version.save()
 
@@ -168,22 +173,25 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
     @extend_schema(responses={200: BundledEmailConfigurationSerializer})
     @action(detail=True, methods=["GET"])
     def get_bundled_info(self, request, pk=None):
-        version = self.get_object()
+        version: EmailConfigurationVersion = self.get_object()
         email_configuration = version.email_configuration
 
-        bundled_data = {
-            "name": email_configuration.name,
-            "description": email_configuration.description,
-            "content": version.content,
-            "subject": version.subject,
-            "subtitle": version.subtitle,
-            "updated_at": version.updated_at,
-            "release_status": version.status,
-            "segment_data": version.segment_data,
-            "trigger": version.trigger,
-        }
+        serializer = BundledEmailConfigurationSerializer(
+            {
+                "name": email_configuration.name,
+                "description": email_configuration.description,
+                "content": version.content,
+                "subject": version.subject,
+                "subtitle": version.subtitle,
+                "updated_at": version.updated_at,
+                "release_status": version.status,
+                "segment_data": version.segment_data,
+                "trigger": version.trigger,
+                "trigger_data": version.trigger_data,
+            }
+        )
 
-        return Response(bundled_data, status=status.HTTP_200_OK)
+        return Response(serializer.data)
 
     @transaction.atomic
     def destroy(self, request, pk=None, *args, **kwargs):
@@ -320,7 +328,11 @@ class TriggerListView(viewsets.ViewSet):
     def list(self, request):
         serializer = TriggerSerializer(
             [
-                {"id": trigger.get_id(), "name": trigger.get_display_name()}
+                {
+                    "id": trigger.get_id(),
+                    "name": trigger.get_display_name(),
+                    "field_definitions": trigger.get_field_definitions(),
+                }
                 for trigger in trigger_registry.values()
             ],
             many=True,

@@ -9,12 +9,37 @@ from tapir_mail.models import (
 from tapir_mail.service.triggers import trigger_registry
 
 
-class TriggerValidationMixin:
+class TriggerSerializationMixin(metaclass=serializers.SerializerMetaclass):
+    trigger = serializers.CharField(allow_null=True, required=False)
+    trigger_data = serializers.JSONField(allow_null=True, required=False)
+
     @staticmethod
     def validate_trigger(trigger_id):
         if trigger_id and trigger_id not in trigger_registry.keys():
             raise serializers.ValidationError(f"Invalid trigger id : {trigger_id}")
         return trigger_id
+
+    @staticmethod
+    def validate(data):
+        if not data["trigger"]:
+            return data
+
+        expected_fields = [
+            field.field_name
+            for field in trigger_registry[data["trigger"]].get_field_definitions()
+        ]
+        received_fields = data["trigger_data"].keys()
+
+        missing_fields = [
+            field for field in expected_fields if field not in received_fields
+        ]
+
+        if missing_fields:
+            raise serializers.ValidationError(
+                f"Invalid trigger data. Missing fields: {missing_fields}"
+            )
+
+        return data
 
 
 class EmailTemplateSerializer(serializers.ModelSerializer):
@@ -30,7 +55,7 @@ class EmailConfigurationSerializer(serializers.ModelSerializer):
 
 
 class EmailConfigurationVersionSerializer(
-    TriggerValidationMixin, serializers.ModelSerializer
+    TriggerSerializationMixin, serializers.ModelSerializer
 ):
     email_configuration = EmailConfigurationSerializer()
 
@@ -55,7 +80,7 @@ class SegmentDataSerializer(serializers.Serializer):
 
 
 class BundledEmailConfigurationSerializer(
-    TriggerValidationMixin, serializers.Serializer
+    TriggerSerializationMixin, serializers.Serializer
 ):
     # EmailConfiguration fields
     name = serializers.CharField()
@@ -69,7 +94,6 @@ class BundledEmailConfigurationSerializer(
     subtitle = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     release_status = serializers.CharField()
     updated_at = serializers.DateTimeField(allow_null=True, required=False)
-    trigger = serializers.CharField(allow_null=True, required=False)
     segment_data = SegmentDataSerializer(allow_null=True, required=False)
 
 
@@ -80,9 +104,16 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     segment_data = SegmentDataSerializer(allow_null=True, required=False)
 
 
+class TriggerFieldDefinitionSerializer(serializers.Serializer):
+    label = serializers.CharField()
+    type = serializers.CharField()
+    field_name = serializers.CharField()
+
+
 class TriggerSerializer(serializers.Serializer):
     id = serializers.CharField()
     name = serializers.CharField()
+    field_definitions = TriggerFieldDefinitionSerializer(many=True)
 
 
 class EmailDispatchSerializer(serializers.ModelSerializer):
