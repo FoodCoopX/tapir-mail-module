@@ -32,6 +32,7 @@ from tapir_mail.service.segment import (
     filter_registry,
     segment_registry,
 )
+from tapir_mail.service.token import replace_tokens, token_registry
 
 LOG = logging.getLogger(__name__)
 
@@ -277,8 +278,9 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
                 data={"message": f"Invalid recipients parameter: {str(e)}"},
             )
+        mjml = replace_tokens(email_version_configuration.content)
         send_email(
-            mjml=email_version_configuration.content,
+            mjml=mjml,
             subject=email_version_configuration.subject,
             subtitle=email_version_configuration.subtitle,
             recipients=recipients_list,
@@ -427,3 +429,16 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
             )
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TokensView(viewsets.ViewSet):
+    @extend_schema(
+        responses={200: {"type": "object"}},
+    )
+    @action(detail=False, methods=["get"])
+    def get_tokens(self, request, *args, **kwargs):
+        all_tokens = {}
+        for token_type, tokens in token_registry.items():
+            all_tokens[token_type] = list(tokens.keys())
+
+        return Response(all_tokens, status=status.HTTP_200_OK)

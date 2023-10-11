@@ -18,6 +18,8 @@ class Command(BaseCommand):
         total = kwargs["total"]
         for i in range(total):
             DummyTapirUser.objects.create(
+                first_name=get_random_string(length=5),
+                last_name=get_random_string(length=5),
                 email=f"{get_random_string(length=5)}@example.com",
                 has_coop_shares=choice([True, False]),
                 pickup_location=choice(
