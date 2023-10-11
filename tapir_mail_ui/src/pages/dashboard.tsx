@@ -65,7 +65,7 @@ const TemplatesCard = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [api, showAlert]);
+  }, []);
 
   return (
     <Card>
