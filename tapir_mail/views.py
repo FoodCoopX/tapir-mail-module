@@ -114,7 +114,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         )
 
         if version.status == ReleaseStatus.RELEASED:
-            Trigger.on_create(version.trigger, version.trigger_data)
+            Trigger.on_create(version)
             EmailConfigurationVersion.objects.filter(
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,

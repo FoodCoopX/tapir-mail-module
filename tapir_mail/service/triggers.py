@@ -3,8 +3,6 @@ from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import Dict, Generic, TypeVar
 
-from tapir_mail.models import EmailConfigurationVersion, EmailConfigurationDispatch
-
 TriggerData = TypeVar("TriggerData")
 
 
@@ -19,19 +17,23 @@ class Trigger(Generic[TriggerData], ABC):
     def fire_all_released_configs(cls, data: TriggerData):
         from tapir_mail.models import ReleaseStatus
 
+        from tapir_mail.models import EmailConfigurationVersion
+
         for version in EmailConfigurationVersion.objects.filter(
             trigger=cls.get_id(), status=ReleaseStatus.RELEASED
         ):
             cls.fire_version(version, data)
 
     @classmethod
-    def fire_version(cls, version: EmailConfigurationVersion, data: TriggerData):
+    def fire_version(cls, email_configuration_version, data: TriggerData):
         from tapir_mail.models import EmailConfigurationDispatch
 
         EmailConfigurationDispatch.objects.create(
-            email_configuration_version=version,
-            override_recipients=cls.get_recipients_override(version, data),
-            scheduled_time=cls.get_scheduled_date(version, data),
+            email_configuration_version=email_configuration_version,
+            override_recipients=cls.get_recipients_override(
+                email_configuration_version, data
+            ),
+            scheduled_time=cls.get_scheduled_date(email_configuration_version, data),
             is_sent=False,
         )
 
@@ -63,13 +65,18 @@ class Trigger(Generic[TriggerData], ABC):
         return []
 
     @staticmethod
-    def on_create(trigger_id, trigger_data: TriggerData):
-        if not trigger_id or trigger_id not in trigger_registry.keys():
+    def on_create(email_configuration_version):
+        if (
+            not email_configuration_version.trigger
+            or email_configuration_version.trigger not in trigger_registry.keys()
+        ):
             return
-        trigger_registry[trigger_id]._on_create(trigger_data)
+        trigger_registry[email_configuration_version.trigger]._on_create(
+            email_configuration_version
+        )
 
     @classmethod
-    def _on_create(cls, version: EmailConfigurationVersion, trigger_data: TriggerData):
+    def _on_create(cls, email_configuration_version):
         # Override this method if your trigger must for example fire on create
         pass
 
@@ -103,13 +110,17 @@ class TimeTrigger(Trigger[TimeTriggerData]):
         ]
 
     @classmethod
-    def _on_create(
-        cls, version: EmailConfigurationVersion, trigger_data: TimeTriggerData
-    ):
+    def _on_create(cls, email_configuration_version):
+        from tapir_mail.models import EmailConfigurationDispatch
+
         EmailConfigurationDispatch.objects.filter(
-            email_configuration_version__email_configuration=version.email_configuration
+            email_configuration_version__email_configuration=email_configuration_version.email_configuration
         ).delete()
-        cls.fire_version(version, trigger_data)
+
+        cls.fire_version(
+            email_configuration_version,
+            TimeTriggerData(**email_configuration_version.trigger_data),
+        )
 
 
 trigger_registry: Dict[str, type[Trigger]] = {}

@@ -121,24 +121,13 @@ class EmailConfigurationDispatch(models.Model):
 
         if self.email_configuration_version.segment_data is not None:
             return combine_segments_with_filters(
-                add_segments=self.email_configuration_version.segment_data.get(
-                    "addSegments", []
-                ),
-                static_segments=self.email_configuration_version.segment_data.get(
-                    "staticSegments", []
-                ),
-                remove_segments=self.email_configuration_version.segment_data.get(
-                    "removeSegments", []
-                ),
-                filter_list=self.email_configuration_version.segment_data.get(
-                    "filterList", []
-                ),
+                **self.email_configuration_version.segment_data
             )
 
         return []
 
     def __str__(self):
-        return f"{self.email_configuration_version} - {self.recipients} - {self.scheduled_time} - {self.is_sent}"
+        return f"{self.email_configuration_version} - {self.get_recipient_list()} - {self.scheduled_time} - {self.is_sent}"
 
 
 class EmailDispatch(models.Model):
