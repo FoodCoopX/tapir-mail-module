@@ -10,7 +10,7 @@ import "easy-email-editor/lib/style.css";
 
 import "@arco-themes/react-easy-email-theme/css/arco.css";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { AdvancedType, BasicType, BlockManager } from "easy-email-core";
+import { AdvancedType } from "easy-email-core";
 import { ExtensionProps, StandardLayout } from "easy-email-extensions";
 import "easy-email-extensions/lib/style.css";
 import { Alert, Button, Form } from "react-bootstrap";
@@ -19,18 +19,26 @@ import { TokensApi } from "../api_client";
 import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
 import { getMediaLibraryFileUrl } from "../utils/getMediaLibraryFileUrl";
+import { mjmlToJson } from "../utils/mjml";
 //import './CustomBlocks';
 
 const fontList = [
-  "Arial",
-  "Tahoma",
-  "Verdana",
-  "Times New Roman",
-  "Courier New",
-  "Georgia",
-  "Lato",
-  "Montserrat",
-].map((item) => ({ value: item, label: item }));
+  {
+    name: "Montserrat",
+    css: "/static/fonts/Montserrat.css",
+  },
+  {
+    name: "Bitter",
+    css: "/static/fonts/Bitter.css",
+  },
+  { name: "Arial" },
+  { name: "Tahoma" },
+  { name: "Verdana" },
+  { name: "Times New Roman" },
+  { name: "Courier New" },
+  { name: "Georgia" },
+  { name: "Lato" },
+].map(({ name, css }) => ({ value: name, label: name, css: css }));
 
 const categories: ExtensionProps["categories"] = [
   {
@@ -94,8 +102,18 @@ const categories: ExtensionProps["categories"] = [
     ],
   },
 ];
-export const EMPTY_PAGE = BlockManager.getBlockByType(BasicType.PAGE)!.create(
-  {},
+export const EMPTY_PAGE = mjmlToJson(
+  "<mjml><mj-head>" +
+    fontList
+      .filter((f) => f.css)
+      .map(
+        (f) =>
+          `<mj-font name="${f.label}" href="${
+            (f.css!!.startsWith("/") ? process.env.REACT_APP_API_ROOT : "") +
+            f.css!!
+          }" />`,
+      ) +
+    "</mj-head><mj-body></mj-body></mjml>",
 );
 
 type EditorProps = {
