@@ -1,6 +1,7 @@
 from django.core.mail import EmailMultiAlternatives
-from django.template import Template, Context
+from django.template import Context, Template
 
+from tapir_mail.service.token import replace_tokens
 from tapir_mail_server import settings
 
 
@@ -13,14 +14,15 @@ def send_email(**kwargs):
     if not mjml:
         raise ValueError("mjml is required")
 
+    recipients = kwargs.pop("recipients", [])
+    if not recipients:
+        raise ValueError("recipients is required")
+
     email_body = Template(
         "{% load mjml %}\n{% mjml %}" + mjml + "{% endmjml %}"
     ).render(Context({}))
 
     subject = kwargs.pop("subject")
-    recipients = kwargs.pop("recipients")
-
-    # TODO: persist sent email in database
 
     email = EmailMultiAlternatives(
         subject=subject,

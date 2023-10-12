@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-wrap-multilines */
-import React, { FC, useEffect } from "react";
+import React, { FC, useEffect, useState } from "react";
 
 import {
   EmailEditor,
@@ -15,6 +15,9 @@ import { ExtensionProps, StandardLayout } from "easy-email-extensions";
 import "easy-email-extensions/lib/style.css";
 import { Alert, Button, Form } from "react-bootstrap";
 import { useWindowSize } from "react-use";
+import { TokensApi } from "../api_client";
+import { useAlert } from "../contexts/alerts";
+import { useApi } from "../hooks/useApi";
 import { getMediaLibraryFileUrl } from "../utils/getMediaLibraryFileUrl";
 import { mjmlToJson } from "../utils/mjml";
 //import './CustomBlocks';
@@ -134,6 +137,32 @@ const Editor: React.FC<EditorProps> = ({
   subtitle,
   content = EMPTY_PAGE,
 }) => {
+  const api = useApi(TokensApi);
+  const showAlert = useAlert();
+
+  const [mergeTags, setMergeTags] = useState<any>({});
+
+  useEffect(() => {
+    api
+      .tokensGetTokensRetrieve()
+      .then((tokens: any) => {
+        const remappedObject: { [key: string]: { [key: string]: string } } = {};
+
+        Object.keys(tokens).forEach((key) => {
+          remappedObject[key] = {} as { [key: string]: string };
+          tokens[key].forEach((value: string) => {
+            remappedObject[key][value] = value;
+          });
+        });
+
+        setMergeTags(remappedObject);
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim Laden der Tokens", "danger");
+      });
+  }, []);
+
   const handleUploadImage = async (file: Blob) => {
     return new Promise<string>((resolve, reject) => {
       startUpload();
@@ -202,10 +231,10 @@ const Editor: React.FC<EditorProps> = ({
           fontList={fontList}
           onSubmit={onSave}
           enabledLogic={false} // conditional blocks and stuff, interesting but maybe complex at the beginning
+          mergeTags={mergeTags}
           // interactiveStyle={hoverColor:'#000000', selectedCorlor:'#000000'} <--- style the editor with CI colors
           // onAddCollection={(collection) => console.log(collection)}  <--- allows to save blocks to a collection for reuse
           // onRemoveCollection={(collection) => console.log(collection)}  <--- allows to remove blocks from a collection
-          // mergeTags={mergeTags} // <--- allows to add tokens to the editor
         >
           {({ values }, { submit }) => (
             <CustomEmailEditor

@@ -1,10 +1,9 @@
-from datetime import date
-
-from tapir_mail.models import StaticSegment
 from tapir_mail.service.segment import (
+    register_base_segment,
     register_filter,
     register_segment,
 )
+from tapir_mail.service.token import register_tokens
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 
 # Folgende Grundmengen sollen in einem ersten Schritt angelegt werden und vom Standort-Admin auswählbar sein:
@@ -15,6 +14,26 @@ from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 # 4. Alle, die einen laufenden Erntevertrag haben.
 # 5. Alle, die keinen laufenden Erntevertrag haben.
 # 6. Eine statische Nutzermenge (Tabelle) mit Mailadressen (=Mitarbeitende der Oragnisation und Stakeholder ohne Tapir-Mitgliedsaccount; wird vom Admin gepflegt)
+
+
+def register_all():
+    register_base_segment(DummyTapirUser.objects.all())
+    register_segments()
+    register_filters()
+    register_tokens(
+        user_tokens={
+            "Vorname": "first_name",
+            "Nachname": "last_name",
+            "Email": "email",
+            "Abholort": "pickup_location",
+            "Ernteanteilsgröße": "subscription_type",
+        },
+        general_tokens={
+            "WirGarten Standort": lambda: "WirGarten Lüneburg eG",
+            "Admin Name": "Max Mustermann",
+            "Admin Email": "max.mustermann@example.com",
+        },
+    )
 
 
 def register_segments():

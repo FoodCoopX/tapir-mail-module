@@ -225,12 +225,12 @@ const EmailConfigurationEditor = () => {
     setSegmentData(segmentData);
   };
 
-  const saveButtonDisabled =
-    !mailingName || (id !== undefined && content !== loadedContent);
+  const saveButtonDisabled = !mailingName;
   const segmentChoosen =
-    segmentData &&
-    ((segmentData.addSegments?.length || 0) > 0 ||
-      (segmentData.staticSegments?.length || 0) > 0);
+    (segmentData &&
+      ((segmentData.addSegments?.length || 0) > 0 ||
+        (segmentData.staticSegments?.length || 0) > 0)) ||
+    (id !== undefined && content !== loadedContent);
   const releaseButtonDisabled =
     saveButtonDisabled || !subject || !segmentChoosen;
   return loading ? (
