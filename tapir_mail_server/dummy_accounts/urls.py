@@ -6,6 +6,5 @@ urlpatterns = []
 
 router = routers.DefaultRouter()
 router.register("dummy_tapir_user", views.DummyTapirUserViewSet)
-router.register("dummy_contract", views.DummyContractViewSet)
 
 urlpatterns += router.urls

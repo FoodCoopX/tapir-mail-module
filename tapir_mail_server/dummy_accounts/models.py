@@ -1,8 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from tapir_mail_server.dummy_accounts.model_utils import DurationModelMixin
-
 
 class DummyTapirUser(models.Model):
     email = models.EmailField(_("email address"), blank=True)
@@ -13,10 +11,6 @@ class DummyTapirUser(models.Model):
 
     def __str__(self):
         return f"User: {self.email} (#{self.id})"
-
-
-class DummyContract(DurationModelMixin, models.Model):
-    tapir_user = models.ForeignKey(DummyTapirUser, on_delete=models.CASCADE)
 
 
 class DummySubscription(models.Model):
