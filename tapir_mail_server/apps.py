@@ -7,10 +7,9 @@ class TapirMailServerAppConfig(AppConfig):
 
     def ready(self):
         try:
-            from .segments import register_filters, register_segments
+            from .segments import register_all
 
-            register_segments()
-            register_filters()
+            register_all()
         except Exception as e:
             print(e)
             pass

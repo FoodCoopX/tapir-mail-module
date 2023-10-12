@@ -8,18 +8,34 @@ from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 
 LOG = logging.getLogger(__name__)
 
-BASE_QUERYSET = DummyTapirUser.objects.all()
+BASE_QUERYSET = None
 
 segment_registry = {"Alle Benutzer": (lambda: DummyTapirUser.objects.all())}
 filter_registry = {}
 
 
+def _check_base_queryset():
+    if BASE_QUERYSET is None:
+        raise ValueError(
+            "Base queryset not set. Please call register_base_segment first."
+        )
+
+
+def register_base_segment(queryset):
+    global BASE_QUERYSET
+    BASE_QUERYSET = queryset
+
+
 def register_segment(name, func):
+    _check_base_queryset()
+
     LOG.info(f"Registering segment {name}")
     segment_registry[name] = func
 
 
 def register_filter(name, func):
+    _check_base_queryset()
+
     LOG.info(f"Registering filter {name}")
     filter_registry[name] = func
 
