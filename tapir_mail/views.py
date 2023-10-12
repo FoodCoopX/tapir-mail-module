@@ -370,9 +370,9 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
     def available_segments(self, request):
         static_segments = [
             x["name"]
-            for x in StaticSegment.objects.filter(recipients__isnull=False).values(
-                "name"
-            )
+            for x in StaticSegment.objects.filter(recipients__isnull=False)
+            .distinct()
+            .values("name")
         ]
 
         available_segments = list(segment_registry.keys())
