@@ -119,7 +119,7 @@ const EmailConfigurationTable = ({
       .finally(() => {
         setLoading(false);
       });
-  }, [apiCall, showAlert]);
+  }, []);
 
   return (
     <Card>

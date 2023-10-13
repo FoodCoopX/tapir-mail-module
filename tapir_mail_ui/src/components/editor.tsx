@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-wrap-multilines */
-import React, { FC, useEffect } from "react";
+import React, { FC, useEffect, useState } from "react";
 
 import {
   EmailEditor,
@@ -10,24 +10,35 @@ import "easy-email-editor/lib/style.css";
 
 import "@arco-themes/react-easy-email-theme/css/arco.css";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { AdvancedType, BasicType, BlockManager } from "easy-email-core";
+import { AdvancedType } from "easy-email-core";
 import { ExtensionProps, StandardLayout } from "easy-email-extensions";
 import "easy-email-extensions/lib/style.css";
 import { Alert, Button, Form } from "react-bootstrap";
 import { useWindowSize } from "react-use";
+import { TokensApi } from "../api_client";
+import { useAlert } from "../contexts/alerts";
+import { useApi } from "../hooks/useApi";
 import { getMediaLibraryFileUrl } from "../utils/getMediaLibraryFileUrl";
+import { mjmlToJson } from "../utils/mjml";
 //import './CustomBlocks';
 
 const fontList = [
-  "Arial",
-  "Tahoma",
-  "Verdana",
-  "Times New Roman",
-  "Courier New",
-  "Georgia",
-  "Lato",
-  "Montserrat",
-].map((item) => ({ value: item, label: item }));
+  {
+    name: "Montserrat",
+    css: "/static/fonts/Montserrat.css",
+  },
+  {
+    name: "Bitter",
+    css: "/static/fonts/Bitter.css",
+  },
+  { name: "Arial" },
+  { name: "Tahoma" },
+  { name: "Verdana" },
+  { name: "Times New Roman" },
+  { name: "Courier New" },
+  { name: "Georgia" },
+  { name: "Lato" },
+].map(({ name, css }) => ({ value: name, label: name, css: css }));
 
 const categories: ExtensionProps["categories"] = [
   {
@@ -91,8 +102,18 @@ const categories: ExtensionProps["categories"] = [
     ],
   },
 ];
-export const EMPTY_PAGE = BlockManager.getBlockByType(BasicType.PAGE)!.create(
-  {},
+export const EMPTY_PAGE = mjmlToJson(
+  "<mjml><mj-head>" +
+    fontList
+      .filter((f) => f.css)
+      .map(
+        (f) =>
+          `<mj-font name="${f.label}" href="${
+            (f.css!!.startsWith("/") ? process.env.REACT_APP_API_ROOT : "") +
+            f.css!!
+          }" />`,
+      ) +
+    "</mj-head><mj-body></mj-body></mjml>",
 );
 
 type EditorProps = {
@@ -116,6 +137,32 @@ const Editor: React.FC<EditorProps> = ({
   subtitle,
   content = EMPTY_PAGE,
 }) => {
+  const api = useApi(TokensApi);
+  const showAlert = useAlert();
+
+  const [mergeTags, setMergeTags] = useState<any>({});
+
+  useEffect(() => {
+    api
+      .tokensGetTokensRetrieve()
+      .then((tokens: any) => {
+        const remappedObject: { [key: string]: { [key: string]: string } } = {};
+
+        Object.keys(tokens).forEach((key) => {
+          remappedObject[key] = {} as { [key: string]: string };
+          tokens[key].forEach((value: string) => {
+            remappedObject[key][value] = value;
+          });
+        });
+
+        setMergeTags(remappedObject);
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim Laden der Tokens", "danger");
+      });
+  }, []);
+
   const handleUploadImage = async (file: Blob) => {
     return new Promise<string>((resolve, reject) => {
       startUpload();
@@ -184,10 +231,10 @@ const Editor: React.FC<EditorProps> = ({
           fontList={fontList}
           onSubmit={onSave}
           enabledLogic={false} // conditional blocks and stuff, interesting but maybe complex at the beginning
+          mergeTags={mergeTags}
           // interactiveStyle={hoverColor:'#000000', selectedCorlor:'#000000'} <--- style the editor with CI colors
           // onAddCollection={(collection) => console.log(collection)}  <--- allows to save blocks to a collection for reuse
           // onRemoveCollection={(collection) => console.log(collection)}  <--- allows to remove blocks from a collection
-          // mergeTags={mergeTags} // <--- allows to add tokens to the editor
         >
           {({ values }, { submit }) => (
             <CustomEmailEditor

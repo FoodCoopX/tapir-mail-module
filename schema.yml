@@ -1426,6 +1426,21 @@ paths:
                         email:
                           type: string
           description: ''
+  /api/tokens/get_tokens/:
+    get:
+      operationId: tokens_get_tokens_retrieve
+      tags:
+      - tokens
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
 components:
   schemas:
     BundledEmailConfiguration:

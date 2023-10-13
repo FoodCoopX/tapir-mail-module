@@ -3,6 +3,8 @@ from django.utils import timezone
 
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import send_email
+from tapir_mail.service.segment import combine_segments_with_filters
+from tapir_mail.service.token import replace_tokens
 from tapir_mail_server.celery import app
 
 
@@ -37,13 +39,6 @@ class SendOldestEmailConfiguration:
         recipients = config_dispatch.get_recipient_list()
 
         if recipients:
-            send_email(
-                mjml=config_dispatch.email_configuration_version.content,
-                subject=config_dispatch.email_configuration_version.subject,
-                subtitle=config_dispatch.email_configuration_version.subtitle,
-                recipients=recipients,
-            )
-
             EmailDispatch.objects.bulk_create(
                 [
                     EmailDispatch(
@@ -54,6 +49,17 @@ class SendOldestEmailConfiguration:
                     for recipient in recipients
                 ]
             )
+
+            for recipient in recipients:
+                mjml = replace_tokens(
+                    config_dispatch.email_configuration_version.content, recipient
+                )
+                send_email(
+                    mjml=mjml,
+                    subject=config_dispatch.email_configuration_version.subject,
+                    subtitle=config_dispatch.email_configuration_version.subtitle,
+                    recipients=[recipient.email],
+                )
 
         config_dispatch.is_sent = True
         config_dispatch.save()

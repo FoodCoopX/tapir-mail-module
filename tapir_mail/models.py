@@ -174,7 +174,7 @@ class EmailDispatch(models.Model):
 
 
 class StaticSegment(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
 
 
 class StaticSegmentRecipient(models.Model):
