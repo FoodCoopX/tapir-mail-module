@@ -8,8 +8,6 @@ class DummyTapirUser(models.Model):
     email = models.EmailField(_("email address"), blank=True)
     pickup_location = models.CharField(max_length=255, blank=True)
     has_coop_shares = models.BooleanField(default=False)
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
 
     @property
     def subscription_type(self):
