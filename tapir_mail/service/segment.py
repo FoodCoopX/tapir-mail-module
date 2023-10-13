@@ -132,3 +132,7 @@ def combine_segments_with_filters(
         )
         traceback.print_exc()
         raise e
+
+
+def segment_data_to_recipient_list(segment_data):
+    return combine_segments_with_filters(**segment_data)

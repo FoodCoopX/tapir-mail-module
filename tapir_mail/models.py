@@ -4,7 +4,9 @@ from django.db import models, transaction
 from django.utils import timezone
 from nanoid import generate
 
-from tapir_mail.service.segment import combine_segments_with_filters
+from tapir_mail.service.segment import (
+    segment_data_to_recipient_list,
+)
 
 ID_LENGTH = 10
 
@@ -88,9 +90,10 @@ class EmailConfigurationVersion(BaseModel):
         self.save()
 
         # Archive current released version
-        self.email_configuration.versions.exclude(id=self.id).filter(
+        for version in self.email_configuration.versions.exclude(id=self.id).filter(
             status=ReleaseStatus.RELEASED
-        ).update(status=ReleaseStatus.ARCHIVED)
+        ):
+            version.archive()
 
     def archive(self):
         self.status = ReleaseStatus.ARCHIVED
@@ -120,14 +123,30 @@ class EmailConfigurationDispatch(models.Model):
             return self.override_recipients
 
         if self.email_configuration_version.segment_data is not None:
-            return combine_segments_with_filters(
-                **self.email_configuration_version.segment_data
+            return segment_data_to_recipient_list(
+                self.email_configuration_version.segment_data
             )
 
         return []
 
     def __str__(self):
         return f"{self.email_configuration_version} - {self.get_recipient_list()} - {self.scheduled_time} - {self.is_sent}"
+
+
+def delete_unsent_dispatches_if_not_released(
+    instance: EmailConfigurationVersion, **kwargs
+):
+    if instance.status == ReleaseStatus.RELEASED:
+        return
+
+    EmailConfigurationDispatch.objects.filter(
+        email_configuration_version=instance, is_sent=False
+    ).delete()
+
+
+models.signals.post_save.connect(
+    delete_unsent_dispatches_if_not_released, sender=EmailConfigurationVersion
+)
 
 
 class EmailDispatch(models.Model):

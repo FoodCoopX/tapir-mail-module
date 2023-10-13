@@ -11,7 +11,9 @@ class DummyAccountsConfig(AppConfig):
         from tapir_mail_server.dummy_accounts.triggers import (
             OnAccountCreatedTrigger,
             OnAccountUpdatedTrigger,
+            DaysAfterSubscriptionStartTrigger,
         )
 
         register_trigger(OnAccountCreatedTrigger)
         register_trigger(OnAccountUpdatedTrigger)
+        register_trigger(DaysAfterSubscriptionStartTrigger)

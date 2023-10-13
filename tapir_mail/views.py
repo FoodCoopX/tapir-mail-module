@@ -115,10 +115,11 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
 
         if version.status == ReleaseStatus.RELEASED:
             Trigger.on_create(version)
-            EmailConfigurationVersion.objects.filter(
+            for version in EmailConfigurationVersion.objects.filter(
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
-            ).exclude(id=version.id).update(status=ReleaseStatus.ARCHIVED)
+            ).exclude(id=version.id):
+                version.archive()
 
         return Response({"id": version.id}, status=status.HTTP_201_CREATED)
 
@@ -163,10 +164,11 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version.save()
 
         if version.status == ReleaseStatus.RELEASED:
-            EmailConfigurationVersion.objects.filter(
+            for version in EmailConfigurationVersion.objects.filter(
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
-            ).exclude(id=version.id).update(status=ReleaseStatus.ARCHIVED)
+            ).exclude(id=version.id):
+                version.archive()
 
         return Response(serializer.data)
 
