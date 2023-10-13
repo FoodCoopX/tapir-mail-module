@@ -3,7 +3,6 @@ from django.utils import timezone
 
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import send_email
-from tapir_mail.service.segment import combine_segments_with_filters
 from tapir_mail.service.token import replace_tokens
 from tapir_mail_server.celery import app
 
@@ -43,7 +42,7 @@ class SendOldestEmailConfiguration:
                 [
                     EmailDispatch(
                         email_configuration_dispatch=config_dispatch,
-                        recipient=recipient,
+                        recipient=recipient.email,
                         sent_time=timezone.now(),
                     )
                     for recipient in recipients

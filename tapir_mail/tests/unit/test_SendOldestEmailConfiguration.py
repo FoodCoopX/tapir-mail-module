@@ -1,7 +1,7 @@
 import datetime
 from unittest.mock import patch, Mock
 
-from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch
+from tapir_mail.models import EmailConfigurationDispatch
 from tapir_mail.service.send_oldest_email_configuration import (
     SendOldestEmailConfiguration,
 )
@@ -38,8 +38,10 @@ class TestSendOldestEmailConfiguration(TapirUnitTest):
         self.assertIs(mock_dispatch_queryset.filter.return_value, result)
 
     def test_sendEmailConfigurationDispatch_noSegmentData_exceptionThrown(self):
-        config_dispatch = EmailConfigurationDispatchFactory.build(segment_data=None)
-        config_dispatch.save = Mock()
+        config_dispatch: EmailConfigurationDispatch = (
+            EmailConfigurationDispatchFactory.build()
+        )
+        config_dispatch.email_configuration_version.segment_data = None
 
         with self.assertRaises(ValueError):
             SendOldestEmailConfiguration._send_email_configuration_dispatch(
