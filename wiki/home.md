@@ -6,4 +6,4 @@ In diesem Verzeichnis können wir unsere Projektdokumentation ablegen und auf di
 
 - [Deployment Rules](deployment_rules.md)
 - [Review Protokolle](Review%20Protokolle.md)
-- [User FAQ](user_faq.md)
+- [Benutzer Handbuch](user_guide.md)
