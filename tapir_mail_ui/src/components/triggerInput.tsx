@@ -53,8 +53,10 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
             <TapirMailFormGroup
               label={fieldDefinition.label}
               type={fieldDefinition.type}
-              object={triggerData}
-              objectField={fieldDefinition.fieldName}
+              value={triggerData[fieldDefinition.fieldName]}
+              onChange={(value) => {
+                triggerData[fieldDefinition.fieldName] = value;
+              }}
             />
             <br />
           </>

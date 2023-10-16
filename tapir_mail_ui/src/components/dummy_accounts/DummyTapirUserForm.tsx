@@ -15,7 +15,7 @@ const DummyTapirUserForm: React.FC<DummyTapirUserFormProps> = ({
   interface FormGroupProps {
     label: string;
     type: string;
-    field: string;
+    field: keyof Omit<DummyTapirUser, "id">;
   }
 
   const formGroups: FormGroupProps[] = [
@@ -25,14 +25,18 @@ const DummyTapirUserForm: React.FC<DummyTapirUserFormProps> = ({
   ];
   return (
     <Form style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-      {formGroups.map((formGroup) => (
-        <TapirMailFormGroup
-          label={formGroup.label}
-          type={formGroup.type}
-          object={user}
-          objectField={formGroup.field}
-        />
-      ))}
+      {formGroups.map((formGroup) => {
+        return (
+          <TapirMailFormGroup
+            label={formGroup.label}
+            type={formGroup.type}
+            value={user[formGroup.field]}
+            onChange={(value) => {
+              user[formGroup.field] = value;
+            }}
+          />
+        );
+      })}
       <Button
         variant="primary"
         onClick={onSave}

@@ -8,15 +8,15 @@ import DateTimePicker from "./dateTimePicker";
 interface FormGroupProps {
   label: string;
   type: string;
-  object: any;
-  objectField: string;
+  value: any;
+  onChange: (newValue: any) => void;
 }
 
 const TapirMailFormGroup: React.FC<FormGroupProps> = ({
   label,
   type,
-  object,
-  objectField,
+  value,
+  onChange,
 }) => {
   return (
     <Form.Group>
@@ -24,10 +24,8 @@ const TapirMailFormGroup: React.FC<FormGroupProps> = ({
         <>
           <Form.Label>{label}</Form.Label>
           <DateTimePicker
-            initialValue={new Date(object[objectField] ?? null)}
-            onChange={(date) => {
-              object[objectField] = date;
-            }}
+            initialValue={value ? new Date(value) : new Date(Date.now())}
+            onChange={onChange}
           />
         </>
       ) : (
@@ -35,9 +33,9 @@ const TapirMailFormGroup: React.FC<FormGroupProps> = ({
           <Form.Control
             required={true}
             type={type}
-            defaultValue={object[objectField]}
+            defaultValue={value}
             onChange={(e) => {
-              object[objectField] = e.target.value;
+              onChange(e.target.value);
             }}
           />
         </FloatingLabel>
