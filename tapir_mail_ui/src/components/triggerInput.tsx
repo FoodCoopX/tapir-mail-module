@@ -26,9 +26,7 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
   );
 
   useEffect(() => {
-    triggersApi.triggersList().then((triggers) => {
-      setTriggers(triggers);
-    });
+    triggersApi.triggersList().then(setTriggers);
   }, []);
 
   function onDropdownSelect(trigger_id: string | null) {
