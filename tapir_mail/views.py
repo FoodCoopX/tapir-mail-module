@@ -35,8 +35,8 @@ from tapir_mail.service.segment import (
     filter_registry,
     segment_registry,
 )
-from tapir_mail.service.triggers import trigger_registry, Trigger
 from tapir_mail.service.token import replace_tokens, token_registry
+from tapir_mail.service.triggers import trigger_registry, Trigger
 
 LOG = logging.getLogger(__name__)
 
@@ -115,7 +115,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         )
 
         if version.status == ReleaseStatus.RELEASED:
-            Trigger.on_create(version)
+            Trigger.on_email_configuration_version_create(version)
             for version in EmailConfigurationVersion.objects.filter(
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,

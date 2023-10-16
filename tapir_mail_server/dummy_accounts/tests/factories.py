@@ -27,7 +27,7 @@ class DummyTapirUserFactory(factory.django.DjangoModelFactory):
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
     email = factory.Faker("email")
-    pickup_location = factory.SubFactory(DummyPickupLocationFactory)
+    pickup_location = factory.Iterator(DummyPickupLocation.objects.all())
     has_coop_shares = factory.Faker("pybool")
 
 

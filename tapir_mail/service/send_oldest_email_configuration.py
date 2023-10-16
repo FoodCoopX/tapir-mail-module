@@ -4,6 +4,7 @@ from django.utils import timezone
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import send_email
 from tapir_mail.service.token import replace_tokens
+from tapir_mail.service.triggers import trigger_registry
 from tapir_mail_server.celery import app
 
 
@@ -59,6 +60,10 @@ class SendOldestEmailConfiguration:
                     subtitle=config_dispatch.email_configuration_version.subtitle,
                     recipients=[recipient.email],
                 )
+
+        trigger_registry[
+            config_dispatch.email_configuration_version.trigger
+        ].after_mail_sent(config_dispatch)
 
         config_dispatch.is_sent = True
         config_dispatch.save()

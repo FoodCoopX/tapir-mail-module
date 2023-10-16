@@ -2,10 +2,10 @@ from rest_framework import viewsets
 
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 from tapir_mail_server.dummy_accounts.serializers import DummyTapirUserSerializer
-from tapir_mail_server.dummy_accounts.triggers import (
+from tapir_mail_server.dummy_accounts.triggers.account_triggers import (
     OnAccountCreatedTrigger,
-    OnAccountUpdatedTrigger,
     SimpleAccountTriggerData,
+    OnAccountUpdatedTrigger,
 )
 
 
