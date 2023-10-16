@@ -1,7 +1,10 @@
 from rest_framework import viewsets
 
-from tapir_mail_server.dummy_accounts.models import DummyTapirUser
-from tapir_mail_server.dummy_accounts.serializers import DummyTapirUserSerializer
+from tapir_mail_server.dummy_accounts.models import DummyTapirUser, DummyPickupLocation
+from tapir_mail_server.dummy_accounts.serializers import (
+    DummyTapirUserSerializer,
+    DummyPickupLocationSerializer,
+)
 from tapir_mail_server.dummy_accounts.triggers.account_triggers import (
     OnAccountCreatedTrigger,
     SimpleAccountTriggerData,
@@ -26,3 +29,8 @@ class DummyTapirUserViewSet(viewsets.ModelViewSet):
             SimpleAccountTriggerData(target_email=result.data["email"])
         )
         return result
+
+
+class DummyPickupLocationViewSet(viewsets.ModelViewSet):
+    queryset = DummyPickupLocation.objects.order_by("name")
+    serializer_class = DummyPickupLocationSerializer
