@@ -6,8 +6,12 @@ from django.core.management.base import BaseCommand
 from tapir_mail_server.dummy_accounts.models import (
     DummySubscription,
     DummyTapirUser,
+    DummyPickupLocation,
 )
-from tapir_mail_server.dummy_accounts.tests.factories import DummyTapirUserFactory
+from tapir_mail_server.dummy_accounts.tests.factories import (
+    DummyTapirUserFactory,
+    DummyPickupLocationFactory,
+)
 
 
 class Command(BaseCommand):
@@ -19,6 +23,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **kwargs):
+        while DummyPickupLocation.objects.count() < 5:
+            DummyPickupLocationFactory.create()
+
         total = kwargs["total"]
         for _ in range(total):
             DummyTapirUserFactory.create()
