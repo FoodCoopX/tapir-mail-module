@@ -1,4 +1,6 @@
 import { lazy } from "react";
+import DummyTapirUserEdit from "./pages/dummy_accounts/DummyTapirUserEdit";
+
 const Dashboard = lazy(() => import("./pages/dashboard"));
 const EmailConfigurationEditor = lazy(
   () => import("./pages/email-configuration/editor"),
@@ -8,6 +10,9 @@ const MailPlanningOverview = lazy(
 );
 const MediaLibrary = lazy(() => import("./pages/media_library"));
 const TemplateEditor = lazy(() => import("./pages/template-editor"));
+const DummyAccountsOverview = lazy(
+  () => import("./pages/dummy_accounts/DummyAccountsOverview"),
+);
 
 const Paths = {
   dashboard: "/",
@@ -17,6 +22,9 @@ const Paths = {
   templateEditorCreate: "/editor",
   templateEditorEdit: "/editor/:templateId",
   mediaLibrary: "/media_library",
+  dummyAccounts: "/dummy_accounts",
+  dummyTapirUserCreate: "/dummy_accounts/dummy_tapir_user/new",
+  dummyTapirUserEdit: "/dummy_accounts/dummy_tapir_user/edit/:id",
   // add new paths here
 };
 
@@ -48,6 +56,18 @@ const routes = [
   {
     path: Paths.mediaLibrary,
     element: MediaLibrary,
+  },
+  {
+    path: Paths.dummyAccounts,
+    element: DummyAccountsOverview,
+  },
+  {
+    path: Paths.dummyTapirUserCreate,
+    element: DummyTapirUserEdit,
+  },
+  {
+    path: Paths.dummyTapirUserEdit,
+    element: DummyTapirUserEdit,
   },
   // add new routes here
 ];

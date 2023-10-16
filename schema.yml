@@ -3,6 +3,151 @@ info:
   title: ''
   version: 0.0.0
 paths:
+  /api/dummy_accounts/dummy_tapir_user/:
+    get:
+      operationId: dummy_accounts_dummy_tapir_user_list
+      tags:
+      - dummy_accounts
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DummyTapirUser'
+          description: ''
+    post:
+      operationId: dummy_accounts_dummy_tapir_user_create
+      tags:
+      - dummy_accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DummyTapirUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DummyTapirUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DummyTapirUserRequest'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DummyTapirUser'
+          description: ''
+  /api/dummy_accounts/dummy_tapir_user/{id}/:
+    get:
+      operationId: dummy_accounts_dummy_tapir_user_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this dummy tapir user.
+        required: true
+      tags:
+      - dummy_accounts
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DummyTapirUser'
+          description: ''
+    put:
+      operationId: dummy_accounts_dummy_tapir_user_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this dummy tapir user.
+        required: true
+      tags:
+      - dummy_accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DummyTapirUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DummyTapirUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DummyTapirUserRequest'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DummyTapirUser'
+          description: ''
+    patch:
+      operationId: dummy_accounts_dummy_tapir_user_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this dummy tapir user.
+        required: true
+      tags:
+      - dummy_accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDummyTapirUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDummyTapirUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDummyTapirUserRequest'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DummyTapirUser'
+          description: ''
+    delete:
+      operationId: dummy_accounts_dummy_tapir_user_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this dummy tapir user.
+        required: true
+      tags:
+      - dummy_accounts
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/email_configuration/:
     get:
       operationId: email_configuration_list
@@ -668,6 +813,45 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
+          description: ''
+  /api/email_dispatch/:
+    get:
+      operationId: email_dispatch_list
+      tags:
+      - email_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmailDispatch'
+          description: ''
+  /api/email_dispatch/{id}/:
+    get:
+      operationId: email_dispatch_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this email dispatch.
+        required: true
+      tags:
+      - email_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailDispatch'
           description: ''
   /api/email_template/:
     get:
@@ -1441,11 +1625,36 @@ paths:
               schema:
                 type: object
           description: ''
+  /api/triggers/:
+    get:
+      operationId: triggers_list
+      description: Get a list of available triggers.
+      tags:
+      - triggers
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trigger'
+          description: ''
 components:
   schemas:
     BundledEmailConfiguration:
       type: object
       properties:
+        trigger:
+          type: string
+          nullable: true
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         name:
           type: string
         description:
@@ -1465,21 +1674,25 @@ components:
           type: string
           format: date-time
           nullable: true
-        scheduled_time:
-          type: string
-          format: date-time
         segment_data:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/SegmentData'
           nullable: true
       required:
       - content
       - name
       - release_status
-      - scheduled_time
     BundledEmailConfigurationRequest:
       type: object
       properties:
+        trigger:
+          type: string
+          nullable: true
+          minLength: 1
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         name:
           type: string
           minLength: 1
@@ -1502,18 +1715,57 @@ components:
           type: string
           format: date-time
           nullable: true
-        scheduled_time:
-          type: string
-          format: date-time
         segment_data:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/SegmentDataRequest'
           nullable: true
       required:
       - content
       - name
       - release_status
-      - scheduled_time
+    DummyTapirUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 255
+        last_name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        pickup_location:
+          type: string
+          maxLength: 255
+        has_coop_shares:
+          type: boolean
+      required:
+      - id
+    DummyTapirUserRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          maxLength: 255
+        last_name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        pickup_location:
+          type: string
+          maxLength: 255
+        has_coop_shares:
+          type: boolean
     EmailConfiguration:
       type: object
       properties:
@@ -1597,6 +1849,13 @@ components:
         id:
           type: string
           maxLength: 10
+        trigger:
+          type: string
+          nullable: true
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         email_configuration:
           $ref: '#/components/schemas/EmailConfiguration'
         created_at:
@@ -1619,6 +1878,10 @@ components:
           maxLength: 255
         status:
           $ref: '#/components/schemas/StatusEnum'
+        segment_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
       required:
       - created_at
       - email_configuration
@@ -1631,6 +1894,14 @@ components:
           type: string
           minLength: 1
           maxLength: 10
+        trigger:
+          type: string
+          nullable: true
+          minLength: 1
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         email_configuration:
           $ref: '#/components/schemas/EmailConfigurationRequest'
         content:
@@ -1647,9 +1918,33 @@ components:
           maxLength: 255
         status:
           $ref: '#/components/schemas/StatusEnum'
+        segment_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
       required:
       - email_configuration
       - subject
+    EmailDispatch:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email_configuration_dispatch:
+          $ref: '#/components/schemas/EmailConfigurationDispatch'
+        recipient:
+          type: string
+          format: email
+          maxLength: 254
+        sent_time:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - email_configuration_dispatch
+      - id
+      - recipient
     EmailTemplate:
       type: object
       properties:
@@ -1694,6 +1989,14 @@ components:
     PatchedBundledEmailConfigurationRequest:
       type: object
       properties:
+        trigger:
+          type: string
+          nullable: true
+          minLength: 1
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         name:
           type: string
           minLength: 1
@@ -1716,13 +2019,29 @@ components:
           type: string
           format: date-time
           nullable: true
-        scheduled_time:
-          type: string
-          format: date-time
         segment_data:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/SegmentDataRequest'
           nullable: true
+    PatchedDummyTapirUserRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          maxLength: 255
+        last_name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        pickup_location:
+          type: string
+          maxLength: 255
+        has_coop_shares:
+          type: boolean
     PatchedEmailConfigurationDispatchRequest:
       type: object
       properties:
@@ -1995,6 +2314,34 @@ components:
       - upload_id
       - upload_name
       - upload_type
+    Trigger:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        field_definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerFieldDefinition'
+      required:
+      - field_definitions
+      - id
+      - name
+    TriggerFieldDefinition:
+      type: object
+      properties:
+        label:
+          type: string
+        type:
+          type: string
+        field_name:
+          type: string
+      required:
+      - field_name
+      - label
+      - type
     UploadTypeEnum:
       enum:
       - F

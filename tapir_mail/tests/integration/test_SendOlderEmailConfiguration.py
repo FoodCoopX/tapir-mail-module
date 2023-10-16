@@ -26,7 +26,7 @@ class TestSendOldestEmailConfiguration(TapirIntegrationTest):
     RECIPIENTS = [RECIPIENT_1, RECIPIENT_2]
     SUBJECT = "Test subject"
     SEGMENT_NAME = "Test segment"
-    SEGMENT_DATA = {"staticSegments": [SEGMENT_NAME]}
+    SEGMENT_DATA = {"static_segments": [SEGMENT_NAME]}
 
     def setUp(self) -> None:
         super().setUp()
@@ -46,20 +46,7 @@ class TestSendOldestEmailConfiguration(TapirIntegrationTest):
 
         SendOldestEmailConfiguration.send_oldest_email_configuration()
 
-        self.assertEqual(1, len(mail.outbox))
-        sent_mail = mail.outbox[0]
-        self.assertEqual(self.RECIPIENTS, sent_mail.recipients())
-        self.assertEqual(self.SUBJECT, sent_mail.subject)
-        self.assertIn("Test content", sent_mail.body)
-
-        config_dispatch.refresh_from_db()
-        self.assertTrue(config_dispatch.is_sent)
-        self.assertEqual(2, EmailDispatch.objects.count())
-        for index, recipient in enumerate(self.RECIPIENTS):
-            dispatch = EmailDispatch.objects.all()[index]
-            self.assertEqual(recipient, dispatch.recipient)
-            self.assertEqual(self.NOW, dispatch.sent_time)
-            self.assertEqual(config_dispatch, dispatch.email_configuration_dispatch)
+        self.assert_config_sent_correctly(config_dispatch)
 
     def test_scheduledTimeIsInTheFuture_emailDoesNotGetSent(self):
         config_dispatch = self.create_config_that_would_be_sent()
@@ -72,6 +59,52 @@ class TestSendOldestEmailConfiguration(TapirIntegrationTest):
         config_dispatch.refresh_from_db()
         self.assertFalse(config_dispatch.is_sent)
         self.assertEqual(0, EmailDispatch.objects.count())
+
+    def test_configOnlyHasADraftVersion_emailDoesNotGetSent(self):
+        self.skipTest(
+            "I think this test doesn't make sense anymore "
+            "now that dispatches are destroyed if the version is not released"
+        )
+        config_dispatch = self.create_config_that_would_be_sent()
+        config_dispatch.email_configuration_version.status = ReleaseStatus.DRAFT
+        config_dispatch.email_configuration_version.save()
+
+        SendOldestEmailConfiguration.send_oldest_email_configuration()
+
+        self.assertEqual(0, len(mail.outbox))
+        config_dispatch.refresh_from_db()
+        self.assertFalse(config_dispatch.is_sent)
+        self.assertEqual(0, EmailDispatch.objects.count())
+
+    def test_configHasSeveralVersions_onlyReleaseGetsSent(self):
+        config_dispatch_archived = self.create_config_that_would_be_sent()
+        config_dispatch_archived.email_configuration_version.status = (
+            ReleaseStatus.ARCHIVED
+        )
+        config_dispatch_archived.email_configuration_version.save()
+        config_dispatch_released = self.create_config_that_would_be_sent()
+        config_dispatch_draft = self.create_config_that_would_be_sent()
+        config_dispatch_draft.email_configuration_version.status = ReleaseStatus.DRAFT
+        config_dispatch_draft.email_configuration_version.save()
+
+        # Sending several times since only one config is sent per call,
+        # we want to make sure that the other configs never get released
+        SendOldestEmailConfiguration.send_oldest_email_configuration()
+        SendOldestEmailConfiguration.send_oldest_email_configuration()
+        SendOldestEmailConfiguration.send_oldest_email_configuration()
+
+        self.assert_config_sent_correctly(config_dispatch_released)
+
+        self.assertFalse(
+            EmailConfigurationDispatch.objects.filter(
+                id=config_dispatch_draft.id
+            ).exists()
+        )
+        self.assertFalse(
+            EmailConfigurationDispatch.objects.filter(
+                id=config_dispatch_archived.id
+            ).exists()
+        )
 
     def test_configAlreadySent_emailDoesNotGetSent(self):
         config_dispatch = self.create_config_that_would_be_sent()
@@ -106,8 +139,26 @@ class TestSendOldestEmailConfiguration(TapirIntegrationTest):
         return EmailConfigurationDispatchFactory.create(
             scheduled_time=self.NOW - datetime.timedelta(days=1),
             is_sent=False,
-            segment_data=self.SEGMENT_DATA,
+            email_configuration_version__segment_data=self.SEGMENT_DATA,
             email_configuration_version__status=ReleaseStatus.RELEASED,
             email_configuration_version__subject=self.SUBJECT,
             email_configuration_version__content="<mjml><mj-body><mj-text>Test content</mj-text></mj-body></mjml>",
         )
+
+    def assert_config_sent_correctly(self, config_dispatch: EmailConfigurationDispatch):
+        self.assertEqual(2, len(mail.outbox))
+        self.assertEqual(2, EmailDispatch.objects.count())
+
+        config_dispatch.refresh_from_db()
+        self.assertTrue(config_dispatch.is_sent)
+
+        for index, recipient in enumerate(self.RECIPIENTS):
+            sent_mail = mail.outbox[index]
+            self.assertEqual([recipient], sent_mail.recipients())
+            self.assertEqual(self.SUBJECT, sent_mail.subject)
+            self.assertIn("Test content", sent_mail.body)
+
+            dispatch = EmailDispatch.objects.all()[index]
+            self.assertEqual(recipient, dispatch.recipient)
+            self.assertEqual(self.NOW, dispatch.sent_time)
+            self.assertEqual(config_dispatch, dispatch.email_configuration_dispatch)

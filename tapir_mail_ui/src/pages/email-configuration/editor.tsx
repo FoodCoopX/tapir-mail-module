@@ -7,11 +7,9 @@ import {
   EmailConfigurationVersionApi,
   EmailTemplate,
   EmailTemplateApi,
-  SegmentCombineCreateRequest,
   SegmentData,
   StatusEnum,
 } from "../../api_client";
-import DateTimePicker from "../../components/dateTimePicker";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
 import Loading from "../../components/loading";
 import SegmentInput from "../../components/segments/segmentInput";
@@ -21,6 +19,7 @@ import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
+import TriggerInput from "../../components/triggerInput";
 
 const ID_NEW_TEMPLATE = "<new>";
 
@@ -40,7 +39,10 @@ const EmailConfigurationEditor = () => {
   const [subtitle, setSubtitle] = useState("");
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
-  const [scheduledTime, setScheduledTime] = useState<Date>(new Date());
+  const [triggerId, setTriggerId] = useState<string | null>("");
+  const [triggerData, setTriggerData] = useState<Record<string, any> | null>(
+    {},
+  );
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
@@ -53,7 +55,6 @@ const EmailConfigurationEditor = () => {
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
   const [lastSavedTime, setLastSavedTime] = useState(Date.now());
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
-
   const showAlert = useAlert();
 
   const templateApi = useApi(EmailTemplateApi);
@@ -87,8 +88,9 @@ const EmailConfigurationEditor = () => {
           setLoadedContent(content);
           setStatus(stringToStatus(data.releaseStatus) || StatusEnum.Draft);
           setMailingName(data.name || "");
-          setScheduledTime(data.scheduledTime);
           setUpdatedAt(data.updatedAt || undefined);
+          setTriggerId(data.trigger || null);
+          setTriggerData(data.triggerData || {});
         })
         .catch((err) => {
           console.error(err);
@@ -111,8 +113,9 @@ const EmailConfigurationEditor = () => {
         subtitle: subtitle,
         content: jsonToMjml(content),
         name: mailingName,
-        scheduledTime: scheduledTime,
         releaseStatus: newStatus,
+        trigger: triggerId,
+        triggerData: triggerData,
         segmentData: segmentData,
       };
 
@@ -184,7 +187,7 @@ const EmailConfigurationEditor = () => {
           setLoadedContent(mjmlToJson(data.content));
           setSelectedTemplate(id);
         })
-        .catch((err) => {
+        .catch(() => {
           setSelectedTemplate(ID_NEW_TEMPLATE);
           showAlert(
             "Beim Laden des Templates ist ein Fehler aufgetreten.",
@@ -348,13 +351,11 @@ const EmailConfigurationEditor = () => {
             </div>
             <br />
 
-            <Form.Group>
-              <Form.Label>Versandzeitpunkt</Form.Label>
-              <DateTimePicker
-                onChange={(datetime) => setScheduledTime(datetime)}
-                initialValue={scheduledTime}
-              />
-            </Form.Group>
+            <TriggerInput
+              selectedTriggerId={triggerId}
+              onTriggerSelected={setTriggerId}
+              triggerData={triggerData}
+            />
 
             <hr />
             <Button

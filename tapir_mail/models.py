@@ -4,7 +4,9 @@ from django.db import models, transaction
 from django.utils import timezone
 from nanoid import generate
 
-from tapir_mail.service.segment import combine_segments_with_filters
+from tapir_mail.service.segment import (
+    segment_data_to_recipient_list,
+)
 
 ID_LENGTH = 10
 
@@ -78,6 +80,9 @@ class EmailConfigurationVersion(BaseModel):
         choices=RELEASE_STATUS_CHOICES,
         default=ReleaseStatus.DRAFT,
     )
+    trigger = models.CharField(max_length=255, null=True)
+    trigger_data = models.JSONField(null=True, blank=True)
+    segment_data = models.JSONField(null=True, blank=True)
 
     @transaction.atomic
     def release(self):
@@ -85,9 +90,10 @@ class EmailConfigurationVersion(BaseModel):
         self.save()
 
         # Archive current released version
-        self.email_configuration.versions.exclude(id=self.id).filter(
+        for version in self.email_configuration.versions.exclude(id=self.id).filter(
             status=ReleaseStatus.RELEASED
-        ).update(status=ReleaseStatus.ARCHIVED)
+        ):
+            version.archive()
 
     def archive(self):
         self.status = ReleaseStatus.ARCHIVED
@@ -102,28 +108,45 @@ class EmailConfigurationDispatch(models.Model):
     This represents an email that has been scheduled to be sent to a list of recipients.
     """
 
-    email_configuration_version = models.OneToOneField(
+    email_configuration_version = models.ForeignKey(
         EmailConfigurationVersion, on_delete=models.CASCADE
     )
-    segment_data = models.JSONField(null=True, blank=True)
     scheduled_time = models.DateTimeField(default=timezone.now)
     is_sent = models.BooleanField(default=False)
+    override_recipients = models.JSONField(null=True)
 
     def get_recipient_list(self):
         if self.is_sent:
             return [dispatch.recipient for dispatch in self.emaildispatch_set.all()]
-        elif self.segment_data is not None:
-            return combine_segments_with_filters(
-                add_segments=self.segment_data.get("addSegments", []),
-                static_segments=self.segment_data.get("staticSegments", []),
-                remove_segments=self.segment_data.get("removeSegments", []),
-                filter_list=self.segment_data.get("filterList", []),
+
+        if self.override_recipients:
+            return self.override_recipients
+
+        if self.email_configuration_version.segment_data is not None:
+            return segment_data_to_recipient_list(
+                self.email_configuration_version.segment_data
             )
-        else:
-            return []
+
+        return []
 
     def __str__(self):
-        return f"{self.email_configuration_version} - {self.recipients} - {self.scheduled_time} - {self.is_sent}"
+        return f"{self.email_configuration_version} - {self.get_recipient_list()} - {self.scheduled_time} - {self.is_sent}"
+
+
+def delete_unsent_dispatches_if_not_released(
+    instance: EmailConfigurationVersion, **kwargs
+):
+    if instance.status == ReleaseStatus.RELEASED:
+        return
+
+    EmailConfigurationDispatch.objects.filter(
+        email_configuration_version=instance, is_sent=False
+    ).delete()
+
+
+models.signals.post_save.connect(
+    delete_unsent_dispatches_if_not_released, sender=EmailConfigurationVersion
+)
 
 
 class EmailDispatch(models.Model):

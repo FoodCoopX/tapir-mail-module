@@ -28,4 +28,4 @@ class DummySubscription(models.Model):
     cancellation_ts = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"Subscription: {self.user.email} (#{self.id})"
+        return f"Subscription: {self.user.email} {self.start_date} (#{self.id})"

@@ -11,12 +11,15 @@ router.register("email_template", views.EmailTemplateViewSet)
 router.register("email_configuration", views.EmailConfigurationViewSet)
 router.register("email_configuration_version", views.EmailConfigurationVersionViewSet)
 router.register("email_configuration_dispatch", views.EmailConfigurationDispatchViewSet)
+router.register("email_dispatch", views.EmailDispatchViewSet)
+router.register("triggers", views.TriggerListView, basename="Triggers")
 router.register(r"segment", views.SegmentAndFilterViewSet, basename="segment")
 router.register(r"tokens", views.TokensView, basename="tokens")
 
 urlpatterns = [
     re_path(
-        r"^(?!api/).*$", TemplateView.as_view(template_name="index.html")
+        r"^(?!(api)/).*$",
+        TemplateView.as_view(template_name="index.html"),
     ),  # React index.html
     path("api/media_library/", include("tapir_mail.media_library.urls")),
     path("api/", include(router.urls)),  # REST API

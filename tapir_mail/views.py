@@ -15,6 +15,7 @@ from tapir_mail.models import (
     EmailConfigurationVersion,
     EmailTemplate,
     ReleaseStatus,
+    EmailDispatch,
     StaticSegment,
 )
 from tapir_mail.serializers import (
@@ -24,6 +25,8 @@ from tapir_mail.serializers import (
     EmailConfigurationVersionSerializer,
     EmailTemplateSerializer,
     RecipientSerializer,
+    TriggerSerializer,
+    EmailDispatchSerializer,
     SegmentDataSerializer,
 )
 from tapir_mail.service.email import send_email
@@ -32,6 +35,7 @@ from tapir_mail.service.segment import (
     filter_registry,
     segment_registry,
 )
+from tapir_mail.service.triggers import trigger_registry, Trigger
 from tapir_mail.service.token import replace_tokens, token_registry
 
 LOG = logging.getLogger(__name__)
@@ -105,37 +109,25 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             subject=serializer.validated_data.get("subject", None),
             subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
+            trigger=serializer.validated_data["trigger"],
+            trigger_data=serializer.validated_data["trigger_data"],
+            segment_data=serializer.validated_data["segment_data"],
         )
 
         if version.status == ReleaseStatus.RELEASED:
-            EmailConfigurationVersion.objects.filter(
+            Trigger.on_create(version)
+            for version in EmailConfigurationVersion.objects.filter(
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
-            ).exclude(id=version.id).update(status=ReleaseStatus.ARCHIVED)
-
-        # Create EmailConfigurationDispatch
-        email_config_dispatch = EmailConfigurationDispatch.objects.get_or_create(
-            email_configuration_version=version,
-        )[0]
-        email_config_dispatch.segment_data = serializer.validated_data.get(
-            "segment_data", None
-        )
-        email_config_dispatch.scheduled_time = serializer.validated_data[
-            "scheduled_time"
-        ]
-        email_config_dispatch.save()
+            ).exclude(id=version.id):
+                version.archive()
 
         return Response({"id": version.id}, status=status.HTTP_201_CREATED)
 
     @transaction.atomic
     def update(self, request, pk=None, *args, **kwargs):
-        version = self.get_object()
+        version: EmailConfigurationVersion = self.get_object()
         email_configuration = version.email_configuration
-
-        # Get existing dispatch instance
-        (dispatch_instance, _) = EmailConfigurationDispatch.objects.get_or_create(
-            email_configuration_version=version
-        )
 
         initial_data = {
             "name": email_configuration.name,
@@ -144,8 +136,9 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "subject": version.subject,
             "subtitle": version.subtitle,
             "release_status": version.status,
-            "scheduled_time": dispatch_instance.scheduled_time,
-            "segment_data": dispatch_instance.segment_data,
+            "segment_data": version.segment_data,
+            "trigger": version.trigger,
+            "trigger_data": version.trigger_data,
         }
         serializer = BundledEmailConfigurationSerializer(
             data=request.data, initial=initial_data
@@ -166,52 +159,42 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version.subject = serializer.validated_data.get("subject", None)
         version.subtitle = serializer.validated_data.get("subtitle", None)
         version.status = serializer.validated_data["release_status"]
+        version.trigger = serializer.validated_data["trigger"]
+        version.trigger_data = serializer.validated_data["trigger_data"]
+        version.segment_data = serializer.validated_data["segment_data"]
         version.save()
 
         if version.status == ReleaseStatus.RELEASED:
-            EmailConfigurationVersion.objects.filter(
+            for version in EmailConfigurationVersion.objects.filter(
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
-            ).exclude(id=version.id).update(status=ReleaseStatus.ARCHIVED)
-
-        # Update EmailConfigurationDispatch
-        dispatch_instance.scheduled_time = serializer.validated_data["scheduled_time"]
-        dispatch_instance.segment_data = serializer.validated_data.get(
-            "segment_data", None
-        )
-        dispatch_instance.save()
+            ).exclude(id=version.id):
+                version.archive()
 
         return Response(serializer.data)
 
     @extend_schema(responses={200: BundledEmailConfigurationSerializer})
     @action(detail=True, methods=["GET"])
     def get_bundled_info(self, request, pk=None):
-        version = self.get_object()
+        version: EmailConfigurationVersion = self.get_object()
         email_configuration = version.email_configuration
 
-        # Get existing dispatch instance
-        try:
-            dispatch_instance = EmailConfigurationDispatch.objects.get(
-                email_configuration_version=version
-            )
-        except EmailConfigurationDispatch.DoesNotExist:
-            dispatch_instance = None
+        serializer = BundledEmailConfigurationSerializer(
+            {
+                "name": email_configuration.name,
+                "description": email_configuration.description,
+                "content": version.content,
+                "subject": version.subject,
+                "subtitle": version.subtitle,
+                "updated_at": version.updated_at,
+                "release_status": version.status,
+                "segment_data": version.segment_data,
+                "trigger": version.trigger,
+                "trigger_data": version.trigger_data,
+            }
+        )
 
-        bundled_data = {
-            "name": email_configuration.name,
-            "description": email_configuration.description,
-            "content": version.content,
-            "subject": version.subject,
-            "subtitle": version.subtitle,
-            "updated_at": version.updated_at,
-            "release_status": version.status,
-            "segment_data": dispatch_instance.segment_data,
-            "scheduled_time": dispatch_instance.scheduled_time
-            if dispatch_instance
-            else None,
-        }
-
-        return Response(bundled_data, status=status.HTTP_200_OK)
+        return Response(serializer.data)
 
     @transaction.atomic
     def destroy(self, request, pk=None, *args, **kwargs):
@@ -337,6 +320,33 @@ class EmailConfigurationDispatchViewSet(viewsets.ModelViewSet):
         )
         serializer = EmailConfigurationDispatchSerializer(first_n_objects, many=True)
         return Response(serializer.data)
+
+
+class TriggerListView(viewsets.ViewSet):
+    @extend_schema(
+        responses={
+            200: TriggerSerializer,
+        },
+        description="Get a list of available triggers.",
+    )
+    def list(self, request):
+        serializer = TriggerSerializer(
+            [
+                {
+                    "id": trigger.get_id(),
+                    "name": trigger.get_display_name(),
+                    "field_definitions": trigger.get_field_definitions(),
+                }
+                for trigger in trigger_registry.values()
+            ],
+            many=True,
+        )
+        return Response(serializer.data)
+
+
+class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = EmailDispatch.objects.all().order_by("-sent_time")
+    serializer_class = EmailDispatchSerializer
 
 
 class SegmentAndFilterViewSet(viewsets.ViewSet):

@@ -22,7 +22,7 @@ from tapir_mail_server import settings
 
 urlpatterns = [
     path("", include("tapir_mail.urls")),
-    path("dummy_accounts/", include("tapir_mail_server.dummy_accounts.urls")),
+    path("api/dummy_accounts/", include("tapir_mail_server.dummy_accounts.urls")),
     path("admin/", admin.site.urls),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
 ]
