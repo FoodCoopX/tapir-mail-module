@@ -55,6 +55,15 @@ const FilterInput: FC<FilterInputProps> = ({
       if (openBrackets !== closeBrackets) {
         isValid = false;
       }
+
+      // Additional check for last element being AND or OR
+      const lastElement = internalFilter[internalFilter.length - 1];
+      if (
+        lastElement.elementType === ElementType.Operator &&
+        (lastElement.value === "AND" || lastElement.value === "OR")
+      ) {
+        isValid = false;
+      }
     }
 
     onValidationChange(isValid);

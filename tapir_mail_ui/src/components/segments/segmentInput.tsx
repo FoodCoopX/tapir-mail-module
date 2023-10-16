@@ -107,26 +107,21 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
       return;
     }
 
+    const filters = complexFilter.map((el) => el.value);
     segmentApi
       .segmentCombineCreate({
         segmentDataRequest: {
           addSegments: segmentsToAdd,
           staticSegments: staticSegmentsToAdd,
           removeSegments: segmentsToRemove,
-          filterList: complexFilter.map((el) => el.value),
+          filterList: filters,
         },
       })
       .then(({ count, recipients }) => {
         setResultCount(count!!);
         setResultRecipients(recipients!!.map((r) => r.name));
       });
-  }, [
-    segmentsToAdd,
-    staticSegmentsToAdd,
-    segmentsToRemove,
-    complexFilter,
-    isFilterValid,
-  ]);
+  }, [isFilterValid]);
 
   const handleAddSegment = () => {
     if (selectedSegment === "") return;
