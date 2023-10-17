@@ -2,7 +2,6 @@ from django.core.mail import EmailMultiAlternatives
 from django.template import Context, Template
 from django.conf import settings
 
-
 def send_email(**kwargs):
     """
     Sends an email using the configuration provided in the kwargs.
@@ -12,7 +11,7 @@ def send_email(**kwargs):
     if not mjml:
         raise ValueError("mjml is required")
 
-    recipients = kwargs.pop("recipients", [])
+    recipients = kwargs.pop("recipients", None)
     if not recipients:
         raise ValueError("recipients is required")
 
@@ -26,9 +25,7 @@ def send_email(**kwargs):
         subject=subject,
         body=email_body,
         to=recipients,
-        bcc=[settings.EMAIL_AUTO_BCC]
-        if hasattr(settings, "EMAIL_AUTO_BCC") and settings.EMAIL_AUTO_BCC
-        else None,
+        bcc=[getattr(settings, "EMAIL_AUTO_BCC", None)],
         from_email=settings.EMAIL_HOST_SENDER,
         headers={
             "From": f"{settings.EMAIL_HOST_SENDER_NAME} <{settings.EMAIL_HOST_SENDER}>"

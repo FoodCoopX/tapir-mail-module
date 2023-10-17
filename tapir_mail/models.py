@@ -103,7 +103,7 @@ class EmailConfigurationVersion(BaseModel):
         return f"{self.email_configuration.name} ({self.status}) ({self.updated_at})"
 
 
-class EmailConfigurationDispatch(models.Model):
+class EmailConfigurationDispatch(BaseModel):
     """
     This represents an email that has been scheduled to be sent to a list of recipients.
     """
@@ -149,7 +149,7 @@ models.signals.post_save.connect(
 )
 
 
-class EmailDispatch(models.Model):
+class EmailDispatch(BaseModel):
     """
     This represents an email that has been sent to a single recipient.
     Here we can track bounces, errors, opening, etc.
@@ -173,11 +173,11 @@ class EmailDispatch(models.Model):
         )
 
 
-class StaticSegment(models.Model):
+class StaticSegment(BaseModel):
     name = models.CharField(max_length=255, unique=True)
 
 
-class StaticSegmentRecipient(models.Model):
+class StaticSegmentRecipient(BaseModel):
     segment = models.ForeignKey(
         StaticSegment, related_name="recipients", on_delete=models.CASCADE
     )

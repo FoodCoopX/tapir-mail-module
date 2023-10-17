@@ -92,11 +92,12 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
       .then(({ filters }) => setAvailableFilters(filters || []))
       .catch((err) => {
         console.error(err);
-        showAlert("Fehler beim laden der Filter!", "danger");
+        showAlert("Fehler beim Laden der Filter!", "danger");
       });
   }, []);
 
   useEffect(() => {
+    console.log(isFilterValid);
     if (
       !isFilterValid ||
       segmentsToAdd.length + staticSegmentsToAdd.length < 1
@@ -122,7 +123,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
       })
       .catch((error) => {
         console.error(error);
-        showAlert("Fehler beim laden der recipients!", "danger");
+        showAlert("Fehler beim Laden der Empfänger!", "danger");
       });
   }, [
     segmentsToAdd,
