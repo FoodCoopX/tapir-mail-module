@@ -297,6 +297,24 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/dummy_accounts/weekdays/:
+    get:
+      operationId: dummy_accounts_weekdays_list
+      description: Get a list of id<->weekday combinations.
+      tags:
+      - dummy_accounts
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Weekday'
+          description: ''
   /api/email_configuration/:
     get:
       operationId: email_configuration_list
@@ -2181,6 +2199,41 @@ components:
       required:
       - content
       - name
+    IdEnum:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      type: integer
+      description: |-
+        * `0` - 0
+        * `1` - 1
+        * `2` - 2
+        * `3` - 3
+        * `4` - 4
+        * `5` - 5
+        * `6` - 6
+    NameEnum:
+      enum:
+      - Monday
+      - Tuesday
+      - Wednesday
+      - Thursday
+      - Friday
+      - Saturday
+      - Sunday
+      description: |-
+        * `Monday` - Monday
+        * `Tuesday` - Tuesday
+        * `Wednesday` - Wednesday
+        * `Thursday` - Thursday
+        * `Friday` - Friday
+        * `Saturday` - Saturday
+        * `Sunday` - Sunday
     PatchedBundledEmailConfigurationRequest:
       type: object
       properties:
@@ -2553,6 +2606,16 @@ components:
       description: |-
         * `F` - Uploaded file data
         * `U` - Remote file URL
+    Weekday:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/IdEnum'
+        name:
+          $ref: '#/components/schemas/NameEnum'
+      required:
+      - id
+      - name
   securitySchemes:
     tokenAuth:
       type: apiKey

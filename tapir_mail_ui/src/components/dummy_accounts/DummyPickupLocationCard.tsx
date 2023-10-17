@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { DummyAccountsApi, DummyPickupLocation } from "../../api_client";
+import {
+  DummyAccountsApi,
+  DummyPickupLocation,
+  Weekday,
+} from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import { Button, Card, Table } from "react-bootstrap";
@@ -10,6 +14,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 
 const DummyPickupLocationCard = () => {
   const [locations, setLocations] = useState<DummyPickupLocation[]>([]);
+  const [weekdays, setWeekdays] = useState<Weekday[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const showAlert = useAlert();
@@ -23,6 +28,19 @@ const DummyPickupLocationCard = () => {
       .catch((err) => {
         console.error(err);
         showAlert("Fehler beim Laden der Locations", "danger");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    api
+      .dummyAccountsWeekdaysList()
+      .then(setWeekdays)
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim Laden der Wochentage", "danger");
       })
       .finally(() => {
         setLoading(false);
@@ -88,7 +106,7 @@ const DummyPickupLocationCard = () => {
                   style={{ cursor: "pointer" }}
                   onClick={() =>
                     navigate(
-                      Paths.dummyTapirUserEdit.replace(
+                      Paths.dummyPickupLocationEdit.replace(
                         ":id",
                         location.id.toString(),
                       ),
@@ -96,7 +114,11 @@ const DummyPickupLocationCard = () => {
                   }
                 >
                   <td>{location.name}</td>
-                  <td>{location.deliveryDay}</td>
+                  <td>
+                    {weekdays
+                      ? weekdays[location.deliveryDay].name
+                      : location.deliveryDay}
+                  </td>
                   <td>
                     <Button
                       variant="danger"

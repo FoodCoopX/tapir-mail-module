@@ -1,9 +1,16 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
+from rest_framework.response import Response
 
-from tapir_mail_server.dummy_accounts.models import DummyTapirUser, DummyPickupLocation
+from tapir_mail_server.dummy_accounts.models import (
+    DummyTapirUser,
+    DummyPickupLocation,
+    WEEKDAY_CHOICES,
+)
 from tapir_mail_server.dummy_accounts.serializers import (
     DummyTapirUserSerializer,
     DummyPickupLocationSerializer,
+    WeekdaySerializer,
 )
 from tapir_mail_server.dummy_accounts.triggers.account_triggers import (
     OnAccountCreatedTrigger,
@@ -34,3 +41,18 @@ class DummyTapirUserViewSet(viewsets.ModelViewSet):
 class DummyPickupLocationViewSet(viewsets.ModelViewSet):
     queryset = DummyPickupLocation.objects.order_by("name")
     serializer_class = DummyPickupLocationSerializer
+
+
+class WeekdaysListView(viewsets.ViewSet):
+    @extend_schema(
+        responses={
+            200: WeekdaySerializer,
+        },
+        description="Get a list of id<->weekday combinations.",
+    )
+    def list(self, request):
+        serializer = WeekdaySerializer(
+            [{"id": weekday[0], "name": weekday[1]} for weekday in WEEKDAY_CHOICES],
+            many=True,
+        )
+        return Response(serializer.data)
