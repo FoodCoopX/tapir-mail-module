@@ -61,9 +61,13 @@ class SendOldestEmailConfiguration:
                     recipients=[recipient.email],
                 )
 
-        trigger_registry[
+        if (
             config_dispatch.email_configuration_version.trigger
-        ].after_mail_sent(config_dispatch)
+            in trigger_registry.keys()
+        ):
+            trigger_registry[
+                config_dispatch.email_configuration_version.trigger
+            ].after_mail_sent(config_dispatch)
 
         config_dispatch.is_sent = True
         config_dispatch.save()
