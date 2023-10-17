@@ -5,6 +5,7 @@ from tapir_mail.models import (
     EmailConfigurationVersion,
     EmailTemplate,
     EmailDispatch,
+    EmailConfigurationDispatch,
 )
 from tapir_mail.service.triggers import trigger_registry
 
@@ -98,10 +99,14 @@ class BundledEmailConfigurationSerializer(
 
 
 class EmailConfigurationDispatchSerializer(serializers.Serializer):
+    class Meta:
+        model = EmailConfigurationDispatch
+
     id = serializers.CharField()
     email_configuration_version = EmailConfigurationVersionSerializer()
     scheduled_time = serializers.DateTimeField()
     segment_data = SegmentDataSerializer(allow_null=True, required=False)
+    override_recipients = serializers.JSONField()
 
 
 class TriggerFieldDefinitionSerializer(serializers.Serializer):

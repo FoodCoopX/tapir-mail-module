@@ -105,7 +105,7 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
             email_configuration_version=version,
             override_recipients=[recipient.email],
             scheduled_time=cls.get_next_weekday(recipient.pickup_location.delivery_day)
-            - datetime.timedelta(days=version.trigger_data["number_of_days"]),
+            - datetime.timedelta(days=int(version.trigger_data["number_of_days"])),
             is_sent=False,
         )
 

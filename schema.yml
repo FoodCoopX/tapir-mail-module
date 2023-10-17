@@ -2017,9 +2017,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/SegmentData'
           nullable: true
+        override_recipients:
+          type: object
+          additionalProperties: {}
       required:
       - email_configuration_version
       - id
+      - override_recipients
       - scheduled_time
     EmailConfigurationDispatchRequest:
       type: object
@@ -2036,9 +2040,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/SegmentDataRequest'
           nullable: true
+        override_recipients:
+          type: object
+          additionalProperties: {}
       required:
       - email_configuration_version
       - id
+      - override_recipients
       - scheduled_time
     EmailConfigurationRequest:
       type: object
@@ -2313,6 +2321,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/SegmentDataRequest'
           nullable: true
+        override_recipients:
+          type: object
+          additionalProperties: {}
     PatchedEmailConfigurationRequest:
       type: object
       properties:
