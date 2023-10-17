@@ -9,8 +9,8 @@ import { useApi } from "../../hooks/useApi";
 import { Button, Card, Table } from "react-bootstrap";
 import Loading from "../loading";
 import Paths from "../../routing";
-import { useNavigate } from "react-router-dom";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { Link, useNavigate } from "react-router-dom";
+import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 const DummyPickupLocationCard = () => {
   const [locations, setLocations] = useState<DummyPickupLocation[]>([]);
@@ -81,6 +81,17 @@ const DummyPickupLocationCard = () => {
           }}
         >
           <h4>Pickup locations</h4>
+          <Link to={Paths.dummyPickupLocationCreate}>
+            <PlusCircleIcon
+              title="Create location"
+              style={{
+                width: "3em",
+                padding: "0.25em",
+                borderRadius: "50%",
+                color: "green",
+              }}
+            />
+          </Link>
         </div>
       </Card.Header>
       <Card.Body style={{ padding: 0, border: "none" }}>
