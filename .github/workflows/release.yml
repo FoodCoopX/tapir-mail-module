@@ -38,6 +38,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install Poetry
+        run: pip install poetry
+
       - name: Package tapir_mail
         run: |
           cd tapir_mail
