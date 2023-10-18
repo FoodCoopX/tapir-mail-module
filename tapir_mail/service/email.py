@@ -1,8 +1,6 @@
 from django.core.mail import EmailMultiAlternatives
 from django.template import Context, Template
-
-from tapir_mail.service.token import replace_tokens
-from tapir_mail_server import settings
+from django.conf import settings
 
 
 def send_email(**kwargs):
