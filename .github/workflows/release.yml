@@ -43,12 +43,6 @@ jobs:
         env:
           CI: false #  otherwise React warnings will be treated as errors
 
-      - name: Package tapir_mail
-        run: |
-          cd tapir_mail
-          python -m pip install --upgrade setuptools wheel
-          python setup.py sdist bdist_wheel
-
       - name: Set tag
         id: set_tag
         run: |
@@ -75,6 +69,9 @@ jobs:
         run: |
            VERSION=${{ steps.set_tag.outputs.tag }}
            echo "::set-output name=version::${VERSION##v}"
+
+      - name: Build tapir_mail
+        run: poetry build
 
       - name: Upload tapir_mail package to release
         uses: actions/upload-release-asset@v1
