@@ -1,11 +1,14 @@
 import factory
 
 from tapir_mail.models import (
-    EmailConfiguration,
-    EmailConfigurationVersion,
-    EmailTemplate,
-    EmailConfigurationDispatch,
     RELEASE_STATUS_CHOICES,
+    EmailConfiguration,
+    EmailConfigurationDispatch,
+    EmailConfigurationVersion,
+    EmailDispatch,
+    EmailTemplate,
+    StaticSegment,
+    StaticSegmentRecipient,
 )
 
 
@@ -61,3 +64,33 @@ class EmailConfigurationDispatchFactory(factory.django.DjangoModelFactory):
         after_today=True,
     )
     is_sent = factory.Faker("pybool")
+
+
+class EmailDispatchFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EmailDispatch
+
+    email_configuration_dispatch = factory.SubFactory(EmailConfigurationDispatchFactory)
+    recipient = factory.Faker("email")
+    sent_time = factory.Faker(
+        "date_this_decade",
+        before_today=True,
+        after_today=False,
+    )
+
+
+class StaticSegmentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = StaticSegment
+
+    name = factory.Faker("bs")
+
+
+class StaticSegmentRecipientFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = StaticSegmentRecipient
+
+    segment = factory.SubFactory(StaticSegmentFactory)
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
+    email = factory.Faker("email")
