@@ -1,0 +1,43 @@
+name: Bundle and Release
+
+on:
+  push:
+    branches:
+      - main # or any other branch where you wish to run this action
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18" # or any other version you need
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: "adopt" # or any other distribution you prefer
+          java-version: "11" # or any other version you need
+
+      - name: Install dependencies
+        run: npm install # or any other command to install additional dependencies
+
+      - name: Generate API schema
+        run: bash /app/scripts/generate_api_schema.sh
+
+      - name: Run bundle script
+        run: bash /app/scripts/bundle.sh
+
+      - name: Draft new release
+        id: create_release
+        uses: gh-actions/gh-release@v1.1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
