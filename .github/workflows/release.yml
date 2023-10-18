@@ -81,6 +81,11 @@ jobs:
           WHEEL_FILE=$(ls dist/*.whl)
           echo "::set-output name=wheel_file::${WHEEL_FILE##*/}"
 
+      - name: List build output
+        run: |
+          cd tapir_mail
+          ls -l dist
+
       - name: Upload tapir_mail package to release
         uses: actions/upload-release-asset@v1
         env:
