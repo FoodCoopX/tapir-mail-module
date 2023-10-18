@@ -2,6 +2,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template import Context, Template
 from django.conf import settings
 
+
 def send_email(**kwargs):
     """
     Sends an email using the configuration provided in the kwargs.
