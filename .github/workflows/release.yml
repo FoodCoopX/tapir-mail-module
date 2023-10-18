@@ -27,12 +27,6 @@ jobs:
           distribution: "adopt"
           java-version: "11"
 
-      - name: Generate API schema
-        run: bash scripts/generate_api_schema.sh
-
-      - name: Run bundle script
-        run: bash scripts/bundle.sh
-
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -40,6 +34,12 @@ jobs:
 
       - name: Install Poetry
         run: pip install poetry
+
+      - name: Generate API schema
+        run: bash scripts/generate_api_schema.sh
+
+      - name: Run bundle script
+        run: bash scripts/bundle.sh
 
       - name: Package tapir_mail
         run: |
@@ -67,7 +67,6 @@ jobs:
           tag_name: ${{ steps.set_tag.outputs.tag }}
           release_name: Release ${{ steps.set_tag.outputs.tag }}
           draft: true  # This makes the release a draft
-            
             
       - name: Extract version
         id: extract_version
