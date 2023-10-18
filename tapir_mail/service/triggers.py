@@ -3,6 +3,8 @@ from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import Dict, Generic, TypeVar
 
+from rest_framework import serializers
+
 TriggerData = TypeVar("TriggerData")
 
 
@@ -86,6 +88,11 @@ class Trigger(Generic[TriggerData], ABC):
         # for example for a weekly trigger
         pass
 
+    @classmethod
+    def validate_data_and_return_object(cls, trigger_data):
+        # Override this if you want to validate the content of the trigger_data variable from EmailConfigurationVersion
+        pass
+
 
 @dataclass
 class TimeTriggerData:
@@ -125,8 +132,22 @@ class TimeTrigger(Trigger[TimeTriggerData]):
 
         cls.fire_version(
             email_configuration_version,
-            TimeTriggerData(**email_configuration_version.trigger_data),
+            cls.validate_data_and_return_object(
+                email_configuration_version.trigger_data
+            ),
         )
+
+    @classmethod
+    def validate_data_and_return_object(cls, trigger_data):
+        try:
+            scheduled_time = datetime.datetime.fromisoformat(
+                trigger_data["scheduled_time"]
+            )
+        except ValueError as ve:
+            raise serializers.ValidationError(
+                f"Invalid value for scheduled_time: {trigger_data['scheduled_time']}, error: {ve}"
+            )
+        return TimeTriggerData(scheduled_time=scheduled_time)
 
 
 trigger_registry: Dict[str, type[Trigger]] = {}

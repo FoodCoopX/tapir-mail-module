@@ -25,22 +25,31 @@ class TriggerSerializationMixin(metaclass=serializers.SerializerMetaclass):
         if not data["trigger"]:
             return data
 
-        expected_fields = [
-            field.field_name
-            for field in trigger_registry[data["trigger"]].get_field_definitions()
-        ]
-        received_fields = data["trigger_data"].keys()
+        if data["trigger"] not in trigger_registry.keys():
+            raise serializers.ValidationError(f"Unknown trigger: {data['trigger']}")
 
+        trigger_class = trigger_registry[data["trigger"]]
+        TriggerSerializationMixin.check_for_missing_fields(
+            trigger_class, data["trigger_data"]
+        )
+
+        trigger_class.validate_data_and_return_object(data["trigger_data"])
+
+        return data
+
+    @staticmethod
+    def check_for_missing_fields(trigger_class, trigger_data):
+        expected_fields = [
+            field.field_name for field in trigger_class.get_field_definitions()
+        ]
+        received_fields = trigger_data.keys()
         missing_fields = [
             field for field in expected_fields if field not in received_fields
         ]
-
         if missing_fields:
             raise serializers.ValidationError(
                 f"Invalid trigger data. Missing fields: {missing_fields}"
             )
-
-        return data
 
 
 class EmailTemplateSerializer(serializers.ModelSerializer):
