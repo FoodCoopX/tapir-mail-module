@@ -64,9 +64,9 @@ jobs:
           repo: tapir-mail-releases
           tag_name: ${{ steps.set_tag.outputs.tag }}
           release_name: Release ${{ steps.set_tag.outputs.tag }}
-          draft: true  # This makes the release a draft
-          target_commitish: master
-            
+          draft: true # This makes the release a draft
+          commitish: master
+
       - name: Extract version
         id: extract_version
         run: |
@@ -76,7 +76,7 @@ jobs:
       - name: Set version in pyproject.toml
         run: |
           sed -i "s/^version = .*/version = \"${{ steps.extract_version.outputs.version }}\"/" pyproject.toml
-      
+
       - name: Build tapir_mail
         id: build
         run: |
@@ -93,4 +93,3 @@ jobs:
           asset_path: ./dist/${{ steps.build.outputs.wheel_file }}
           asset_name: ${{ steps.build.outputs.wheel_file }}
           asset_content_type: application/zip
-          
