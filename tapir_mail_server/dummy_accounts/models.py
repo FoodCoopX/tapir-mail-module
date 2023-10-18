@@ -29,7 +29,7 @@ class DummyTapirUser(models.Model):
         return f"{self.first_name} {self.last_name}"
 
     def __str__(self):
-        return f"User: {self.email} (#{self.id})"
+        return f"User: {self.email} ({self.pickup_location.name}) (#{self.id})"
 
 
 class DummySubscription(models.Model):
