@@ -9,7 +9,6 @@ packages = [{include = "tapir_mail"}]
 [tool.poetry.dependencies]
 python = "^3.11"
 django = "^3.2.21"
-django-bootstrap5 = "^23.3"
 django-environ = "^0.10.0"
 django-cors-headers = "^4.2.0"
 django-drf-filepond = "^0.5.0"

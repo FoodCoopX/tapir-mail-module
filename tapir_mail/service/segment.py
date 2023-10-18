@@ -4,13 +4,11 @@ from collections import deque
 
 from django.db.models import Q
 
-from tapir_mail_server.dummy_accounts.models import DummyTapirUser
-
 LOG = logging.getLogger(__name__)
 
 BASE_QUERYSET = None
 
-segment_registry = {"Alle Benutzer": (lambda: DummyTapirUser.objects.all())}
+segment_registry = {}
 filter_registry = {}
 
 
@@ -24,6 +22,7 @@ def _check_base_queryset():
 def register_base_segment(queryset):
     global BASE_QUERYSET
     BASE_QUERYSET = queryset
+    segment_registry["Alle Benutzer"] = lambda: queryset.all()
 
 
 def register_segment(name, func):
