@@ -65,6 +65,7 @@ jobs:
           tag_name: ${{ steps.set_tag.outputs.tag }}
           release_name: Release ${{ steps.set_tag.outputs.tag }}
           draft: true  # This makes the release a draft
+          target_commitish: master
             
       - name: Extract version
         id: extract_version
