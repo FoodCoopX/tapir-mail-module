@@ -58,8 +58,10 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TAPIR_MAIL_RELEASE_TOKEN }}
         with:
+          owner: FoodCoopX
+          repo: tapir-mail-releases
           tag_name: ${{ steps.set_tag.outputs.tag }}
           release_name: Release ${{ steps.set_tag.outputs.tag }}
           draft: true  # This makes the release a draft
@@ -84,7 +86,7 @@ jobs:
       - name: Upload tapir_mail package to release
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TAPIR_MAIL_RELEASE_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/${{ steps.build.outputs.wheel_file }}
