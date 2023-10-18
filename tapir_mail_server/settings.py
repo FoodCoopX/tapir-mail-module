@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     "mjml",
 ]
 DEPENDENCIES_APPS = [
-    "django_bootstrap5",
     "rest_framework",
     "drf_spectacular",
     "django_drf_filepond",
