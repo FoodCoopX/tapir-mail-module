@@ -75,14 +75,18 @@ jobs:
           sed -i "s/^version = .*/version = \"${{ steps.extract_version.outputs.version }}\"/" pyproject.toml
       
       - name: Build tapir_mail
-        run: poetry build
-
+        id: build
+        run: |
+          OUTPUT=$(poetry build)
+          WHEEL_FILE=$(echo "$OUTPUT" | grep -o 'Built .*\.whl' | awk '{print $2}')
+          echo "::set-output name=wheel_file::$WHEEL_FILE"
+          
       - name: Upload tapir_mail package to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./tapir_mail/dist/tapir_mail_module-${{ steps.extract_version.outputs.version }}-py3-none-any.whl
-          asset_name: tapir_mail-${{ steps.extract_version.outputs.version }}-py3-none-any.whl
+          asset_path: ./tapir_mail/dist/${{ steps.build.outputs.wheel_file }}
+          asset_name: ${{ steps.build.outputs.wheel_file }}
           asset_content_type: application/zip
