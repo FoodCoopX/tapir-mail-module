@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "tapir-mail-module"
+name = "tapir-mail"
 version = "0.1.0"
 description = ""
 authors = ["Théophile Madet <theo.madet@posteo.net>", "Michael Kleimann <dev@mkleimann.com>"]
