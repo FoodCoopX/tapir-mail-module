@@ -81,18 +81,13 @@ jobs:
           WHEEL_FILE=$(ls dist/*.whl)
           echo "::set-output name=wheel_file::${WHEEL_FILE##*/}"
 
-      - name: List build output
-        run: |
-          cd tapir_mail
-          ls -l dist
-
       - name: Upload tapir_mail package to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./tapir_mail/dist/${{ steps.build.outputs.wheel_file }}
+          asset_path: ./dist/${{ steps.build.outputs.wheel_file }}
           asset_name: ${{ steps.build.outputs.wheel_file }}
           asset_content_type: application/zip
           
