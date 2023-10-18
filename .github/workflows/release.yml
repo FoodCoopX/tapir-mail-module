@@ -1,9 +1,12 @@
-name: Bundle and Release
+name: Release
 
 on:
   push:
     branches:
-      - main # or any other branch where you wish to run this action
+      - master
+    tags:
+      - "*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,16 +19,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "18" # or any other version you need
+          node-version: "18"
 
       - name: Setup Java
         uses: actions/setup-java@v2
         with:
-          distribution: "adopt" # or any other distribution you prefer
-          java-version: "11" # or any other version you need
-
-      - name: Install dependencies
-        run: npm install # or any other command to install additional dependencies
+          distribution: "adopt"
+          java-version: "11"
 
       - name: Generate API schema
         run: bash /app/scripts/generate_api_schema.sh
@@ -33,11 +33,50 @@ jobs:
       - name: Run bundle script
         run: bash /app/scripts/bundle.sh
 
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11"
+
+      - name: Package tapir_mail
+        run: |
+          cd tapir_mail
+          python -m pip install --upgrade setuptools wheel
+          python setup.py sdist bdist_wheel
+
+      - name: Set tag
+        id: set_tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "::set-output name=tag::${GITHUB_REF##refs/tags/}"
+          elif [[ "${{ github.ref }}" == refs/heads/master ]]; then
+            echo "::set-output name=tag::latest-dev"
+          else
+            echo "::set-output name=tag::manual"
+          fi
+
       - name: Draft new release
         id: create_release
         uses: gh-actions/gh-release@v1.1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ steps.set_tag.outputs.tag }}
+          release_name: Release ${{ steps.set_tag.outputs.tag }}
+          draft: true # This makes the release a draft
+
+      - name: Extract version
+        id: extract_version
+        run: |
+          VERSION=${{ steps.set_tag.outputs.tag }}
+          echo "::set-output name=version::${VERSION##v}"
+
+      - name: Upload tapir_mail package to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./tapir_mail/dist/tapir_mail-${{ steps.extract_version.outputs.version }}-py3-none-any.whl
+          asset_name: tapir_mail-${{ steps.extract_version.outputs.version }}-py3-none-any.whl
+          asset_content_type: application/zip
