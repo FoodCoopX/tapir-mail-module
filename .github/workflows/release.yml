@@ -42,6 +42,7 @@ jobs:
         run: bash scripts/bundle.sh
         env:
           CI: false #  otherwise React warnings will be treated as errors
+          REACT_APP_BASENAME: /mail
 
       - name: Set tag
         id: set_tag

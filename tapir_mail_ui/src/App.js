@@ -51,7 +51,7 @@ function App() {
     >
       <AlertProvider>
         <AnimatePresence mode="wait">
-          <Router>
+          <Router basename={process.env.REACT_APP_BASENAME}>
             <InnerApp />
           </Router>
         </AnimatePresence>
