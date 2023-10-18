@@ -28,10 +28,10 @@ jobs:
           java-version: "11"
 
       - name: Generate API schema
-        run: bash /app/scripts/generate_api_schema.sh
+        run: bash scripts/generate_api_schema.sh
 
       - name: Run bundle script
-        run: bash /app/scripts/bundle.sh
+        run: bash scripts/bundle.sh
 
       - name: Setup Python
         uses: actions/setup-python@v2
