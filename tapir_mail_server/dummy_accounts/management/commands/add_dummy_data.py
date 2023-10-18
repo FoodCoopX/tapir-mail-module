@@ -1,9 +1,17 @@
-from django.core.management.base import BaseCommand
-from django.utils.crypto import get_random_string
-from random import choice
 from datetime import datetime, timedelta
+from random import choice
 
-from tapir_mail_server.dummy_accounts.models import DummySubscription, DummyTapirUser
+from django.core.management.base import BaseCommand
+
+from tapir_mail_server.dummy_accounts.models import (
+    DummySubscription,
+    DummyTapirUser,
+    DummyPickupLocation,
+)
+from tapir_mail_server.dummy_accounts.tests.factories import (
+    DummyTapirUserFactory,
+    DummyPickupLocationFactory,
+)
 
 
 class Command(BaseCommand):
@@ -15,17 +23,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **kwargs):
+        while DummyPickupLocation.objects.count() < 5:
+            DummyPickupLocationFactory.create()
+
         total = kwargs["total"]
-        for i in range(total):
-            DummyTapirUser.objects.create(
-                first_name=get_random_string(length=5),
-                last_name=get_random_string(length=5),
-                email=f"{get_random_string(length=5)}@example.com",
-                has_coop_shares=choice([True, False]),
-                pickup_location=choice(
-                    ["WirGarten Lüneburg", "Edeka Bergmann", "Garage am Finkenberg"]
-                ),
-            )
+        for _ in range(total):
+            DummyTapirUserFactory.create()
 
         users = DummyTapirUser.objects.all()
         for user in users:

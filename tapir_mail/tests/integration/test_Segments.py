@@ -6,6 +6,10 @@ from tapir_mail.service.segment import (
 )
 from tapir_mail.tests.test_utils import TapirIntegrationTest
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
+from tapir_mail_server.dummy_accounts.tests.factories import (
+    DummyTapirUserFactory,
+    DummyPickupLocationFactory,
+)
 
 
 class TestSegments(TapirIntegrationTest):
@@ -22,10 +26,11 @@ class TestSegments(TapirIntegrationTest):
     @classmethod
     def setUpTestData(cls):
         # Create some dummy users with and without coop shares
-        DummyTapirUser.objects.create(id=1, has_coop_shares=True)
-        DummyTapirUser.objects.create(id=2, has_coop_shares=False)
-        DummyTapirUser.objects.create(id=3, has_coop_shares=True)
-        DummyTapirUser.objects.create(id=4, has_coop_shares=False)
+        DummyPickupLocationFactory.create()
+        DummyTapirUserFactory.create(id=1, has_coop_shares=True)
+        DummyTapirUserFactory.create(id=2, has_coop_shares=False)
+        DummyTapirUserFactory.create(id=3, has_coop_shares=True)
+        DummyTapirUserFactory.create(id=4, has_coop_shares=False)
 
         def coop_members():
             return DummyTapirUser.objects.filter(has_coop_shares=True)

@@ -67,7 +67,7 @@ class Trigger(Generic[TriggerData], ABC):
         return []
 
     @staticmethod
-    def on_create(email_configuration_version):
+    def on_email_configuration_version_create(email_configuration_version):
         if (
             not email_configuration_version.trigger
             or email_configuration_version.trigger not in trigger_registry.keys()
@@ -80,6 +80,12 @@ class Trigger(Generic[TriggerData], ABC):
     @classmethod
     def _on_create(cls, email_configuration_version):
         # Override this method if your trigger must for example fire on create
+        pass
+
+    @classmethod
+    def after_mail_sent(cls, email_configuration_dispatch):
+        # Override this if you want for example to repeat the trigger after it's been sent,
+        # for example for a weekly trigger
         pass
 
     @classmethod

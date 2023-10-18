@@ -141,7 +141,13 @@ const EmailConfigurationDispatchTable: React.FC<
                     </td>
                     <td>
                       {/* FIXME: */}
-                      {JSON.stringify(emailConfigurationDispatch.segmentData)}
+                      {emailConfigurationDispatch.overrideRecipients
+                        ? JSON.stringify(
+                            emailConfigurationDispatch.overrideRecipients,
+                          )
+                        : JSON.stringify(
+                            emailConfigurationDispatch.segmentData,
+                          )}
                     </td>
                     <td>
                       <EmailConfigurationVersionStatusBadge

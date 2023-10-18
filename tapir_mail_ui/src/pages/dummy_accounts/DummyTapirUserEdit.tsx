@@ -15,6 +15,9 @@ const DummyTapirUserEdit = () => {
     id: 0,
     firstName: "",
     lastName: "",
+    pickupLocation: { id: 0, name: "default-name", deliveryDay: 0 },
+    email: "",
+    hasCoopShares: false,
   });
   const [loading, setLoading] = useState<boolean>(true);
 

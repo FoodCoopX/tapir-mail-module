@@ -1,5 +1,6 @@
 import { lazy } from "react";
 import DummyTapirUserEdit from "./pages/dummy_accounts/DummyTapirUserEdit";
+import DummyPickupLocationEdit from "./pages/dummy_accounts/DummyPickupLocationEdit";
 
 const Dashboard = lazy(() => import("./pages/dashboard"));
 const EmailConfigurationEditor = lazy(
@@ -25,7 +26,8 @@ const Paths = {
   dummyAccounts: "/dummy_accounts",
   dummyTapirUserCreate: "/dummy_accounts/dummy_tapir_user/new",
   dummyTapirUserEdit: "/dummy_accounts/dummy_tapir_user/edit/:id",
-  // add new paths here
+  dummyPickupLocationCreate: "/dummy_accounts/dummy_pickup_location/new",
+  dummyPickupLocationEdit: "/dummy_accounts/dummy_pickup_location/edit/:id",
 };
 
 const routes = [
@@ -69,7 +71,14 @@ const routes = [
     path: Paths.dummyTapirUserEdit,
     element: DummyTapirUserEdit,
   },
-  // add new routes here
+  {
+    path: Paths.dummyPickupLocationCreate,
+    element: DummyPickupLocationEdit,
+  },
+  {
+    path: Paths.dummyPickupLocationEdit,
+    element: DummyPickupLocationEdit,
+  },
 ];
 
 export default Paths;
