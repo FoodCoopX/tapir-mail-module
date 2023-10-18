@@ -4,7 +4,8 @@ from tapir_mail.service.segment import (
     register_segment,
 )
 from tapir_mail.service.token import register_tokens
-from tapir_mail_server.dummy_accounts.models import DummyTapirUser
+from tapir_mail_server.dummy_accounts.models import DummyTapirUser, DummyPickupLocation
+
 
 # Folgende Grundmengen sollen in einem ersten Schritt angelegt werden und vom Standort-Admin auswählbar sein:
 
@@ -50,10 +51,11 @@ def register_segments():
 
 
 def register_filters():
-    def pickup_location(location):
+    def build_pickup_location_filter(location: DummyPickupLocation):
         return lambda queryset: queryset.filter(pickup_location=location)
 
-    # dynamic filter example:
-    pickup_locations = ["WirGarten Lüneburg", "Edeka Bergmann", "Garage am Finkenberg"]
-    for pl in pickup_locations:
-        register_filter(f"Abholort = '{pl}'", pickup_location(pl))
+    for pickup_location in DummyPickupLocation.objects.all():
+        register_filter(
+            f"Abholort = '{pickup_location.name}'",
+            build_pickup_location_filter(pickup_location),
+        )

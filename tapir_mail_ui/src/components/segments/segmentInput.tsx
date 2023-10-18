@@ -6,8 +6,7 @@ import {
 } from "@heroicons/react/24/outline";
 import React, { FC, useEffect, useState } from "react";
 import { Accordion, Badge, Form } from "react-bootstrap";
-import { SegmentData } from "../../api_client";
-import { SegmentApi } from "../../api_client/apis/SegmentApi";
+import { SegmentApi, SegmentData } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import AccordionToggleCompact from "../accordionToggleCompact";
@@ -107,7 +106,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
       return;
     }
 
-    const filters = complexFilter.map((el) => el.value);
+    const filters = complexFilter.map((filterElement) => filterElement.value);
     segmentApi
       .segmentCombineCreate({
         segmentDataRequest: {
@@ -119,9 +118,19 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
       })
       .then(({ count, recipients }) => {
         setResultCount(count!!);
-        setResultRecipients(recipients!!.map((r) => r.name));
+        setResultRecipients(recipients!!.map((recipient) => recipient.name));
+      })
+      .catch((error) => {
+        console.error(error);
+        showAlert("Fehler beim laden der recipients!", "danger");
       });
-  }, [isFilterValid]);
+  }, [
+    segmentsToAdd,
+    staticSegmentsToAdd,
+    segmentsToRemove,
+    complexFilter,
+    isFilterValid,
+  ]);
 
   const handleAddSegment = () => {
     if (selectedSegment === "") return;
@@ -148,8 +157,9 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     (s) => !segmentsToAdd.includes(s),
   );
 
-  const handleFilterChange = (filter: FilterElement[]) => {
+  const handleFilterChange = (filter: FilterElement[], isValid: boolean) => {
     setComplexFilter(filter);
+    setIsFilterValid(isValid);
   };
 
   const plusSegmentButtonDisabled = !selectedSegment || selectedSegment === "";
@@ -349,7 +359,6 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
                   availableFilters={availableFilters}
                   initialFilter={complexFilter}
                   onFilterChange={handleFilterChange}
-                  onValidationChange={setIsFilterValid}
                 />
                 {isFilterValid || (
                   <Badge

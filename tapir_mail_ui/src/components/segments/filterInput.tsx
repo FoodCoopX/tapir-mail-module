@@ -6,15 +6,13 @@ import { ElementType, FilterElement } from "./common";
 interface FilterInputProps {
   availableFilters: string[];
   initialFilter: FilterElement[];
-  onFilterChange: (filter: FilterElement[]) => void;
-  onValidationChange: (isValid: boolean) => void;
+  onFilterChange: (filter: FilterElement[], isValid: boolean) => void;
 }
 
 const FilterInput: FC<FilterInputProps> = ({
   availableFilters: availableFilters,
   initialFilter: initialFilter,
   onFilterChange,
-  onValidationChange,
 }) => {
   const [openBracketCount, setOpenBracketCount] = useState(0);
   const [currentFilter, setCurrentFilter] = useState<string>("");
@@ -25,49 +23,53 @@ const FilterInput: FC<FilterInputProps> = ({
     useState<FilterElement[]>(initialFilter);
 
   useEffect(() => {
-    let isValid = true;
+    const filtered = initialFilter.filter((filterElement) => {
+      return (
+        filterElement.elementType != ElementType.Filter ||
+        availableFilters.includes(filterElement.value)
+      );
+    });
+    if (filtered.length != initialFilter.length) {
+      setInternalFilter(filtered);
+    }
+  }, [initialFilter]);
 
-    if (internalFilter.length > 0) {
-      // Begins or ends with AND, OR
-      if (
-        ElementType.Operator === internalFilter[0].elementType ||
-        ElementType.Operator ===
-          internalFilter[internalFilter.length - 1].elementType
-      ) {
-        isValid = false;
-      }
-
-      // Ends with NOT
-      if (
-        internalFilter[internalFilter.length - 1].elementType ===
-        ElementType.Not
-      ) {
-        isValid = false;
-      }
-
-      // Number of brackets doesn't match
-      const openBrackets = internalFilter.filter(
-        (el: FilterElement) => el.elementType === ElementType.OpenBracket,
-      ).length;
-      const closeBrackets = internalFilter.filter(
-        (el: FilterElement) => el.elementType === ElementType.CloseBracket,
-      ).length;
-      if (openBrackets !== closeBrackets) {
-        isValid = false;
-      }
-
-      // Additional check for last element being AND or OR
-      const lastElement = internalFilter[internalFilter.length - 1];
-      if (
-        lastElement.elementType === ElementType.Operator &&
-        (lastElement.value === "AND" || lastElement.value === "OR")
-      ) {
-        isValid = false;
-      }
+  function isValid(filter: FilterElement[]) {
+    if (filter.length === 0) {
+      return true;
     }
 
-    onValidationChange(isValid);
-  }, [internalFilter, onValidationChange]);
+    // Begins or ends with AND, OR
+    if (
+      ElementType.Operator === filter[0].elementType ||
+      ElementType.Operator === filter[filter.length - 1].elementType
+    ) {
+      return false;
+    }
+
+    // Ends with NOT
+    if (filter[filter.length - 1].elementType === ElementType.Not) {
+      return false;
+    }
+
+    // Number of brackets doesn't match
+    const openBrackets = filter.filter(
+      (el: FilterElement) => el.elementType === ElementType.OpenBracket,
+    ).length;
+    const closeBrackets = filter.filter(
+      (el: FilterElement) => el.elementType === ElementType.CloseBracket,
+    ).length;
+    if (openBrackets !== closeBrackets) {
+      return false;
+    }
+
+    // Additional check for last element being AND or OR
+    const lastElement = filter[filter.length - 1];
+    return !(
+      lastElement.elementType === ElementType.Operator &&
+      (lastElement.value === "AND" || lastElement.value === "OR")
+    );
+  }
 
   const deleteLastElement = () => {
     if (internalFilter.length === 0) return;
@@ -85,7 +87,7 @@ const FilterInput: FC<FilterInputProps> = ({
 
     const newFilter = internalFilter.slice(0, internalFilter.length - 1);
     setInternalFilter(newFilter);
-    onFilterChange(newFilter); // Update the parent's state
+    onFilterChange(newFilter, isValid(newFilter)); // Update the parent's state
   };
 
   const addFilter = (filter: string, elementType: ElementType) => {
@@ -114,7 +116,7 @@ const FilterInput: FC<FilterInputProps> = ({
 
     setInternalFilter(newFilter);
     setCurrentFilter("");
-    onFilterChange(newFilter);
+    onFilterChange(newFilter, isValid(newFilter));
   };
 
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
