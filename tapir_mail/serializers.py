@@ -105,7 +105,12 @@ class SegmentDataSerializer(serializers.Serializer):
         return segments
 
     def validate_filter_list(self, filter_list):
-        invalid_filters = [f for f in filter_list if f not in filter_registry.keys()]
+        invalid_filters = [
+            f
+            for f in filter_list
+            if f not in filter_registry.keys()
+            and f not in ["AND", "OR", "NOT", "(", ")"]
+        ]
         if invalid_filters:
             raise serializers.ValidationError(
                 f"The following filters are invalid: {invalid_filters}"
