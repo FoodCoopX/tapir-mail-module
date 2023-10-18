@@ -39,7 +39,8 @@ jobs:
         run: bash scripts/generate_api_schema.sh
 
       - name: Run bundle script
-        run: bash scripts/bundle.sh
+        env:
+          CI: false #  otherwise React warnings will be treated as errors
 
       - name: Package tapir_mail
         run: |
