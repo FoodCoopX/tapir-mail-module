@@ -32,11 +32,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Poetry
-        run: pip install poetry 
-
-      - name: Install Python dependencies
-        run: poetry install
+      - name: Install
+        run: bash scripts/install.sh
 
       - name: Generate API schema
         run: bash scripts/generate_api_schema.sh
