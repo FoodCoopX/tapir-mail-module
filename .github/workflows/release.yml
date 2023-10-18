@@ -80,13 +80,14 @@ jobs:
           poetry build
           WHEEL_FILE=$(ls dist/*.whl)
           echo "::set-output name=wheel_file::${WHEEL_FILE##*/}"
-          
+
       - name: Upload tapir_mail package to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./tapir_mail/${{ steps.build.outputs.wheel_file }}
-          asset_name: ${{ steps.get_filename.outputs.wheel_filename }}
+          asset_path: ./tapir_mail/dist/${{ steps.build.outputs.wheel_file }}
+          asset_name: ${{ steps.build.outputs.wheel_file }}
           asset_content_type: application/zip
+          
