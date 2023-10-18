@@ -77,8 +77,8 @@ jobs:
       - name: Build tapir_mail
         id: build
         run: |
-          OUTPUT=$(poetry build)
-          WHEEL_FILE=$(echo "$OUTPUT" | grep -o 'Built .*\.whl' | awk '{print $2}')
+          poetry build
+          WHEEL_FILE=$(ls dist/*.whl)
           echo "::set-output name=wheel_file::$WHEEL_FILE"
           
       - name: Upload tapir_mail package to release
