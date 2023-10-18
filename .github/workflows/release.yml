@@ -67,8 +67,8 @@ jobs:
       - name: Extract version
         id: extract_version
         run: |
-           VERSION=${{ steps.set_tag.outputs.tag }}
-           echo "::set-output name=version::${VERSION##v}"
+          VERSION=${{ github.ref == 'refs/heads/master' && '0.0.0-dev' || github.ref_name }}
+          echo "::set-output name=version::${VERSION##v}"
 
       - name: Set version in pyproject.toml
         run: |
