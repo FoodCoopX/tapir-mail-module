@@ -70,6 +70,10 @@ jobs:
            VERSION=${{ steps.set_tag.outputs.tag }}
            echo "::set-output name=version::${VERSION##v}"
 
+      - name: Set version in pyproject.toml
+        run: |
+          sed -i "s/^version = .*/version = \"${{ steps.extract_version.outputs.version }}\"/" pyproject.toml
+      
       - name: Build tapir_mail
         run: poetry build
 
