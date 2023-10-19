@@ -1,4 +1,4 @@
-name: Back formatting check
+name: Black formatting check
 
 on: [push]
 

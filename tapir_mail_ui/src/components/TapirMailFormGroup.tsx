@@ -2,7 +2,7 @@ import React from "react";
 import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
 import "@fortawesome/fontawesome-free/css/solid.css";
 import "@fortawesome/fontawesome-free/css/fontawesome.css";
-import { FloatingLabel, Form } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import DateTimePicker from "./dateTimePicker";
 
 interface FormGroupProps {
@@ -18,18 +18,24 @@ const TapirMailFormGroup: React.FC<FormGroupProps> = ({
   value,
   onChange,
 }) => {
-  return (
-    <Form.Group>
-      {type === "datetime" ? (
-        <>
-          <Form.Label>{label}</Form.Label>
+  function renderInput() {
+    switch (type) {
+      case "datetime":
+        return (
           <DateTimePicker
             initialValue={value ? new Date(value) : new Date(Date.now())}
             onChange={onChange}
           />
-        </>
-      ) : (
-        <FloatingLabel label={label}>
+        );
+      case "checkbox":
+        return (
+          <Form.Check
+            onChange={onChange}
+            defaultChecked={value}
+          />
+        );
+      default:
+        return (
           <Form.Control
             required={true}
             type={type}
@@ -38,8 +44,14 @@ const TapirMailFormGroup: React.FC<FormGroupProps> = ({
               onChange(e.target.value);
             }}
           />
-        </FloatingLabel>
-      )}
+        );
+    }
+  }
+
+  return (
+    <Form.Group>
+      <Form.Label>{label}</Form.Label>
+      {renderInput()}
     </Form.Group>
   );
 };

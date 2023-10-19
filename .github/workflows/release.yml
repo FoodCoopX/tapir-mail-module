@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18"
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: "adopt"
+          java-version: "11"
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: bash scripts/install.sh
+
+      - name: Generate API schema
+        run: bash scripts/generate_api_schema.sh
+
+      - name: Run bundle script
+        run: bash scripts/bundle.sh
+        env:
+          CI: false #  otherwise React warnings will be treated as errors
+          REACT_APP_BASENAME: /mail
+
+      - name: Set tag
+        id: set_tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "::set-output name=tag::${GITHUB_REF##refs/tags/}"
+          elif [[ "${{ github.ref }}" == refs/heads/master ]]; then
+            echo "::set-output name=tag::latest-dev"
+          else
+            echo "::set-output name=tag::manual"
+          fi
+
+      - name: Draft new release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TAPIR_MAIL_RELEASE_TOKEN }}
+        with:
+          owner: FoodCoopX
+          repo: tapir-mail-releases
+          tag_name: ${{ steps.set_tag.outputs.tag }}
+          release_name: Release ${{ steps.set_tag.outputs.tag }}
+          draft: true # This makes the release a draft
+          commitish: main
+
+      - name: Extract version
+        id: extract_version
+        run: |
+          VERSION=${{ github.ref == 'refs/heads/master' && '0.0.0-dev' || github.ref_name }}
+          echo "::set-output name=version::${VERSION##v}"
+
+      - name: Set version in pyproject.toml
+        run: |
+          sed -i "s/^version = .*/version = \"${{ steps.extract_version.outputs.version }}\"/" pyproject.toml
+
+      - name: Build tapir_mail
+        id: build
+        run: |
+          poetry build
+          WHEEL_FILE=$(ls dist/*.whl)
+          echo "::set-output name=wheel_file::${WHEEL_FILE##*/}"
+
+      - name: Upload tapir_mail package to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TAPIR_MAIL_RELEASE_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/${{ steps.build.outputs.wheel_file }}
+          asset_name: ${{ steps.build.outputs.wheel_file }}
+          asset_content_type: application/zip

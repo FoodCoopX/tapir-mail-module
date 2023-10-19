@@ -22,6 +22,7 @@ const DummyTapirUserForm: React.FC<DummyTapirUserFormProps> = ({
     { label: "E-Mail", type: "email", field: "email" },
     { label: "First name", type: "text", field: "firstName" },
     { label: "Last name", type: "text", field: "lastName" },
+    { label: "Has coop shares", type: "checkbox", field: "hasCoopShares" },
   ];
   return (
     <Form style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
@@ -31,8 +32,12 @@ const DummyTapirUserForm: React.FC<DummyTapirUserFormProps> = ({
             label={formGroup.label}
             type={formGroup.type}
             value={user[formGroup.field]}
-            onChange={(value) => {
-              user[formGroup.field] = value;
+            onChange={(value: any) => {
+              let foo: {
+                [key: string]: any;
+              } = {};
+              foo[formGroup.field] = value;
+              Object.assign(user, foo);
             }}
           />
         );

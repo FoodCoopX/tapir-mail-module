@@ -6,8 +6,7 @@ import {
 } from "@heroicons/react/24/outline";
 import React, { FC, useEffect, useState } from "react";
 import { Accordion, Badge, Form } from "react-bootstrap";
-import { SegmentData } from "../../api_client";
-import { SegmentApi } from "../../api_client/apis/SegmentApi";
+import { SegmentApi, SegmentData } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import AccordionToggleCompact from "../accordionToggleCompact";
@@ -93,11 +92,12 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
       .then(({ filters }) => setAvailableFilters(filters || []))
       .catch((err) => {
         console.error(err);
-        showAlert("Fehler beim laden der Filter!", "danger");
+        showAlert("Fehler beim Laden der Filter!", "danger");
       });
   }, []);
 
   useEffect(() => {
+    console.log(isFilterValid);
     if (
       !isFilterValid ||
       segmentsToAdd.length + staticSegmentsToAdd.length < 1
@@ -107,18 +107,23 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
       return;
     }
 
+    const filters = complexFilter.map((filterElement) => filterElement.value);
     segmentApi
       .segmentCombineCreate({
         segmentDataRequest: {
           addSegments: segmentsToAdd,
           staticSegments: staticSegmentsToAdd,
           removeSegments: segmentsToRemove,
-          filterList: complexFilter.map((el) => el.value),
+          filterList: filters,
         },
       })
       .then(({ count, recipients }) => {
         setResultCount(count!!);
-        setResultRecipients(recipients!!.map((r) => r.name));
+        setResultRecipients(recipients!!.map((recipient) => recipient.name));
+      })
+      .catch((error) => {
+        console.error(error);
+        showAlert("Fehler beim Laden der Empfänger!", "danger");
       });
   }, [
     segmentsToAdd,
@@ -153,8 +158,9 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     (s) => !segmentsToAdd.includes(s),
   );
 
-  const handleFilterChange = (filter: FilterElement[]) => {
+  const handleFilterChange = (filter: FilterElement[], isValid: boolean) => {
     setComplexFilter(filter);
+    setIsFilterValid(isValid);
   };
 
   const plusSegmentButtonDisabled = !selectedSegment || selectedSegment === "";
@@ -354,7 +360,6 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
                   availableFilters={availableFilters}
                   initialFilter={complexFilter}
                   onFilterChange={handleFilterChange}
-                  onValidationChange={setIsFilterValid}
                 />
                 {isFilterValid || (
                   <Badge

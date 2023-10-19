@@ -1,10 +1,11 @@
 from django.conf.urls.static import static
 from django.urls import include, path, re_path
 from django.views.generic.base import TemplateView
+from django.conf import settings
+
 from rest_framework import routers
 
 from tapir_mail import views
-from tapir_mail_server import settings
 
 router = routers.DefaultRouter()
 router.register("email_template", views.EmailTemplateViewSet)

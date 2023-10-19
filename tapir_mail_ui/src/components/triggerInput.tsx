@@ -4,9 +4,9 @@ import "@fortawesome/fontawesome-free/css/solid.css";
 import "@fortawesome/fontawesome-free/css/fontawesome.css";
 import { Trigger, TriggersApi } from "../api_client";
 import { useApi } from "../hooks/useApi";
-import TriggerDropdown from "./triggerDropdown";
 import { Form } from "react-bootstrap";
 import TapirMailFormGroup from "./TapirMailFormGroup";
+import TapirDropdown from "./tapirDropdown";
 
 interface TriggerInputProps {
   selectedTriggerId: string | null;
@@ -21,29 +21,30 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
 }) => {
   const triggersApi = useApi(TriggersApi);
   const [triggers, setTriggers] = useState<Trigger[]>([]);
-  const selectedTrigger = triggers.find(
-    (trigger) => trigger.id === selectedTriggerId,
-  );
+  const selectedTrigger =
+    triggers.find((trigger) => trigger.id === selectedTriggerId) ?? triggers[0];
 
   useEffect(() => {
-    triggersApi.triggersList().then(setTriggers);
+    triggersApi.triggersList().then((triggers) => {
+      setTriggers(triggers);
+      if (!selectedTriggerId) {
+        onDropdownSelect(triggers[0]);
+      }
+    });
   }, []);
 
-  function onDropdownSelect(trigger_id: string | null) {
-    const selectedTrigger = triggers.find(
-      (trigger) => trigger.id === trigger_id,
-    );
-    onTriggerSelected(selectedTrigger ? selectedTrigger.id : null);
+  function onDropdownSelect(trigger: Trigger | null) {
+    onTriggerSelected(trigger ? trigger.id : null);
   }
 
   return (
     <>
       <Form.Group>
         <Form.Label>Trigger</Form.Label>
-        <TriggerDropdown
-          triggers={triggers}
-          selectedTriggerId={selectedTrigger ? selectedTrigger.id : null}
-          onTriggerSelected={onDropdownSelect}
+        <TapirDropdown
+          choices={triggers}
+          onChoiceSelected={onDropdownSelect}
+          selectedChoice={selectedTrigger}
         />
       </Form.Group>
       <br />

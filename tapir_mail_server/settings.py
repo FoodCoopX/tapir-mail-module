@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     "mjml",
 ]
 DEPENDENCIES_APPS = [
-    "django_bootstrap5",
     "rest_framework",
     "drf_spectacular",
     "django_drf_filepond",
@@ -98,6 +97,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "tapir_mail_server.wsgi.application"
 
+EMAIL_DISPATCH_BATCH_SIZE = 50  # job runs 1x/minute --> 3000 emails per hour
 
 # django-environ EMAIL_URL mechanism is a bit hairy with passwords with slashes in them, so use this instead
 EMAIL_ENV = env("EMAIL_ENV", default="dev")
@@ -227,8 +227,12 @@ MJML_EXEC_CMD = [
 CELERY_BROKER_URL = "redis://redis:6379"
 
 CELERY_BEAT_SCHEDULE = {
-    "send_oldest_email_configuration_task": {
-        "task": "tapir_mail.tasks.send_oldest_email_configuration_task",
+    "resolve_segment_and_create_email_dispatches_task": {
+        "task": "tapir_mail.tasks.resolve_segment_and_create_email_dispatches_task",
+        "schedule": datetime.timedelta(minutes=1),
+    },
+    "send_email_dispatch_batch_task": {
+        "task": "tapir_mail.tasks.send_email_dispatch_batch_task",
         "schedule": datetime.timedelta(minutes=1),
     },
 }

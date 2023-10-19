@@ -88,6 +88,8 @@ const DummyTapirUsersCard = () => {
                 <th>Email</th>
                 <th>First name</th>
                 <th>Last name</th>
+                <th>Pickup location</th>
+                <th>Has shares</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -108,6 +110,8 @@ const DummyTapirUsersCard = () => {
                   <td>{user.email}</td>
                   <td>{user.firstName}</td>
                   <td>{user.lastName}</td>
+                  <td>{user.pickupLocation.name}</td>
+                  <td>{user.hasCoopShares ? "Yes" : "No"}</td>
                   <td>
                     <Button
                       variant="danger"

@@ -4,13 +4,11 @@ from collections import deque
 
 from django.db.models import Q
 
-from tapir_mail_server.dummy_accounts.models import DummyTapirUser
-
 LOG = logging.getLogger(__name__)
 
 BASE_QUERYSET = None
 
-segment_registry = {"Alle Benutzer": (lambda: DummyTapirUser.objects.all())}
+segment_registry = {}
 filter_registry = {}
 
 
@@ -24,6 +22,7 @@ def _check_base_queryset():
 def register_base_segment(queryset):
     global BASE_QUERYSET
     BASE_QUERYSET = queryset
+    segment_registry["Alle Benutzer"] = lambda: queryset.all()
 
 
 def register_segment(name, func):
@@ -40,58 +39,73 @@ def register_filter(name, func):
     filter_registry[name] = func
 
 
+def _apply_top_operator(operator_stack, operand_stack):
+    if not operator_stack:
+        return
+
+    operator = operator_stack.pop()
+    if operator == "NOT":
+        if operand_stack:
+            operand_stack.append(~operand_stack.pop())
+        else:
+            raise ValueError("Missing operand for NOT")
+    else:
+        if len(operand_stack) >= 2:
+            right = operand_stack.pop()
+            left = operand_stack.pop()
+            if operator == "AND":
+                operand_stack.append(left & right)
+            elif operator == "OR":
+                operand_stack.append(left | right)
+        else:
+            raise ValueError("Missing operand for AND/OR")
+
+
 def _apply_complex_filters(queryset, filter_list):
-    stack = deque()
-    complex_filter = Q()
-    not_flag = False
+    operator_stack = deque()
+    operand_stack = deque()
 
     for item in filter_list:
         if item == "(":
-            stack.append((complex_filter, not_flag))
-            stack.append(None)
-            complex_filter = Q()
-            not_flag = False
+            operator_stack.append(item)
         elif item == ")":
-            last_filter = complex_filter if not not_flag else ~complex_filter
-            not_flag = False
-            complex_filter, not_flag = stack.pop()
-            operator = stack.pop()
-            if operator == "AND":
-                complex_filter &= last_filter
-            elif operator == "OR":
-                complex_filter |= last_filter
-        elif item == "NOT":
-            not_flag = not not_flag
-        elif item in ["AND", "OR"]:
-            stack.append((complex_filter, not_flag))
-            stack.append(item)
-            complex_filter = Q()
-            not_flag = False
-        else:
-            new_filter = filter_registry[item](BASE_QUERYSET.all())
-            new_q = Q(id__in=new_filter)
-            if not_flag:
-                new_q = ~new_q
-                not_flag = False
-
-            if stack and stack[-1] in ["AND", "OR"]:
-                operator = stack.pop()
-                last_filter, last_not_flag = stack.pop()
-                last_filter = last_filter if not last_not_flag else ~last_filter
-                if operator == "AND":
-                    complex_filter = last_filter & new_q
-                elif operator == "OR":
-                    complex_filter = last_filter | new_q
+            while operator_stack and operator_stack[-1] != "(":
+                _apply_top_operator(operator_stack, operand_stack)
+            if operator_stack:
+                operator_stack.pop()
             else:
-                if complex_filter:
-                    complex_filter &= new_q
-                else:
-                    complex_filter = new_q
+                raise ValueError("Mismatched parentheses")
+        elif item in ["AND", "OR", "NOT"]:
+            while operator_stack and _precedence(item) <= _precedence(
+                operator_stack[-1]
+            ):
+                _apply_top_operator(operator_stack, operand_stack)
+            operator_stack.append(item)
+        else:
+            if item not in filter_registry:
+                raise ValueError(f"Unknown filter or operand: {item}")
 
-    if not_flag:
-        complex_filter = ~complex_filter
+            new_filter = filter_registry[item](queryset)
+            operand_stack.append(Q(id__in=new_filter.values_list("id", flat=True)))
 
-    return queryset.filter(complex_filter)
+    while operator_stack:
+        _apply_top_operator(operator_stack, operand_stack)
+
+    if operand_stack:
+        return queryset.filter(operand_stack.pop())
+    else:
+        return queryset  # return the original queryset if operand_stack is empty
+
+
+def _precedence(operator):
+    if operator == "NOT":
+        return 3
+    elif operator == "AND":
+        return 2
+    elif operator == "OR":
+        return 1
+    elif operator == "(":
+        return 0
 
 
 def combine_segments_with_filters(
@@ -136,7 +150,6 @@ def combine_segments_with_filters(
 
         # Add static segments
         static_segments = StaticSegment.objects.filter(name__in=static_segments)
-        print(static_segments)
         for segment in static_segments:
             LOG.info(f"Adding static segment {segment.name}")
             result.extend(segment.recipients.all())
