@@ -248,3 +248,4 @@ filepond_stored_uploads/
 tapir_mail_ui/src/api_client/
 
 node_modules
+/.idea/
