@@ -20,6 +20,7 @@ import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
 import { getMediaLibraryFileUrl } from "../utils/getMediaLibraryFileUrl";
 import { mjmlToJson } from "../utils/mjml";
+import env from "../env";
 //import './CustomBlocks';
 
 const fontList = [
@@ -109,8 +110,7 @@ export const EMPTY_PAGE = mjmlToJson(
       .map(
         (f) =>
           `<mj-font name="${f.label}" href="${
-            (f.css!!.startsWith("/") ? process.env.REACT_APP_API_ROOT : "") +
-            f.css!!
+            (f.css!!.startsWith("/") ? env.REACT_APP_API_ROOT : "") + f.css!!
           }" />`,
       ) +
     "</mj-head><mj-body></mj-body></mjml>",
@@ -171,7 +171,7 @@ const Editor: React.FC<EditorProps> = ({
         const uploadFormData = new FormData();
         uploadFormData.append("filepond", file, file.name);
         fetch(
-          (process.env.REACT_APP_API_ROOT as string) +
+          (env.REACT_APP_API_ROOT as string) +
             "/api/media_library/filepond/process/",
           {
             method: "POST",
@@ -192,7 +192,7 @@ const Editor: React.FC<EditorProps> = ({
         const confirmFormData = new FormData();
         confirmFormData.append("filepond", uploadId);
         fetch(
-          (process.env.REACT_APP_API_ROOT as string) +
+          (env.REACT_APP_API_ROOT as string) +
             "/api/media_library/confirm_upload/",
           {
             method: "post",

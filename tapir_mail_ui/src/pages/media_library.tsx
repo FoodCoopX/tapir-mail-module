@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
+import env from "../env";
 
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
@@ -29,9 +30,7 @@ export default function MediaLibrary() {
   function onFilePondInit() {
     FilePondJs.setOptions({
       server: {
-        url:
-          (process.env.REACT_APP_API_ROOT as string) +
-          "/api/media_library/filepond",
+        url: (env.REACT_APP_API_ROOT as string) + "/api/media_library/filepond",
         process: "/process/",
         revert: "/revert/",
         restore: "/restore/",
@@ -62,8 +61,7 @@ export default function MediaLibrary() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     fetch(
-      (process.env.REACT_APP_API_ROOT as string) +
-        "/api/media_library/confirm_upload/",
+      (env.REACT_APP_API_ROOT as string) + "/api/media_library/confirm_upload/",
       {
         method: "post",
         body: formData,

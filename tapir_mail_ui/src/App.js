@@ -10,6 +10,7 @@ import "./App.css";
 import Loading from "./components/loading";
 import { AlertProvider } from "./contexts/alerts";
 import { routes } from "./routing";
+import env from "./env";
 
 // add new routes in routing.ts
 
@@ -51,7 +52,7 @@ function App() {
     >
       <AlertProvider>
         <AnimatePresence mode="wait">
-          <Router basename={process.env.REACT_APP_BASENAME}>
+          <Router basename={env.REACT_APP_BASENAME}>
             <InnerApp />
           </Router>
         </AnimatePresence>
