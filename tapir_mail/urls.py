@@ -2,6 +2,7 @@ from django.conf.urls.static import static
 from django.urls import include, path, re_path
 from django.views.generic.base import TemplateView
 from django.conf import settings
+from django.views.static import serve
 
 from rest_framework import routers
 
@@ -19,7 +20,7 @@ router.register(r"tokens", views.TokensView, basename="tokens")
 
 urlpatterns = [
     re_path(
-        r"^(?!(api)/).*$",
+        r"^(?!((api)|config\.js|static)/).*$",
         TemplateView.as_view(template_name="index.html"),
     ),  # React index.html
     path("api/media_library/", include("tapir_mail.media_library.urls")),

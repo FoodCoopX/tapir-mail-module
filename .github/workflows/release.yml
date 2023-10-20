@@ -2,8 +2,6 @@ name: Release
 
 on:
   push:
-    branches:
-      - master
     tags:
       - "*"
   workflow_dispatch:
@@ -19,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "18"
+          node-version: "20"
 
       - name: Setup Java
         uses: actions/setup-java@v2
@@ -44,16 +42,19 @@ jobs:
           CI: false #  otherwise React warnings will be treated as errors
           REACT_APP_BASENAME: /mail
 
-      - name: Set tag
-        id: set_tag
+      - name: Set tag and version
+        id: set_tag_version
         run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "::set-output name=tag::${GITHUB_REF##refs/tags/}"
-          elif [[ "${{ github.ref }}" == refs/heads/master ]]; then
-            echo "::set-output name=tag::latest-dev"
+            TAG=${GITHUB_REF##refs/tags/}
+            VERSION=${TAG}
           else
-            echo "::set-output name=tag::manual"
+            TIMESTAMP=$(date +%s)
+            TAG="0.0.0-dev-${TIMESTAMP}"
+            VERSION="0.0.0.dev${TIMESTAMP}"
           fi
+          echo "::set-output name=tag::${TAG}"
+          echo "::set-output name=version::${VERSION}"
 
       - name: Draft new release
         id: create_release
@@ -63,20 +64,17 @@ jobs:
         with:
           owner: FoodCoopX
           repo: tapir-mail-releases
-          tag_name: ${{ steps.set_tag.outputs.tag }}
-          release_name: Release ${{ steps.set_tag.outputs.tag }}
-          draft: true # This makes the release a draft
+          tag_name: ${{ steps.set_tag_version.outputs.tag }}
+          release_name: Release ${{ steps.set_tag_version.outputs.tag }}
+          draft: true
           commitish: main
-
-      - name: Extract version
-        id: extract_version
-        run: |
-          VERSION=${{ github.ref == 'refs/heads/master' && '0.0.0-dev' || github.ref_name }}
-          echo "::set-output name=version::${VERSION##v}"
+          body: |
+            Release for ${{ steps.set_tag_version.outputs.tag }}.
+            [View commit on GitHub](https://github.com/FoodCoopX/tapir-mail-module/commit/${{ github.sha }})
 
       - name: Set version in pyproject.toml
         run: |
-          sed -i "s/^version = .*/version = \"${{ steps.extract_version.outputs.version }}\"/" pyproject.toml
+          sed -i "s/^version = .*/version = \"${{ steps.set_tag_version.outputs.version }}\"/" pyproject.toml
 
       - name: Build tapir_mail
         id: build
