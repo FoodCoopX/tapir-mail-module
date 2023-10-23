@@ -10,6 +10,7 @@ export function useApi<T>(
       headers: {
         "X-CSRFToken": getCookie("csrftoken"),
       },
+      credentials: "include",
     }),
   );
 }
