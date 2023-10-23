@@ -160,6 +160,8 @@ class EmailDispatch(BaseModel):
     )
     recipient = models.EmailField()
     sent_time = models.DateTimeField(null=True, blank=True)
+    opened_time = models.DateTimeField(null=True, blank=True)
+    error_message = models.TextField(null=True, blank=True)
 
     class Meta:
         unique_together = (

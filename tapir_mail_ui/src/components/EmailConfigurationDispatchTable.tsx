@@ -1,17 +1,16 @@
+import { PlusCircleIcon, QueueListIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
-import { useApi } from "../hooks/useApi";
+import { Card, ProgressBar, Table } from "react-bootstrap";
+import { Link, useNavigate } from "react-router-dom";
 import {
   EmailConfigurationDispatch,
   EmailConfigurationDispatchApi,
 } from "../api_client";
 import { useAlert } from "../contexts/alerts";
-import { Link, useNavigate } from "react-router-dom";
-import { Card, Table } from "react-bootstrap";
-import Loading from "./loading";
+import { useApi } from "../hooks/useApi";
 import Paths from "../routing";
 import { formatDate } from "../utils/formatDate";
-import EmailConfigurationVersionStatusBadge from "./emailConfigurationVersionStatusBadge";
-import { PlusCircleIcon, QueueListIcon } from "@heroicons/react/24/outline";
+import Loading from "./loading";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -30,28 +29,38 @@ const EmailConfigurationDispatchTable: React.FC<
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    let call;
-    switch (content) {
-      case "last-sent":
-        call = api.emailConfigurationDispatchLastSentList.bind(api);
-        break;
-      case "next-sends":
-        call = api.emailConfigurationDispatchNextSendsList.bind(api);
-        break;
-    }
+    const fetchData = () => {
+      let call;
+      switch (content) {
+        case "last-sent":
+          call = api.emailConfigurationDispatchLastSentList.bind(api);
+          break;
+        case "next-sends":
+          call = api.emailConfigurationDispatchNextSendsList.bind(api);
+          break;
+      }
 
-    call({ limit: 10 })
-      .then(setEmailConfigurationDispatches)
-      .catch((err) => {
-        console.error(err);
-        showAlert(
-          "Error loading the emails : " + content, //TODO translation
-          "danger",
-        );
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      call({ limit: 10 })
+        .then(setEmailConfigurationDispatches)
+        .catch((err) => {
+          console.error(err);
+          showAlert(
+            "Error loading the emails : " + content, //TODO translation
+            "danger",
+          );
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    };
+
+    fetchData();
+
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -103,9 +112,19 @@ const EmailConfigurationDispatchTable: React.FC<
               <tr>
                 <th>Name des Mailings</th>
                 <th>Betreff</th>
-                <th>Gesendet am</th>
-                <th>Empfänger</th>
-                <th>Status</th>
+                {content === "last-sent" && (
+                  <>
+                    <th>Gesendet am</th>
+                    <th>Empfänger</th>
+                    <th>Öffnungsrate</th>
+                  </>
+                )}
+                {content === "next-sends" && (
+                  <>
+                    <th>Versandzeitpunkt</th>
+                    <th>Empfänger</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -149,14 +168,15 @@ const EmailConfigurationDispatchTable: React.FC<
                             emailConfigurationDispatch.segmentData,
                           )}
                     </td>
-                    <td>
-                      <EmailConfigurationVersionStatusBadge
-                        status={
-                          emailConfigurationDispatch.emailConfigurationVersion
-                            .status!
-                        }
-                      />
-                    </td>
+                    {content === "last-sent" && (
+                      <td style={{ padding: "0.1em", margin: "0" }}>
+                        <EmailConfigurationDispatchStatsColumn
+                          emailConfigurationDispatch={
+                            emailConfigurationDispatch
+                          }
+                        />
+                      </td>
+                    )}
                   </tr>
                 ),
               )}
@@ -165,6 +185,63 @@ const EmailConfigurationDispatchTable: React.FC<
         )}
       </Card.Body>
     </Card>
+  );
+};
+
+const EmailConfigurationDispatchStatsColumn: React.FC<{
+  emailConfigurationDispatch: EmailConfigurationDispatch;
+}> = ({ emailConfigurationDispatch }) => {
+  return (
+    <>
+      <small>
+        <strong>
+          {emailConfigurationDispatch.sentCount
+            ? Math.round(
+                (emailConfigurationDispatch.openedCount /
+                  emailConfigurationDispatch.sentCount) *
+                  100,
+              )
+            : 0}
+          &nbsp;%
+        </strong>
+        &nbsp;&nbsp;&nbsp;(
+        <strong>{emailConfigurationDispatch.openedCount}</strong>/
+        <span style={{ color: "darkred" }}>
+          {emailConfigurationDispatch.errorCount}
+        </span>
+        /{emailConfigurationDispatch.sentCount})
+      </small>
+      <ProgressBar style={{ height: "0.75em" }}>
+        <ProgressBar
+          title={"Geöffnet: " + emailConfigurationDispatch.openedCount}
+          variant="success"
+          now={emailConfigurationDispatch.openedCount * 100}
+          key={1}
+        />
+        <ProgressBar
+          title={"Fehler: " + emailConfigurationDispatch.errorCount}
+          variant="danger"
+          now={emailConfigurationDispatch.errorCount * 100}
+          key={3}
+        />
+        <ProgressBar
+          title={
+            "Nicht geöffnet: " +
+            (emailConfigurationDispatch.sentCount -
+              emailConfigurationDispatch.openedCount -
+              emailConfigurationDispatch.errorCount)
+          }
+          variant="warning"
+          now={
+            (emailConfigurationDispatch.sentCount -
+              emailConfigurationDispatch.openedCount -
+              emailConfigurationDispatch.errorCount) *
+            100
+          }
+          key={2}
+        />
+      </ProgressBar>
+    </>
   );
 };
 

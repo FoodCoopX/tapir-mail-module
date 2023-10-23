@@ -8,6 +8,7 @@ from django.utils import timezone
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import send_email
 from tapir_mail.service.token import replace_tokens
+from tapir_mail.service.tracking import get_tracking_url
 from tapir_mail.service.triggers import trigger_registry
 
 LOG = logging.getLogger(__name__)
@@ -20,8 +21,11 @@ class ResolveAndCreateEmailDispatches:
 
     @classmethod
     def resolve_and_create(cls):
-        lock = cache.lock("resolve_and_create_email_dispatches", timeout=1200)
+        lock = cache.lock("resolve_and_create_email_dispatches", timeout=180)
         if not lock.acquire(blocking=False):
+            LOG.error(
+                "Could not acquire lock for resolve_and_create_email_dispatches lock"
+            )
             return
 
         try:
@@ -87,8 +91,9 @@ class SendEmailBatch:
 
     @classmethod
     def send_email_dispatches(cls, batch_size=None):
-        lock = cache.lock("send_email_task_lock", timeout=1200)
+        lock = cache.lock("send_email_task_lock", timeout=180)
         if not lock.acquire(blocking=False):
+            LOG.error("Could not acquire lock for send_email_task_lock")
             return
 
         try:
@@ -98,6 +103,7 @@ class SendEmailBatch:
             batch = EmailDispatch.objects.filter(sent_time=None).order_by("created_at")[
                 :batch_size
             ]
+
             cls._send_batch(batch)
         finally:
             lock.release()
@@ -106,6 +112,7 @@ class SendEmailBatch:
     def _send_batch(email_dispatches):
         for email_dispatch in email_dispatches:
             with transaction.atomic():
+                LOG.info("Sending email to %s", email_dispatch.recipient)
                 config_dispatch = email_dispatch.email_configuration_dispatch
                 recipient = email_dispatch.recipient
                 mjml = replace_tokens(
@@ -117,6 +124,7 @@ class SendEmailBatch:
                         subject=config_dispatch.email_configuration_version.subject,
                         subtitle=config_dispatch.email_configuration_version.subtitle,
                         recipients=[recipient],
+                        tracking_url=get_tracking_url(email_dispatch),
                     )
 
                     if (
@@ -129,9 +137,8 @@ class SendEmailBatch:
 
                     email_dispatch.sent_time = timezone.now()
                     email_dispatch.save()
-
                 except Exception as e:
                     LOG.error(f"Error while sending email to {recipient}: {e}")
-                    # TODO: Error handling + retry logic
-                    # 1. save error message in EmailDispatch
-                    # 2. differentiate between different error types to decide if and when to retry
+                    email_dispatch.error_message = str(e)
+                    email_dispatch.sent_time = timezone.now()
+                    email_dispatch.save()

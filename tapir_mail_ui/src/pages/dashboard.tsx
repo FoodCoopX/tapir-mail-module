@@ -8,12 +8,12 @@ import {
   EmailTemplate,
   EmailTemplateApi,
 } from "../api_client";
+import EmailConfigurationDispatchTable from "../components/EmailConfigurationDispatchTable";
 import Loading from "../components/loading";
 import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
 import Paths from "../routing";
 import { formatDate } from "../utils/formatDate";
-import EmailConfigurationDispatchTable from "../components/EmailConfigurationDispatchTable";
 
 function Dashboard() {
   return (
@@ -153,16 +153,22 @@ const DispatchCard = () => {
   const api = useApi(EmailDispatchApi);
 
   useEffect(() => {
-    api
-      .emailDispatchList()
-      .then(setDispatches)
-      .catch((err) => {
-        console.error(err);
-        showAlert("Fehler beim Laden der Templates", "danger");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    const fetch = () =>
+      api
+        .emailDispatchList()
+        .then(setDispatches)
+        .catch((err) => {
+          console.error(err);
+          showAlert("Fehler beim Laden der Templates", "danger");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+
+    fetch();
+
+    const interval = setInterval(fetch, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -188,8 +194,9 @@ const DispatchCard = () => {
           >
             <thead>
               <tr>
-                <th>Recipient</th>
-                <th>Sent time</th>
+                <th>Empfänger</th>
+                <th>Gesendet am</th>
+                <th>Geöffnet am</th>
                 <th>Config</th>
               </tr>
             </thead>
@@ -198,6 +205,7 @@ const DispatchCard = () => {
                 <tr key={dispatch.id}>
                   <td>{dispatch.recipient}</td>
                   <td>{formatDate(dispatch.sentTime)}</td>
+                  <td>{formatDate(dispatch.openedTime)}</td>
                   <td>
                     {
                       dispatch.emailConfigurationDispatch
