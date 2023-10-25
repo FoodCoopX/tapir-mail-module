@@ -2,6 +2,7 @@ import logging
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
@@ -13,9 +14,9 @@ from tapir_mail.models import (
     EmailConfiguration,
     EmailConfigurationDispatch,
     EmailConfigurationVersion,
+    EmailDispatch,
     EmailTemplate,
     ReleaseStatus,
-    EmailDispatch,
     StaticSegment,
 )
 from tapir_mail.serializers import (
@@ -23,11 +24,11 @@ from tapir_mail.serializers import (
     EmailConfigurationDispatchSerializer,
     EmailConfigurationSerializer,
     EmailConfigurationVersionSerializer,
+    EmailDispatchSerializer,
     EmailTemplateSerializer,
     RecipientSerializer,
-    TriggerSerializer,
-    EmailDispatchSerializer,
     SegmentDataSerializer,
+    TriggerSerializer,
 )
 from tapir_mail.service.email import send_email
 from tapir_mail.service.segment import (
@@ -36,7 +37,8 @@ from tapir_mail.service.segment import (
     segment_registry,
 )
 from tapir_mail.service.token import replace_tokens, token_registry
-from tapir_mail.service.triggers import trigger_registry, Trigger
+from tapir_mail.service.tracking import track_email_opening
+from tapir_mail.service.triggers import Trigger, trigger_registry
 
 LOG = logging.getLogger(__name__)
 
@@ -452,3 +454,21 @@ class TokensView(viewsets.ViewSet):
             all_tokens[token_type] = list(tokens.keys())
 
         return Response(all_tokens, status=status.HTTP_200_OK)
+
+
+class TrackingView(viewsets.ViewSet):
+    @extend_schema(
+        responses={200: None},
+    )
+    @action(detail=True, methods=["GET"], url_path="track")
+    @transaction.atomic
+    def track(self, request, pk=None, *args, **kwargs):
+        try:
+            email_dispatch = EmailDispatch.objects.get(id=pk)
+        except EmailDispatch.DoesNotExist:
+            LOG.error(f"EmailDispatch with id {pk} not found")
+            return Response(None, status=status.HTTP_200_OK)
+
+        track_email_opening(email_dispatch)
+
+        return Response(None, status=status.HTTP_200_OK)

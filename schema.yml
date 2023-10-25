@@ -561,8 +561,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this email configuration dispatch.
+          type: string
+        description: A unique value identifying this email configuration dispatch.
         required: true
       tags:
       - email_configuration_dispatch
@@ -582,8 +582,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this email configuration dispatch.
+          type: string
+        description: A unique value identifying this email configuration dispatch.
         required: true
       tags:
       - email_configuration_dispatch
@@ -615,8 +615,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this email configuration dispatch.
+          type: string
+        description: A unique value identifying this email configuration dispatch.
         required: true
       tags:
       - email_configuration_dispatch
@@ -647,8 +647,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this email configuration dispatch.
+          type: string
+        description: A unique value identifying this email configuration dispatch.
         required: true
       tags:
       - email_configuration_dispatch
@@ -1005,8 +1005,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: integer
-        description: A unique integer value identifying this email dispatch.
+          type: string
+        description: A unique value identifying this email dispatch.
         required: true
       tags:
       - email_dispatch
@@ -1792,6 +1792,23 @@ paths:
               schema:
                 type: object
           description: ''
+  /api/tracking/{id}/track/:
+    get:
+      operationId: tracking_track_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - tracking
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/triggers/:
     get:
       operationId: triggers_list
@@ -2020,11 +2037,23 @@ components:
         override_recipients:
           type: object
           additionalProperties: {}
+        sent_count:
+          type: integer
+          readOnly: true
+        opened_count:
+          type: integer
+          readOnly: true
+        error_count:
+          type: integer
+          readOnly: true
       required:
       - email_configuration_version
+      - error_count
       - id
+      - opened_count
       - override_recipients
       - scheduled_time
+      - sent_count
     EmailConfigurationDispatchRequest:
       type: object
       properties:
@@ -2150,10 +2179,18 @@ components:
       type: object
       properties:
         id:
-          type: integer
-          readOnly: true
+          type: string
+          maxLength: 10
         email_configuration_dispatch:
           $ref: '#/components/schemas/EmailConfigurationDispatch'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
         recipient:
           type: string
           format: email
@@ -2162,10 +2199,18 @@ components:
           type: string
           format: date-time
           nullable: true
+        opened_time:
+          type: string
+          format: date-time
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
       required:
+      - created_at
       - email_configuration_dispatch
-      - id
       - recipient
+      - updated_at
     EmailTemplate:
       type: object
       properties:

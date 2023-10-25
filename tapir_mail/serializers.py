@@ -2,10 +2,10 @@ from rest_framework import serializers
 
 from tapir_mail.models import (
     EmailConfiguration,
-    EmailConfigurationVersion,
-    EmailTemplate,
-    EmailDispatch,
     EmailConfigurationDispatch,
+    EmailConfigurationVersion,
+    EmailDispatch,
+    EmailTemplate,
     StaticSegment,
 )
 from tapir_mail.service.segment import filter_registry, segment_registry
@@ -160,6 +160,18 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     scheduled_time = serializers.DateTimeField()
     segment_data = SegmentDataSerializer(allow_null=True, required=False)
     override_recipients = serializers.JSONField()
+    sent_count = serializers.SerializerMethodField()
+    opened_count = serializers.SerializerMethodField()
+    error_count = serializers.SerializerMethodField()
+
+    def get_sent_count(self, obj) -> int:
+        return obj.emaildispatch_set.filter(sent_time__isnull=False).count()
+
+    def get_opened_count(self, obj) -> int:
+        return obj.emaildispatch_set.filter(opened_time__isnull=False).count()
+
+    def get_error_count(self, obj) -> int:
+        return obj.emaildispatch_set.filter(error_message__isnull=False).count()
 
 
 class TriggerFieldDefinitionSerializer(serializers.Serializer):

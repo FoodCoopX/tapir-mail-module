@@ -65,6 +65,7 @@ TAPIR_MAIL_APPS = [
 ]
 INSTALLED_APPS += DEPENDENCIES_APPS + TAPIR_MAIL_APPS
 
+SITE_URL = env("SITE_URL", default="http://127.0.0.1:8000")
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -177,10 +178,6 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# CORS
-ALLOWED_HOSTS = ["*"]
-CORS_ALLOW_ALL_ORIGINS = True
-
 DJANGO_DRF_FILEPOND_UPLOAD_TMP = os.path.join(BASE_DIR, "filepond_temp_uploads")
 DJANGO_DRF_FILEPOND_FILE_STORE_PATH = os.path.join(BASE_DIR, "filepond_stored_uploads")
 
@@ -193,6 +190,11 @@ REST_FRAMEWORK = {
 }
 SPECTACULAR_SETTINGS = {"COMPONENT_SPLIT_REQUEST": True}
 
+# CORS
+ALLOWED_HOSTS = ["*"]
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 CORS_ALLOW_HEADERS = [
