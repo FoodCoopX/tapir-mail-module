@@ -14,7 +14,6 @@ const DummyAccountsOverview = lazy(
 
 const Paths = {
   dashboard: "/",
-  emailConfiguration: "/emailconfiguration",
   emailConfigurationCreate: "/emailconfiguration/new",
   emailConfigurationEdit: "/emailconfiguration/edit/:id",
   templateEditorCreate: "/editor",

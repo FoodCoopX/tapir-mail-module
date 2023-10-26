@@ -140,7 +140,8 @@ const EmailConfigurationDispatchTable: React.FC<
                             emailConfigurationDispatch.overrideRecipients,
                           )
                         : JSON.stringify(
-                            emailConfigurationDispatch.segmentData,
+                            emailConfigurationDispatch.emailConfigurationVersion
+                              .segmentData,
                           )}
                     </td>
                     {content === "last-sent" && (

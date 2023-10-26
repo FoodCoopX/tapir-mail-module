@@ -2042,10 +2042,6 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        segment_data:
-          allOf:
-          - $ref: '#/components/schemas/SegmentData'
-          nullable: true
         override_recipients:
           type: object
           additionalProperties: {}
@@ -2077,10 +2073,6 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        segment_data:
-          allOf:
-          - $ref: '#/components/schemas/SegmentDataRequest'
-          nullable: true
         override_recipients:
           type: object
           additionalProperties: {}
@@ -2374,10 +2366,6 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        segment_data:
-          allOf:
-          - $ref: '#/components/schemas/SegmentDataRequest'
-          nullable: true
         override_recipients:
           type: object
           additionalProperties: {}

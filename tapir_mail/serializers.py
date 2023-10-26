@@ -178,7 +178,6 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     id = serializers.CharField()
     email_configuration_version = EmailConfigurationVersionSerializer()
     scheduled_time = serializers.DateTimeField()
-    segment_data = SegmentDataSerializer(allow_null=True, required=False)
     override_recipients = serializers.JSONField()
     sent_count = serializers.SerializerMethodField()
     opened_count = serializers.SerializerMethodField()

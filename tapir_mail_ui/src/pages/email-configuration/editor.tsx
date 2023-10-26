@@ -130,7 +130,7 @@ const EmailConfigurationEditor = () => {
               },
             })
             .then((data) => {
-              navigate(Paths.emailConfigurationEdit.replace(":id", data.id));
+              navigate(Paths.dashboard);
               resolve();
             })
             .catch(reject);
@@ -208,7 +208,7 @@ const EmailConfigurationEditor = () => {
     saveVersion(content, "released")
       .then(() => {
         showAlert("Email Konfiguration veröffentlicht!", "success");
-        navigate(Paths.emailConfiguration);
+        navigate(Paths.dashboard);
       })
       .catch(() =>
         showAlert("Beim Veröffentlichen ist ein Fehler aufgetreten.", "danger"),
@@ -218,7 +218,7 @@ const EmailConfigurationEditor = () => {
     saveVersion(content, "draft")
       .then(() => {
         showAlert("Email Konfiguration gespeichert!", "success");
-        navigate(Paths.emailConfiguration);
+        navigate(Paths.dashboard);
       })
       .catch(() =>
         showAlert("Beim Speichern ist ein Fehler aufgetreten.", "danger"),
@@ -259,7 +259,7 @@ const EmailConfigurationEditor = () => {
                 &nbsp;&nbsp;Dashboard
               </Button>
             </Link>
-            <Link to={Paths.emailConfiguration}>
+            <Link to={Paths.dashboard}>
               <Button
                 size="sm"
                 style={{ width: "100%" }}
