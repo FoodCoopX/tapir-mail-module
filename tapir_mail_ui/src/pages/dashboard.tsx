@@ -49,7 +49,7 @@ function Dashboard() {
           content="last-sent"
         />
         <EmailConfigurationDispatchTable
-          cardTitle="Next sent Emails"
+          cardTitle="Warten auf Versand"
           content="next-sends"
         />
         <DispatchCard />
