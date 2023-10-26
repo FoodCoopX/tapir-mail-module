@@ -10,6 +10,7 @@ import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import Loading from "../loading";
+import SegmentsDisplay from "../segmentsDisplay";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -135,14 +136,18 @@ const EmailConfigurationDispatchTable: React.FC<
                     </td>
                     <td>
                       {/* FIXME: */}
-                      {emailConfigurationDispatch.overrideRecipients
-                        ? JSON.stringify(
-                            emailConfigurationDispatch.overrideRecipients,
-                          )
-                        : JSON.stringify(
+                      {emailConfigurationDispatch.overrideRecipients ? (
+                        JSON.stringify(
+                          emailConfigurationDispatch.overrideRecipients,
+                        )
+                      ) : (
+                        <SegmentsDisplay
+                          segmentData={
                             emailConfigurationDispatch.emailConfigurationVersion
-                              .segmentData,
-                          )}
+                              .segmentData
+                          }
+                        />
+                      )}
                     </td>
                     {content === "last-sent" && (
                       <td style={{ padding: "0.1em", margin: "0" }}>

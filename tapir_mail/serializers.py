@@ -84,29 +84,11 @@ class EmailConfigurationSerializer(serializers.ModelSerializer):
         return last_updated_draft.updated_at if last_updated_draft else None
 
 
-class EmailConfigurationVersionSerializer(
-    TriggerSerializationMixin, serializers.ModelSerializer
-):
-    email_configuration = EmailConfigurationSerializer()
-
-    class Meta:
-        model = EmailConfigurationVersion
-        fields = "__all__"
-
-
-class RecipientSerializer(serializers.Serializer):
-    recipients = serializers.ListField(child=serializers.EmailField(), required=True)
-
-
 class SegmentDataSerializer(serializers.Serializer):
-    add_segments = serializers.ListField(child=serializers.CharField(), required=False)
-    static_segments = serializers.ListField(
-        child=serializers.CharField(), required=False
-    )
-    remove_segments = serializers.ListField(
-        child=serializers.CharField(), required=False
-    )
-    filter_list = serializers.ListField(child=serializers.CharField(), required=False)
+    add_segments = serializers.ListField(child=serializers.CharField())
+    static_segments = serializers.ListField(child=serializers.CharField())
+    remove_segments = serializers.ListField(child=serializers.CharField())
+    filter_list = serializers.ListField(child=serializers.CharField())
 
     def validate_add_segments(self, add_segments):
         return self.validate_segments(add_segments)
@@ -151,6 +133,21 @@ class SegmentDataSerializer(serializers.Serializer):
                 f"The following static segments are invalid: {invalid_segments}"
             )
         return static_segments
+
+
+class EmailConfigurationVersionSerializer(
+    TriggerSerializationMixin, serializers.ModelSerializer
+):
+    email_configuration = EmailConfigurationSerializer()
+    segment_data = SegmentDataSerializer()
+
+    class Meta:
+        model = EmailConfigurationVersion
+        fields = "__all__"
+
+
+class RecipientSerializer(serializers.Serializer):
+    recipients = serializers.ListField(child=serializers.EmailField(), required=True)
 
 
 class BundledEmailConfigurationSerializer(

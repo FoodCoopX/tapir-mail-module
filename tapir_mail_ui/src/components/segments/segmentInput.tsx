@@ -10,9 +10,10 @@ import { SegmentApi, SegmentData } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import AccordionToggleCompact from "../accordionToggleCompact";
-import { getBorderRadiusByIdx, guessElementType } from "./common";
+import { guessElementType } from "./common";
 import FilterDisplay from "./filterDisplay";
 import FilterInput, { FilterElement } from "./filterInput";
+import SegmentsDisplay from "../segmentsDisplay";
 
 type SegmentInputProps = {
   initialData?: SegmentData;
@@ -42,16 +43,12 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   const [isFilterValid, setIsFilterValid] = useState<boolean>(true);
 
   useEffect(() => {
-    if (isFilterValid) {
-      onChange({
-        addSegments: segmentsToAdd,
-        staticSegments: staticSegmentsToAdd,
-        removeSegments: segmentsToRemove,
-        filterList: complexFilter.map((c) => c.value),
-      });
-    } else {
-      onChange({});
-    }
+    onChange({
+      addSegments: segmentsToAdd,
+      staticSegments: staticSegmentsToAdd,
+      removeSegments: segmentsToRemove,
+      filterList: isFilterValid ? complexFilter.map((c) => c.value) : [],
+    });
   }, [
     segmentsToAdd,
     staticSegmentsToAdd,
@@ -169,113 +166,39 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     segmentsToAdd.length === 0 ||
     availableStaticSegments.includes(selectedSegment);
 
+  function onSegmentToAddClicked(segment: string) {
+    const newSegmentsToAdd = segmentsToAdd.filter((s) => s !== segment);
+    setSegmentsToAdd(newSegmentsToAdd);
+    if (newSegmentsToAdd.length === 0) {
+      setSegmentsToRemove([]);
+      setComplexFilter([]);
+    }
+  }
+
+  function onSegmentToRemoveClicked(segment: string) {
+    setSegmentsToRemove(segmentsToRemove.filter((s) => s !== segment));
+  }
+
+  function onStaticSegmentToAddClicked(segment: string) {
+    setStaticSegmentsToAdd(staticSegmentsToAdd.filter((s) => s !== segment));
+  }
+
   return (
     <div>
       <Form.Label>Segmente</Form.Label>
-      {(segmentsToAdd.length > 0 || staticSegmentsToAdd.length > 0) && (
-        <div style={{ marginBottom: "1em" }}>
-          <h6>
-            {segmentsToAdd.map((segment, idx) => (
-              <>
-                {idx > 0 && (
-                  <Badge
-                    bg="dark"
-                    style={{ borderRadius: 0, userSelect: "none" }}
-                  >
-                    +
-                  </Badge>
-                )}
-                <Badge
-                  key={idx}
-                  style={{
-                    cursor: "pointer",
-                    ...getBorderRadiusByIdx(
-                      idx,
-                      segmentsToAdd.length,
-                      true,
-                      segmentsToRemove.length === 0 &&
-                        staticSegmentsToAdd.length === 0,
-                    ),
-                  }}
-                  onClick={() => {
-                    const newSegmentsToAdd = [
-                      ...segmentsToAdd.filter((s) => s !== segment),
-                    ];
-                    setSegmentsToAdd(newSegmentsToAdd);
-                    if (newSegmentsToAdd.length === 0) {
-                      setSegmentsToRemove([]);
-                      setComplexFilter([]);
-                    }
-                  }}
-                  bg="success"
-                >
-                  {segment}
-                </Badge>
-              </>
-            ))}
-            {segmentsToRemove.map((segment, idx) => (
-              <>
-                <Badge
-                  bg="dark"
-                  style={{ borderRadius: 0, userSelect: "none" }}
-                >
-                  -
-                </Badge>
-                <Badge
-                  key={idx}
-                  style={{
-                    cursor: "pointer",
-                    ...getBorderRadiusByIdx(
-                      idx,
-                      segmentsToRemove.length,
-                      false,
-                      staticSegmentsToAdd.length === 0,
-                    ),
-                  }}
-                  onClick={() =>
-                    setSegmentsToRemove([
-                      ...segmentsToRemove.filter((s) => s !== segment),
-                    ])
-                  }
-                  bg="danger"
-                >
-                  {segment}
-                </Badge>
-              </>
-            ))}
-            {staticSegmentsToAdd.map((segment, idx) => (
-              <>
-                {(segmentsToAdd.length > 0 || idx > 0) && (
-                  <Badge
-                    bg="dark"
-                    style={{ borderRadius: 0, userSelect: "none" }}
-                  >
-                    +
-                  </Badge>
-                )}
-                <Badge
-                  key={idx}
-                  style={{
-                    cursor: "pointer",
-                    ...getBorderRadiusByIdx(
-                      idx,
-                      staticSegmentsToAdd.length,
-                      segmentsToAdd.length === 0,
-                    ),
-                  }}
-                  onClick={() =>
-                    setStaticSegmentsToAdd([
-                      ...staticSegmentsToAdd.filter((s) => s !== segment),
-                    ])
-                  }
-                >
-                  {segment}
-                </Badge>
-              </>
-            ))}
-          </h6>
-        </div>
-      )}
+      <SegmentsDisplay
+        segmentData={{
+          addSegments: segmentsToAdd,
+          removeSegments: segmentsToRemove,
+          staticSegments: staticSegmentsToAdd,
+          filterList: [],
+        }}
+        interactions={{
+          onSegmentToAddClicked: onSegmentToAddClicked,
+          onStaticSegmentToAddClicked: onStaticSegmentToAddClicked,
+          onSegmentToRemoveClicked: onSegmentToRemoveClicked,
+        }}
+      />
       <div style={{ display: "flex" }}>
         <Form.Select
           onChange={(e) => setSelectedSegment(e.currentTarget.value)}

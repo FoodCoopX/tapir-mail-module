@@ -1755,6 +1755,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/SegmentDataRequest'
+        required: true
       security:
       - tokenAuth: []
       - {}
@@ -2112,6 +2113,8 @@ components:
           nullable: true
         email_configuration:
           $ref: '#/components/schemas/EmailConfiguration'
+        segment_data:
+          $ref: '#/components/schemas/SegmentData'
         created_at:
           type: string
           format: date-time
@@ -2132,13 +2135,10 @@ components:
           maxLength: 255
         status:
           $ref: '#/components/schemas/StatusEnum'
-        segment_data:
-          type: object
-          additionalProperties: {}
-          nullable: true
       required:
       - created_at
       - email_configuration
+      - segment_data
       - subject
       - updated_at
     EmailConfigurationVersionRequest:
@@ -2158,6 +2158,8 @@ components:
           nullable: true
         email_configuration:
           $ref: '#/components/schemas/EmailConfigurationRequest'
+        segment_data:
+          $ref: '#/components/schemas/SegmentDataRequest'
         content:
           type: string
           nullable: true
@@ -2172,12 +2174,9 @@ components:
           maxLength: 255
         status:
           $ref: '#/components/schemas/StatusEnum'
-        segment_data:
-          type: object
-          additionalProperties: {}
-          nullable: true
       required:
       - email_configuration
+      - segment_data
       - subject
     EmailDispatch:
       type: object
@@ -2472,6 +2471,11 @@ components:
           type: array
           items:
             type: string
+      required:
+      - add_segments
+      - filter_list
+      - remove_segments
+      - static_segments
     SegmentDataRequest:
       type: object
       properties:
@@ -2495,6 +2499,11 @@ components:
           items:
             type: string
             minLength: 1
+      required:
+      - add_segments
+      - filter_list
+      - remove_segments
+      - static_segments
     StatusEnum:
       enum:
       - draft
