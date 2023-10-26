@@ -74,7 +74,7 @@ const TemplatesCard = () => {
       .then(setTemplates)
       .catch((err) => {
         console.error(err);
-        showAlert("Fehler beim Laden der Templates", "danger");
+        showAlert("Fehler beim Laden der Vorlagen", "danger");
       })
       .finally(() => {
         setLoading(false);
@@ -90,10 +90,10 @@ const TemplatesCard = () => {
             justifyContent: "space-between",
           }}
         >
-          <h4>Templates</h4>
+          <h4>Vorlagen</h4>
           <Link to="/editor">
             <PlusCircleIcon
-              title="Neues Template"
+              title="Neue Vorlage"
               style={{
                 width: "3em",
                 padding: "0.25em",
@@ -159,7 +159,7 @@ const DispatchCard = () => {
         .then(setDispatches)
         .catch((err) => {
           console.error(err);
-          showAlert("Fehler beim Laden der Templates", "danger");
+          showAlert("Fehler beim Laden der Vorlagen", "danger");
         })
         .finally(() => {
           setLoading(false);

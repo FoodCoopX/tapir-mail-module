@@ -60,7 +60,7 @@ const TemplateEditor = () => {
       api
         .emailtemplatesCreate(props)
         .then((data) => {
-          showAlert("Dein Template wurde gespeichert!", "success");
+          showAlert("Dein Vorlage wurde gespeichert!", "success");
           if (data.id) {
             navigate("/editor/" + data.id);
           }

@@ -190,7 +190,7 @@ const EmailConfigurationEditor = () => {
         .catch(() => {
           setSelectedTemplate(ID_NEW_TEMPLATE);
           showAlert(
-            "Beim Laden des Templates ist ein Fehler aufgetreten.",
+            "Beim Laden der Vorlagen ist ein Fehler aufgetreten.",
             "danger",
           );
         })

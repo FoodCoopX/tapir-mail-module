@@ -295,8 +295,8 @@ const CustomEmailEditor: FC<CustomEmailEditorProps> = ({
       >
         {onTemplateNameChange && (
           <Form.Control
-            placeholder="Template Name"
-            aria-label="Template Name"
+            placeholder="Vorlage-Name"
+            aria-label="Vorlage-Name"
             required
             style={{ borderRadius: "0" }}
             className={templateName ? "" : "is-invalid"}
