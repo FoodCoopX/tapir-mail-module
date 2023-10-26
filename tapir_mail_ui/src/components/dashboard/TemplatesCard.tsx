@@ -64,7 +64,8 @@ const TemplatesCard = () => {
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Created</th>
+                <th>Erzeugt am</th>
+                <th>Aktualisiert am</th>
               </tr>
             </thead>
             <tbody>
@@ -83,6 +84,7 @@ const TemplatesCard = () => {
                 >
                   <td>{template.name}</td>
                   <td>{formatDate(template.createdAt)}</td>
+                  <td>{formatDate(template.updatedAt)}</td>
                 </tr>
               ))}
             </tbody>

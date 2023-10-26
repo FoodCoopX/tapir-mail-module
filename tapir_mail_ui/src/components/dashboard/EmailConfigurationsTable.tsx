@@ -81,7 +81,7 @@ const EmailConfigurationTable = () => {
                   <th>Name</th>
                   <th>Erstellt am</th>
                   <th>Veröffentlicht am</th>
-                  <th>Last updated draft</th>
+                  <th>Letzter Entwurf aktualisiert am</th>
                 </tr>
               </thead>
               <tbody>

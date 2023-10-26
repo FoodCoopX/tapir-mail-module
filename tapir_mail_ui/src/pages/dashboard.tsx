@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import EmailConfigurationDispatchTable from "../components/dashboard/EmailConfigurationDispatchTable";
 import Paths from "../routing";
 import TemplatesCard from "../components/dashboard/TemplatesCard";
-import DispatchCard from "../components/dashboard/DispatchCard";
 import EmailConfigurationTable from "../components/dashboard/EmailConfigurationsTable";
 import TapirButton from "../components/TapirButton";
 import { PhotoIcon, UserIcon } from "@heroicons/react/24/outline";
@@ -53,7 +52,6 @@ function Dashboard() {
           cardTitle="Warten auf Versand"
           content="next-sends"
         />
-        <DispatchCard />
       </div>
     </>
   );
