@@ -1,6 +1,6 @@
 import { Badge } from "react-bootstrap";
 import React, { Fragment } from "react";
-import "./segmentsDisplay.css";
+import "./chainedBadges.css";
 import { SegmentData } from "../api_client";
 
 interface SegmentsDisplayProps {
@@ -24,11 +24,8 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
     : {};
 
   return (
-    <div
-      style={{ marginBottom: "1em" }}
-      className="segments-display"
-    >
-      <h6>
+    <div style={{ marginBottom: "1em" }}>
+      <h6 className="chained-badges">
         {segmentData.addSegments.map((segment, idx) => (
           <Fragment key={segment}>
             {idx > 0 && <OperatorBadge text="+" />}

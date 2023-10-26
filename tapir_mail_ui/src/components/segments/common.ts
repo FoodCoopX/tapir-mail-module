@@ -1,3 +1,5 @@
+import { Variant } from "react-bootstrap/types";
+
 enum ElementType {
   Filter,
   Operator,
@@ -11,21 +13,12 @@ type FilterElement = {
   elementType: ElementType;
 };
 
-const getBorderRadiusByIdx = (
-  idx: number,
-  length: number,
-  canStart: boolean = true,
-  canEnd: boolean = true,
-) => {
-  const isFirst = canStart && idx === 0;
-  const isLast = canEnd && idx === length - 1;
-
-  return {
-    borderTopLeftRadius: isFirst ? 6 : 0,
-    borderBottomLeftRadius: isFirst ? 6 : 0,
-    borderTopRightRadius: isLast ? 6 : 0,
-    borderBottomRightRadius: isLast ? 6 : 0,
-  };
+const FILTER_ELEMENT_COLORS: { [key in ElementType]: Variant } = {
+  [ElementType.Filter]: "dark",
+  [ElementType.Operator]: "primary",
+  [ElementType.OpenBracket]: "info",
+  [ElementType.CloseBracket]: "info",
+  [ElementType.Not]: "warning",
 };
 
 const guessElementType = (value: string): ElementType => {
@@ -45,8 +38,8 @@ const guessElementType = (value: string): ElementType => {
 };
 
 export {
-  getBorderRadiusByIdx,
   guessElementType,
   ElementType,
   type FilterElement,
+  FILTER_ELEMENT_COLORS,
 };

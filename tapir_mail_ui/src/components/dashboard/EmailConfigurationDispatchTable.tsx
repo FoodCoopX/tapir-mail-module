@@ -11,6 +11,8 @@ import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import Loading from "../loading";
 import SegmentsDisplay from "../segmentsDisplay";
+import FilterDisplay from "../segments/filterDisplay";
+import { guessElementType } from "../segments/common";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -141,12 +143,24 @@ const EmailConfigurationDispatchTable: React.FC<
                           emailConfigurationDispatch.overrideRecipients,
                         )
                       ) : (
-                        <SegmentsDisplay
-                          segmentData={
-                            emailConfigurationDispatch.emailConfigurationVersion
-                              .segmentData
-                          }
-                        />
+                        <>
+                          <SegmentsDisplay
+                            segmentData={
+                              emailConfigurationDispatch
+                                .emailConfigurationVersion.segmentData
+                            }
+                          />
+                          <FilterDisplay
+                            filter={emailConfigurationDispatch.emailConfigurationVersion.segmentData.filterList.map(
+                              (filter) => {
+                                return {
+                                  value: filter,
+                                  elementType: guessElementType(filter),
+                                };
+                              },
+                            )}
+                          />
+                        </>
                       )}
                     </td>
                     {content === "last-sent" && (
