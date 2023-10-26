@@ -1,16 +1,15 @@
-import { PlusCircleIcon, QueueListIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
 import { Card, ProgressBar, Table } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   EmailConfigurationDispatch,
   EmailConfigurationDispatchApi,
-} from "../api_client";
-import { useAlert } from "../contexts/alerts";
-import { useApi } from "../hooks/useApi";
-import Paths from "../routing";
-import { formatDate } from "../utils/formatDate";
-import Loading from "./loading";
+} from "../../api_client";
+import { useAlert } from "../../contexts/alerts";
+import { useApi } from "../../hooks/useApi";
+import Paths from "../../routing";
+import { formatDate } from "../../utils/formatDate";
+import Loading from "../loading";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -65,39 +64,15 @@ const EmailConfigurationDispatchTable: React.FC<
 
   return (
     <Card>
-      <Card.Header>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <h4>{cardTitle}</h4>
-          <div>
-            <Link to={Paths.emailConfigurationCreate}>
-              <PlusCircleIcon
-                title="Neue Email Konfiguration"
-                style={{
-                  width: "3em",
-                  padding: "0.25em",
-                  borderRadius: "50%",
-                  color: "green",
-                }}
-              />
-            </Link>
-            <Link to={Paths.emailConfiguration}>
-              <QueueListIcon
-                title="Alle Email Konfigurationen"
-                style={{
-                  width: "3em",
-                  padding: "0.25em",
-                  borderRadius: "50%",
-                  color: "primary",
-                }}
-              />
-            </Link>
-          </div>
-        </div>
+      <Card.Header
+        as="h5"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span>{cardTitle}</span>
       </Card.Header>
       <Card.Body style={{ padding: 0, border: "none" }}>
         {loading ? (

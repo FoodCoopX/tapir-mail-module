@@ -1,3 +1,5 @@
+import datetime
+
 from rest_framework import serializers
 
 from tapir_mail.models import (
@@ -7,6 +9,7 @@ from tapir_mail.models import (
     EmailDispatch,
     EmailTemplate,
     StaticSegment,
+    ReleaseStatus,
 )
 from tapir_mail.service.segment import filter_registry, segment_registry
 from tapir_mail.service.triggers import trigger_registry
@@ -62,6 +65,23 @@ class EmailConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailConfiguration
         fields = "__all__"
+
+    released_date = serializers.SerializerMethodField()
+    last_updated_draft_date = serializers.SerializerMethodField()
+
+    def get_released_date(self, obj: EmailConfiguration) -> datetime.datetime | None:
+        released_version = obj.versions.filter(status=ReleaseStatus.RELEASED).first()
+        return released_version.updated_at if released_version else None
+
+    def get_last_updated_draft_date(
+        self, obj: EmailConfiguration
+    ) -> datetime.datetime | None:
+        last_updated_draft = (
+            obj.versions.filter(status=ReleaseStatus.DRAFT)
+            .order_by("-updated_at")
+            .first()
+        )
+        return last_updated_draft.updated_at if last_updated_draft else None
 
 
 class EmailConfigurationVersionSerializer(

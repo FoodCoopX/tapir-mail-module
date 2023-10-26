@@ -2002,6 +2002,16 @@ components:
         id:
           type: string
           maxLength: 10
+        released_date:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        last_updated_draft_date:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -2018,7 +2028,9 @@ components:
           nullable: true
       required:
       - created_at
+      - last_updated_draft_date
       - name
+      - released_date
       - updated_at
     EmailConfigurationDispatch:
       type: object
