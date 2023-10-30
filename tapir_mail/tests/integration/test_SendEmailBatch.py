@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 
 from dateutil.relativedelta import relativedelta
-from django.conf import settings
 from django.core import mail
 
 from tapir_mail.models import EmailDispatch, ReleaseStatus
@@ -29,19 +28,23 @@ class SendEmailBatchTest(TapirIntegrationTest):
         )
 
     def create_email_dispatches(
-        self, count, config_dispatch=None, sent_time=None, created_at=None
+        self,
+        count,
+        config_dispatch=None,
+        sent_time=None,
+        created_at=None,
+        recipient_prefix="test",
     ):
-        dispatches = []
-        for i in range(count):
-            dispatches.append(
-                EmailDispatchFactory.create(
-                    email_configuration_dispatch=config_dispatch
-                    if config_dispatch
-                    else self.config_dispatch,
-                    recipient=f"test{i}@example.com",
-                    sent_time=sent_time,
-                )
+        dispatches = EmailDispatch.objects.bulk_create(
+            EmailDispatchFactory.build(
+                email_configuration_dispatch=config_dispatch
+                if config_dispatch
+                else self.config_dispatch,
+                recipient=f"{recipient_prefix}{i}@example.com",
+                sent_time=sent_time,
             )
+            for i in range(count)
+        )
 
         if created_at is not None:
             EmailDispatch.objects.filter(id__in=[d.id for d in dispatches]).update(
@@ -85,11 +88,11 @@ class SendEmailBatchTest(TapirIntegrationTest):
         self.assertEqual(len(mail.outbox), 0)
 
     def test_sendEmailDispatches_batchSizeLimit_onlyLimitSent(self):
-        self.create_email_dispatches(60)
-        SendEmailBatch.send_email_dispatches(batch_size=50)
-        self.assertEqual(len(mail.outbox), 50)
+        self.create_email_dispatches(10)
+        SendEmailBatch.send_email_dispatches(batch_size=4)
+        self.assertEqual(len(mail.outbox), 4)
         self.assertEqual(
-            EmailDispatch.objects.filter(sent_time__isnull=True).count(), 10
+            EmailDispatch.objects.filter(sent_time__isnull=True).count(), 6
         )
 
     def test_sendEmailDispatches_severalConfigurationsCouldBeSent_oldestGetsSent(self):
@@ -101,21 +104,24 @@ class SendEmailBatchTest(TapirIntegrationTest):
         )
 
         newer_dispatches = self.create_email_dispatches(
-            10, config_dispatch=newer_config_dispatch, created_at=self.NOW
+            10,
+            config_dispatch=newer_config_dispatch,
+            created_at=self.NOW,
+            recipient_prefix="new",
         )
-        older_dispatches = self.create_email_dispatches(
+        self.create_email_dispatches(
             10,
             config_dispatch=older_config_dispatch,
             created_at=self.NOW - relativedelta(days=2),
+            recipient_prefix="old",
         )
 
         SendEmailBatch.send_email_dispatches(batch_size=10)
 
         self.assertEqual(len(mail.outbox), 10)
-        older_recipients = {dispatch.recipient for dispatch in older_dispatches}
 
-        for email in mail.outbox:
-            self.assertTrue(email.to[0] in older_recipients)
+        for index, email in enumerate(mail.outbox):
+            self.assertIn(f"old{index}@example.com", email.to[0])
 
         self.assertEqual(
             set(EmailDispatch.objects.filter(sent_time__isnull=True)),

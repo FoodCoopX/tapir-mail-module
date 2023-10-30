@@ -100,9 +100,14 @@ class SendEmailBatch:
             if not batch_size:
                 batch_size = getattr(settings, "EMAIL_DISPATCH_BATCH_SIZE", 50)
 
-            batch = EmailDispatch.objects.filter(sent_time=None).order_by("created_at")[
-                :batch_size
-            ]
+            batch = (
+                EmailDispatch.objects.filter(sent_time=None)
+                .order_by("created_at")
+                .prefetch_related("email_configuration_dispatch")
+                .prefetch_related(
+                    "email_configuration_dispatch__email_configuration_version"
+                )[:batch_size]
+            )
 
             cls._send_batch(batch)
         finally:
