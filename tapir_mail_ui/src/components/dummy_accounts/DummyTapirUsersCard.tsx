@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { DummyAccountsApi, DummyTapirUser } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
-import { Button, Card, Table } from "react-bootstrap";
+import { Card, Table } from "react-bootstrap";
 import Loading from "../loading";
 import Paths from "../../routing";
 import { Link, useNavigate } from "react-router-dom";
-import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, UserIcon } from "@heroicons/react/24/outline";
+import TapirButton from "../TapirButton";
 
 const DummyTapirUsersCard = () => {
   const [users, setUsers] = useState<DummyTapirUser[]>([]);
@@ -35,7 +36,6 @@ const DummyTapirUsersCard = () => {
   ) {
     event.stopPropagation();
 
-    setLoading(true);
     api
       .dummyAccountsDummyTapirUserDestroy({ id: userId })
       .then(() => {
@@ -45,9 +45,6 @@ const DummyTapirUsersCard = () => {
       .catch((err) => {
         console.error(err);
         showAlert("Fehler beim Löschen der Users", "danger");
-      })
-      .finally(() => {
-        setLoading(false);
       });
   }
 
@@ -62,14 +59,10 @@ const DummyTapirUsersCard = () => {
         >
           <h4>Users</h4>
           <Link to={Paths.dummyTapirUserCreate}>
-            <PlusCircleIcon
-              title="Create user"
-              style={{
-                width: "3em",
-                padding: "0.25em",
-                borderRadius: "50%",
-                color: "green",
-              }}
+            <TapirButton
+              variant="primary"
+              icon={UserIcon}
+              text={"Create user"}
             />
           </Link>
         </div>
@@ -113,20 +106,12 @@ const DummyTapirUsersCard = () => {
                   <td>{user.pickupLocation.name}</td>
                   <td>{user.hasCoopShares ? "Yes" : "No"}</td>
                   <td>
-                    <Button
+                    <TapirButton
                       variant="danger"
+                      text=""
+                      icon={TrashIcon}
                       onClick={(event) => handleDelete(event, user.id)}
-                    >
-                      <TrashIcon
-                        title="Delete"
-                        style={{
-                          width: "2em",
-                          padding: "0.25em",
-                          borderRadius: "50%",
-                          color: "white",
-                        }}
-                      />
-                    </Button>
+                    />
                   </td>
                 </tr>
               ))}

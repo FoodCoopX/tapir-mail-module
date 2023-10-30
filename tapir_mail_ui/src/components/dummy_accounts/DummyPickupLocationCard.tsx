@@ -6,11 +6,12 @@ import {
 } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
-import { Button, Card, Table } from "react-bootstrap";
+import { Card, Table } from "react-bootstrap";
 import Loading from "../loading";
 import Paths from "../../routing";
 import { Link, useNavigate } from "react-router-dom";
-import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { MapPinIcon, TrashIcon } from "@heroicons/react/24/outline";
+import TapirButton from "../TapirButton";
 
 const DummyPickupLocationCard = () => {
   const [locations, setLocations] = useState<DummyPickupLocation[]>([]);
@@ -53,7 +54,6 @@ const DummyPickupLocationCard = () => {
   ) {
     event.stopPropagation();
 
-    setLoading(true);
     api
       .dummyAccountsDummyPickupLocationDestroy({ id: locationId })
       .then(() => {
@@ -65,9 +65,6 @@ const DummyPickupLocationCard = () => {
       .catch((err) => {
         console.error(err);
         showAlert("Fehler beim Löschen der Location", "danger");
-      })
-      .finally(() => {
-        setLoading(false);
       });
   }
 
@@ -82,14 +79,10 @@ const DummyPickupLocationCard = () => {
         >
           <h4>Pickup locations</h4>
           <Link to={Paths.dummyPickupLocationCreate}>
-            <PlusCircleIcon
-              title="Create location"
-              style={{
-                width: "3em",
-                padding: "0.25em",
-                borderRadius: "50%",
-                color: "green",
-              }}
+            <TapirButton
+              variant="primary"
+              icon={MapPinIcon}
+              text={"Create location"}
             />
           </Link>
         </div>
@@ -131,20 +124,12 @@ const DummyPickupLocationCard = () => {
                       : location.deliveryDay}
                   </td>
                   <td>
-                    <Button
+                    <TapirButton
                       variant="danger"
+                      text=""
+                      icon={TrashIcon}
                       onClick={(event) => handleDelete(event, location.id)}
-                    >
-                      <TrashIcon
-                        title="Delete"
-                        style={{
-                          width: "2em",
-                          padding: "0.25em",
-                          borderRadius: "50%",
-                          color: "white",
-                        }}
-                      />
-                    </Button>
+                    />
                   </td>
                 </tr>
               ))}

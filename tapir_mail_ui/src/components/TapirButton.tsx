@@ -6,6 +6,7 @@ interface TapirButtonProps {
   variant: ButtonVariant;
   text: string;
   icon: React.ComponentType<{ style: any }>;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 const TapirButton: React.FC<TapirButtonProps> = (props) => {
@@ -18,6 +19,7 @@ const TapirButton: React.FC<TapirButtonProps> = (props) => {
         alignItems: "center",
         gap: "2px",
       }}
+      onClick={props.onClick}
     >
       <span>{props.text}</span>
       <props.icon style={{ width: "1.5em" }} />

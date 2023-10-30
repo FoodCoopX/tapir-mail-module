@@ -19,7 +19,6 @@ function DummyAccountsOverview() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
           gridGap: "2em",
           margin: "2em",
         }}
