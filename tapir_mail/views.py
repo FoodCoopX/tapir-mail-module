@@ -100,19 +100,23 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         email_configuration = EmailConfiguration.objects.get_or_create(
             name=serializer.validated_data["name"],
         )[0]
-        email_configuration.description = (serializer.validated_data["description"],)
+        email_configuration.description = (
+            (serializer.validated_data["description"],)
+            if "description" in serializer.validated_data
+            else None
+        )
         email_configuration.save()
 
         # Create EmailConfigurationVersion
         version = EmailConfigurationVersion.objects.create(
             email_configuration=email_configuration,
             content=serializer.validated_data["content"],
-            subject=serializer.validated_data.get("subject", None),
+            subject=serializer.validated_data["subject"],
             subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
-            trigger=serializer.validated_data["trigger"],
-            trigger_data=serializer.validated_data["trigger_data"],
-            segment_data=serializer.validated_data["segment_data"],
+            trigger=serializer.validated_data.get("trigger", None),
+            trigger_data=serializer.validated_data.get("trigger_data", None),
+            segment_data=serializer.validated_data.get("segment_data", None),
         )
 
         if version.status == ReleaseStatus.RELEASED:

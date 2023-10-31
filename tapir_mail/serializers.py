@@ -24,14 +24,15 @@ class TriggerSerializationMixin(metaclass=serializers.SerializerMetaclass):
             raise serializers.ValidationError(f"Invalid trigger id : {trigger_id}")
         return trigger_id
 
-    def validate(self, data):
-        if not data["trigger"]:
+    def validate(self, data: dict):
+        trigger_name = data.get("trigger", None)
+        if not trigger_name:
             return data
 
-        if data["trigger"] not in trigger_registry.keys():
-            raise serializers.ValidationError(f"Unknown trigger: {data['trigger']}")
+        trigger_class = trigger_registry.get(trigger_name, None)
+        if not trigger_class:
+            raise serializers.ValidationError(f"Unknown trigger: {trigger_name}")
 
-        trigger_class = trigger_registry[data["trigger"]]
         TriggerSerializationMixin.check_for_missing_fields(
             trigger_class, data["trigger_data"]
         )
@@ -161,7 +162,7 @@ class BundledEmailConfigurationSerializer(
 
     # EmailConfigurationVersion fields
     content = serializers.CharField()
-    subject = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    subject = serializers.CharField()
     subtitle = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     release_status = serializers.CharField()
     updated_at = serializers.DateTimeField(allow_null=True, required=False)
