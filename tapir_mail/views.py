@@ -164,9 +164,9 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version.subject = serializer.validated_data.get("subject", None)
         version.subtitle = serializer.validated_data.get("subtitle", None)
         version.status = serializer.validated_data["release_status"]
-        version.trigger = serializer.validated_data["trigger"]
-        version.trigger_data = serializer.validated_data["trigger_data"]
-        version.segment_data = serializer.validated_data["segment_data"]
+        version.trigger = serializer.validated_data.get("trigger", None)
+        version.trigger_data = serializer.validated_data.get("trigger_data", None)
+        version.segment_data = serializer.validated_data.get("segment_data", None)
         version.save()
 
         if version.status == ReleaseStatus.RELEASED:

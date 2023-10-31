@@ -21,6 +21,13 @@ class TapirIntegrationTest(TapirFactoryMixin, TestCase):
         self.apiClient = APIClient()
         cache.clear()
 
+    def assertStatusCode(self, response, expected_status_code):
+        self.assertEqual(
+            expected_status_code,
+            response.status_code,
+            f"Unexpected status code, response content : {response.content.decode()}",
+        )
+
 
 class TapirUnitTest(TapirFactoryMixin, SimpleTestCase):
     def setUp(self) -> None:

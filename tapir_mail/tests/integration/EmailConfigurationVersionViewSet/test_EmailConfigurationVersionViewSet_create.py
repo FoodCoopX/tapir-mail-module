@@ -24,7 +24,7 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
     def test_invalidData_returns400(self):
         response = self._send_request({"invalid_parameter": "aaa"})
 
-        self.assertEqual(400, response.status_code)
+        self.assertStatusCode(response, 400)
         self.assertEqual(0, EmailConfigurationVersion.objects.count())
 
     def test_emailConfigurationDoesntExist_emailConfigurationGetsCreated(self):
@@ -127,13 +127,6 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
         self.assertStatusCode(response, 201)
         older_release.refresh_from_db()
         self.assertEqual(ReleaseStatus.ARCHIVED, older_release.status)
-
-    def assertStatusCode(self, response, expected_status_code):
-        self.assertEqual(
-            expected_status_code,
-            response.status_code,
-            f"Unexpected status code, response content : {response.content.decode()}",
-        )
 
     def get_minimal_post_data(self):
         return {
