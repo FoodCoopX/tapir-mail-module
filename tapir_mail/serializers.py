@@ -29,9 +29,7 @@ class TriggerSerializationMixin(metaclass=serializers.SerializerMetaclass):
         if not trigger_name:
             return data
 
-        trigger_class = trigger_registry.get(trigger_name, None)
-        if not trigger_class:
-            raise serializers.ValidationError(f"Unknown trigger: {trigger_name}")
+        trigger_class = trigger_registry[trigger_name]
 
         TriggerSerializationMixin.check_for_missing_fields(
             trigger_class, data["trigger_data"]
