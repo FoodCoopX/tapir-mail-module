@@ -27,11 +27,12 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     if (!pickerRef.current) return;
     loadLocale({ localization, name });
     locale(name);
+    const currentYear = new Date().getFullYear();
     dateTimePicker = new TempusDominus(pickerRef.current, {
       display: { theme: "light" },
       restrictions: {
-        minDate: DateTime.convert(new Date()),
-        maxDate: DateTime.convert(new Date()),
+        minDate: DateTime.convert(new Date(currentYear, 0, 1)),
+        maxDate: DateTime.convert(new Date(currentYear + 5, 11, 31)),
       },
     });
     dateTimePicker.subscribe("change.td", (e: ChangeEvent) => {

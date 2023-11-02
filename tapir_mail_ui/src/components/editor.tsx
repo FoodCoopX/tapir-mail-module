@@ -169,7 +169,7 @@ const Editor: React.FC<EditorProps> = ({
 
       function startUpload() {
         const uploadFormData = new FormData();
-        uploadFormData.append("filepond", file, file.name);
+        uploadFormData.append("filepond", file);
         fetch(
           (env.REACT_APP_API_ROOT as string) +
             "/api/media_library/filepond/process/",
