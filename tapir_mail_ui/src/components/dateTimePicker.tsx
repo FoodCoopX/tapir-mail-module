@@ -14,11 +14,15 @@ import { ChangeEvent } from "@eonasdan/tempus-dominus/types/utilities/event-type
 interface DateTimePickerProps {
   onChange: (value: Date) => void;
   initialValue: Date;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 const DateTimePicker: React.FC<DateTimePickerProps> = ({
   onChange,
   initialValue,
+  minDate,
+  maxDate,
 }) => {
   const pickerRef = useRef<HTMLDivElement>(null);
   let dateTimePicker: TempusDominus | null = null;
@@ -31,8 +35,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     dateTimePicker = new TempusDominus(pickerRef.current, {
       display: { theme: "light" },
       restrictions: {
-        minDate: DateTime.convert(new Date(currentYear, 0, 1)),
-        maxDate: DateTime.convert(new Date(currentYear + 5, 11, 31)),
+        minDate: DateTime.convert(minDate ?? new Date(currentYear, 0, 1)),
+        maxDate: DateTime.convert(maxDate ?? new Date(currentYear + 5, 11, 31)),
       },
     });
     dateTimePicker.subscribe("change.td", (e: ChangeEvent) => {

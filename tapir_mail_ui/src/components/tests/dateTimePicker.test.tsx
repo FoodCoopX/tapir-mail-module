@@ -10,6 +10,8 @@ describe("DateTimePicker", () => {
       <DateTimePicker
         onChange={() => {}}
         initialValue={initialValue}
+        minDate={new Date(2022, 1)}
+        maxDate={new Date(2024, 12)}
       />,
     );
 
