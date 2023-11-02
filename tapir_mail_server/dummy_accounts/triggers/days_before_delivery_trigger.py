@@ -10,7 +10,7 @@ from tapir_mail.models import (
     EmailConfigurationDispatch,
 )
 from tapir_mail.service.segment import segment_data_to_recipient_list
-from tapir_mail.service.triggers import Trigger, TriggerData
+from tapir_mail.service.triggers import Trigger
 from tapir_mail_server.dummy_accounts.models import DummyPickupLocation, DummyTapirUser
 from tapir_mail_server.dummy_accounts.triggers.days_after_subscription_start_trigger import (
     DaysTriggerData,
@@ -20,6 +20,7 @@ LOG = logging.getLogger(__name__)
 
 
 class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
+    # TODO simplify and fix to have a single delivery day.
     @staticmethod
     def get_next_weekday(target_weekday: int):
         today = timezone.now().date()
@@ -27,13 +28,6 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
         if days_ahead <= 0:
             days_ahead += 7
         return today + datetime.timedelta(days_ahead)
-
-    @classmethod
-    def get_scheduled_date(
-        cls, email_configuration_version, data: TriggerData
-    ) -> datetime.datetime:
-        # Unused
-        pass
 
     @classmethod
     def get_id(cls) -> str:

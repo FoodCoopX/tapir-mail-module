@@ -3,6 +3,7 @@ from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import Dict, Generic, TypeVar
 
+from django.utils import timezone
 from rest_framework import serializers
 
 TriggerData = TypeVar("TriggerData")
@@ -40,11 +41,10 @@ class Trigger(Generic[TriggerData], ABC):
         )
 
     @classmethod
-    @abstractmethod
     def get_scheduled_date(
         cls, email_configuration_version, data: TriggerData
     ) -> datetime.datetime:
-        pass
+        return timezone.now()
 
     @classmethod
     def get_recipients_override(
@@ -83,8 +83,8 @@ class Trigger(Generic[TriggerData], ABC):
         pass
 
     @classmethod
-    def after_mail_sent(cls, email_configuration_dispatch):
-        # Override this if you want for example to repeat the trigger after it's been sent,
+    def after_mail_sent(cls, email_dispatch):
+        # Override this if you want to repeat the trigger after it's been sent,
         # for example for a weekly trigger
         pass
 
