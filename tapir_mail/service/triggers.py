@@ -83,7 +83,7 @@ class Trigger(Generic[TriggerData], ABC):
         pass
 
     @classmethod
-    def after_mail_sent(cls, email_dispatch):
+    def after_mail_sent(cls, email_configuration_dispatch):
         # Override this if you want to repeat the trigger after it's been sent,
         # for example for a weekly trigger
         pass
