@@ -100,7 +100,11 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         email_configuration = EmailConfiguration.objects.get_or_create(
             name=serializer.validated_data["name"],
         )[0]
-        email_configuration.description = (serializer.validated_data["description"],)
+        email_configuration.description = (
+            (serializer.validated_data["description"],)
+            if "description" in serializer.validated_data
+            else None
+        )
         email_configuration.save()
 
         # Create EmailConfigurationVersion
@@ -110,9 +114,9 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             subject=serializer.validated_data.get("subject", None),
             subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
-            trigger=serializer.validated_data["trigger"],
-            trigger_data=serializer.validated_data["trigger_data"],
-            segment_data=serializer.validated_data["segment_data"],
+            trigger=serializer.validated_data.get("trigger", None),
+            trigger_data=serializer.validated_data.get("trigger_data", None),
+            segment_data=serializer.validated_data.get("segment_data", None),
         )
 
         if version.status == ReleaseStatus.RELEASED:
@@ -160,9 +164,9 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version.subject = serializer.validated_data.get("subject", None)
         version.subtitle = serializer.validated_data.get("subtitle", None)
         version.status = serializer.validated_data["release_status"]
-        version.trigger = serializer.validated_data["trigger"]
-        version.trigger_data = serializer.validated_data["trigger_data"]
-        version.segment_data = serializer.validated_data["segment_data"]
+        version.trigger = serializer.validated_data.get("trigger", None)
+        version.trigger_data = serializer.validated_data.get("trigger_data", None)
+        version.segment_data = serializer.validated_data.get("segment_data", None)
         version.save()
 
         if version.status == ReleaseStatus.RELEASED:

@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-from django.utils import timezone
-
 from tapir_mail.models import EmailConfigurationVersion
 from tapir_mail.service.triggers import Trigger
 
@@ -26,12 +24,6 @@ class OnAccountCreatedTrigger(Trigger[SimpleAccountTriggerData]):
     def get_display_name(cls):
         return "On account created"
 
-    @classmethod
-    def get_scheduled_date(
-        cls, version: EmailConfigurationVersion, data: SimpleAccountTriggerData
-    ):
-        return timezone.now()
-
 
 class OnAccountUpdatedTrigger(Trigger[SimpleAccountTriggerData]):
     @classmethod
@@ -47,9 +39,3 @@ class OnAccountUpdatedTrigger(Trigger[SimpleAccountTriggerData]):
     @classmethod
     def get_display_name(cls):
         return "On account updated"
-
-    @classmethod
-    def get_scheduled_date(
-        cls, version: EmailConfigurationVersion, data: SimpleAccountTriggerData
-    ):
-        return timezone.now()

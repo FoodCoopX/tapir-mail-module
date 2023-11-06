@@ -5,7 +5,7 @@ from tapir_mail.tests.factories import EmailConfigurationVersionFactory
 from tapir_mail.tests.test_utils import TapirIntegrationTest
 
 
-class TestEmailConfigurationSendTestEmail(TapirIntegrationTest):
+class TestEmailConfigurationVersionSendTestEmail(TapirIntegrationTest):
     def test_emailConfigurationDoesNotExist_returns404(self):
         self.assertEqual(0, EmailConfigurationVersion.objects.count())
         response = self._send_request("abc", None)

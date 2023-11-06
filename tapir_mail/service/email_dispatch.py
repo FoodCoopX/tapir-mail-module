@@ -132,13 +132,11 @@ class SendEmailBatch:
                         tracking_url=get_tracking_url(email_dispatch),
                     )
 
-                    if (
-                        config_dispatch.email_configuration_version.trigger
-                        in trigger_registry.keys()
-                    ):
-                        trigger_registry[
-                            config_dispatch.email_configuration_version.trigger
-                        ].after_mail_sent(config_dispatch)
+                    trigger_class = trigger_registry.get(
+                        config_dispatch.email_configuration_version.trigger, None
+                    )
+                    if trigger_class:
+                        trigger_class.after_mail_sent(email_dispatch)
 
                     email_dispatch.sent_time = timezone.now()
                     email_dispatch.save()

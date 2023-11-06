@@ -24,11 +24,6 @@ class DaysTriggerData:
 
 class DaysAfterSubscriptionStartTrigger(Trigger[DaysTriggerData]):
     @classmethod
-    def get_scheduled_date(cls, email_configuration_version, data):
-        # Unused
-        pass
-
-    @classmethod
     def get_id(cls) -> str:
         return f"{__name__}.days_after_subscription"
 

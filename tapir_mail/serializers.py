@@ -24,14 +24,13 @@ class TriggerSerializationMixin(metaclass=serializers.SerializerMetaclass):
             raise serializers.ValidationError(f"Invalid trigger id : {trigger_id}")
         return trigger_id
 
-    def validate(self, data):
-        if not data["trigger"]:
+    def validate(self, data: dict):
+        trigger_name = data.get("trigger", None)
+        if not trigger_name:
             return data
 
-        if data["trigger"] not in trigger_registry.keys():
-            raise serializers.ValidationError(f"Unknown trigger: {data['trigger']}")
+        trigger_class = trigger_registry[trigger_name]
 
-        trigger_class = trigger_registry[data["trigger"]]
         TriggerSerializationMixin.check_for_missing_fields(
             trigger_class, data["trigger_data"]
         )
