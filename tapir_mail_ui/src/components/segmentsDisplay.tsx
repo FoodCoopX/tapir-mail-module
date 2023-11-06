@@ -16,8 +16,11 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
   segmentData,
   interactions,
 }) => {
-  if (segmentData.addSegments.length + segmentData.addSegments.length === 0) {
-    return <></>;
+  if (
+    segmentData.addSegments.length + segmentData.staticSegments.length ===
+    0
+  ) {
+    return null;
   }
   const segmentStyle: React.CSSProperties = interactions
     ? { cursor: "pointer" }
