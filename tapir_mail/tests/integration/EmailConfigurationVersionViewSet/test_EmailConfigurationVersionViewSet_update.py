@@ -92,7 +92,6 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         put_data = {
             "name": older_release.email_configuration.name,
             "content": older_release.content,
-            "subject": older_release.subject,
             "release_status": ReleaseStatus.RELEASED,
         }
         response = self._send_request(new_version.id, put_data)

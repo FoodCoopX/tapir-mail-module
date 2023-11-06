@@ -111,7 +111,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version = EmailConfigurationVersion.objects.create(
             email_configuration=email_configuration,
             content=serializer.validated_data["content"],
-            subject=serializer.validated_data["subject"],
+            subject=serializer.validated_data.get("subject", None),
             subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
             trigger=serializer.validated_data.get("trigger", None),

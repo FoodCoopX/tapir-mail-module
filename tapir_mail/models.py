@@ -70,7 +70,7 @@ class EmailConfigurationVersion(BaseModel):
     """
 
     content = models.TextField(null=True)
-    subject = models.CharField(max_length=255)
+    subject = models.CharField(max_length=255, null=True, blank=True)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
     email_configuration = models.ForeignKey(
         EmailConfiguration, on_delete=models.CASCADE, related_name="versions"
