@@ -131,7 +131,6 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
     def get_minimal_post_data(self):
         return {
             "name": self.CONFIG_NAME,
-            "subject": self.VERSION_SUBJECT,
             "content": self.VERSION_CONTENT,
             "release_status": ReleaseStatus.DRAFT,
         }

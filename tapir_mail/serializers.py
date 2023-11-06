@@ -32,7 +32,7 @@ class TriggerDataSerializer(serializers.Serializer):
 
         trigger_class = trigger_registry.get(data["trigger_id"], None)
         if not trigger_class:
-            return
+            raise serializers.ValidationError(f"Unknown trigger: {trigger_id}")
 
         self.check_for_missing_fields(trigger_class, data["trigger_values"])
 
