@@ -193,7 +193,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 "updated_at": version.updated_at,
                 "release_status": version.status,
                 "segment_data": version.segment_data,
-                "trigger": version.triggers,
+                "triggers": version.triggers,
             }
         )
 
