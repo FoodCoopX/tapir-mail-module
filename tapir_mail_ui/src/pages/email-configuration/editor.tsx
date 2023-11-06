@@ -296,16 +296,6 @@ const EmailConfigurationEditor = () => {
             </Form.Group>
             <br />
 
-            <Form.Group>
-              <Form.Label>Untertitel (2. Betreffzeile)</Form.Label>
-              <Form.Control
-                type="text"
-                value={subtitle}
-                onChange={(e) => setSubtitle(e.target.value)}
-              />
-            </Form.Group>
-            <br />
-
             {!id && (
               <>
                 <Form.Group>

@@ -39,7 +39,6 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
             email_configuration__description="Description before",
             content="Content before",
             subject="Subject before",
-            subtitle="Subtitle before",
             status="Status before",
             segment_data=segment_data_before,
             trigger=None,

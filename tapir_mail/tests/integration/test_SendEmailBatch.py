@@ -69,18 +69,27 @@ class SendEmailBatchTest(TapirIntegrationTest):
         SendEmailBatch.send_email_dispatches()
         self.assertEqual(len(mail.outbox), 0)
 
+        self.create_email_dispatches(1)
+
     def test_sendEmailDispatches_errorSendingEmail_logsError(self):
         self.create_email_dispatches(1)
         with patch(
-            "tapir_mail.service.email_dispatch.send_email",
+            "tapir_mail.service.email_dispatch.prepare_email",
             side_effect=Exception("Test exception"),
-        ) as mock_send_email, patch(
-            "tapir_mail.service.email_dispatch.LOG.error"
-        ) as mock_log_error:
-            SendEmailBatch.send_email_dispatches()
-        mock_log_error.assert_called_once_with(
-            "Error while sending email to test0@example.com: Test exception"
-        )
+        ):
+            with patch("tapir_mail.service.email_dispatch.LOG.error") as mock_log_error:
+                SendEmailBatch.send_email_dispatches()
+
+                mock_log_error.assert_called_once_with(
+                    "Error while preparing email to test0@example.com: Test exception"
+                )
+
+                self.assertEqual(len(mail.outbox), 0)
+                self.assertTrue(
+                    EmailDispatch.objects.filter(
+                        error_message="Test exception"
+                    ).exists()
+                )
 
     def test_sendEmailDispatches_alreadySent_noEmailsSent(self):
         self.create_email_dispatches(10, sent_time=self.NOW)

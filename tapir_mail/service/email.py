@@ -4,16 +4,19 @@ from django.core.mail import EmailMultiAlternatives
 from django.template import Context, Template
 
 
-def send_email(**kwargs):
+def prepare_email(
+    mjml: str = None,
+    subject: str = None,
+    recipients: list[str] | str = [],
+    tracking_url: str = None,
+):
     """
     Sends an email using the configuration provided in the kwargs.
     """
 
-    mjml = kwargs.pop("mjml")
     if not mjml:
         raise ValueError("mjml is required")
 
-    recipients = kwargs.pop("recipients", None)
     if not recipients:
         raise ValueError("recipients is required")
 
@@ -21,15 +24,13 @@ def send_email(**kwargs):
         "{% load mjml %}\n{% mjml %}" + mjml + "{% endmjml %}"
     ).render(Context({}))
 
-    if "tracking_url" in kwargs:
-        email_body = _add_tracking_pixel(email_body, kwargs.pop("tracking_url"))
-
-    subject = kwargs.pop("subject")
+    if tracking_url:
+        email_body = _add_tracking_pixel(email_body, tracking_url)
 
     email = EmailMultiAlternatives(
         subject=subject,
         body=email_body,
-        to=recipients,
+        to=recipients if isinstance(recipients, list) else [recipients],
         bcc=[getattr(settings, "EMAIL_AUTO_BCC", None)],
         from_email=settings.EMAIL_HOST_SENDER,
         headers={
@@ -39,7 +40,8 @@ def send_email(**kwargs):
         else None,
     )
     email.content_subtype = "html"
-    email.send()
+
+    return email
 
 
 def _add_tracking_pixel(html_content, pixel_url):
