@@ -69,7 +69,7 @@ class DaysAfterSubscriptionStartTrigger(Trigger[DaysTriggerData]):
             return
 
         scheduled_time = subscription.start_date + datetime.timedelta(
-            days=int(version.trigger_data["number_of_days"])
+            days=int(version.triggers["number_of_days"])
         )
         if scheduled_time <= timezone.now().date():
             return

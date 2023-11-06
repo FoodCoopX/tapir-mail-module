@@ -89,8 +89,8 @@ class Trigger(Generic[TriggerData], ABC):
         pass
 
     @classmethod
-    def validate_data_and_return_object(cls, trigger_data):
-        # Override this if you want to validate the content of the trigger_data variable from EmailConfigurationVersion
+    def validate_field_values_and_return_object(cls, trigger_field_values):
+        # Override this if you want to validate the content of the trigger_field_values variable from EmailConfigurationVersion
         pass
 
 
@@ -132,13 +132,13 @@ class TimeTrigger(Trigger[TimeTriggerData]):
 
         cls.fire_version(
             email_configuration_version,
-            cls.validate_data_and_return_object(
-                email_configuration_version.trigger_data
+            cls.validate_field_values_and_return_object(
+                email_configuration_version.trigger_field_values
             ),
         )
 
     @classmethod
-    def validate_data_and_return_object(cls, trigger_data):
+    def validate_field_values_and_return_object(cls, trigger_data):
         try:
             scheduled_time = datetime.datetime.fromisoformat(
                 trigger_data["scheduled_time"]

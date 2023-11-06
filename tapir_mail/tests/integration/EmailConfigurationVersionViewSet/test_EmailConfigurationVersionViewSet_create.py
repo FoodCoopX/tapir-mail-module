@@ -76,7 +76,7 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
         self.assertEqual("Test status", version.status)
         self.assertEqual(TimeTrigger.get_id(), version.trigger)
         self.assertEqual(
-            {"scheduled_time": scheduled_time.isoformat()}, version.trigger_data
+            {"scheduled_time": scheduled_time.isoformat()}, version.trigger_field_values
         )
         self.assertEqual(
             {

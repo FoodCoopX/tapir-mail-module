@@ -43,7 +43,6 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
             status="Status before",
             segment_data=segment_data_before,
             trigger=None,
-            trigger_data=None,
         )
 
         segment_data_after = {

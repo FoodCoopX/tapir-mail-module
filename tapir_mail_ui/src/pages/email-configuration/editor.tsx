@@ -9,6 +9,7 @@ import {
   EmailTemplateApi,
   SegmentData,
   StatusEnum,
+  TriggerDataRequest,
 } from "../../api_client";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
 import Loading from "../../components/loading";
@@ -39,10 +40,7 @@ const EmailConfigurationEditor = () => {
   const [subtitle, setSubtitle] = useState("");
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
-  const [triggerId, setTriggerId] = useState<string | null>("");
-  const [triggerData, setTriggerData] = useState<Record<string, any> | null>(
-    {},
-  );
+  const [triggers, setTriggers] = useState<TriggerDataRequest[]>([]);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
@@ -89,8 +87,7 @@ const EmailConfigurationEditor = () => {
           setStatus(stringToStatus(data.releaseStatus) || StatusEnum.Draft);
           setMailingName(data.name || "");
           setUpdatedAt(data.updatedAt || undefined);
-          setTriggerId(data.trigger || null);
-          setTriggerData(data.triggerData || {});
+          setTriggers(data.triggers ?? []);
         })
         .catch((err) => {
           console.error(err);
@@ -114,8 +111,7 @@ const EmailConfigurationEditor = () => {
         content: jsonToMjml(content),
         name: mailingName,
         releaseStatus: newStatus,
-        trigger: triggerId,
-        triggerData: triggerData,
+        triggers: triggers,
         segmentData: segmentData,
       };
 
@@ -129,7 +125,7 @@ const EmailConfigurationEditor = () => {
                 ...props,
               },
             })
-            .then((data) => {
+            .then(() => {
               navigate(Paths.dashboard);
               resolve();
             })
@@ -351,11 +347,9 @@ const EmailConfigurationEditor = () => {
             </div>
             <br />
 
-            <TriggerInput
-              selectedTriggerId={triggerId}
-              onTriggerSelected={setTriggerId}
-              triggerData={triggerData}
-            />
+            {triggers.map((trigger) => (
+              <TriggerInput triggerData={trigger} />
+            ))}
 
             <hr />
             <Button

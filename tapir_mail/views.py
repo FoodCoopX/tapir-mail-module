@@ -27,7 +27,7 @@ from tapir_mail.serializers import (
     EmailTemplateSerializer,
     RecipientSerializer,
     SegmentDataSerializer,
-    TriggerSerializer,
+    TriggerDefinitionSerializer,
 )
 from tapir_mail.service.email import send_email
 from tapir_mail.service.segment import (
@@ -114,8 +114,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             subject=serializer.validated_data["subject"],
             subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
-            trigger=serializer.validated_data.get("trigger", None),
-            trigger_data=serializer.validated_data.get("trigger_data", None),
+            triggers=serializer.validated_data.get("triggers", None),
             segment_data=serializer.validated_data.get("segment_data", None),
         )
 
@@ -194,8 +193,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 "updated_at": version.updated_at,
                 "release_status": version.status,
                 "segment_data": version.segment_data,
-                "trigger": version.trigger,
-                "trigger_data": version.trigger_data,
+                "trigger": version.triggers,
             }
         )
 
@@ -330,12 +328,12 @@ class EmailConfigurationDispatchViewSet(viewsets.ModelViewSet):
 class TriggerListView(viewsets.ViewSet):
     @extend_schema(
         responses={
-            200: TriggerSerializer,
+            200: TriggerDefinitionSerializer,
         },
         description="Get a list of available triggers.",
     )
     def list(self, request):
-        serializer = TriggerSerializer(
+        serializer = TriggerDefinitionSerializer(
             [
                 {
                     "id": trigger.get_id(),

@@ -2,39 +2,39 @@ import React, { useEffect, useState } from "react";
 import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
 import "@fortawesome/fontawesome-free/css/solid.css";
 import "@fortawesome/fontawesome-free/css/fontawesome.css";
-import { Trigger, TriggersApi } from "../api_client";
+import {
+  TriggerDataRequest,
+  TriggerDefinition,
+  TriggersApi,
+} from "../api_client";
 import { useApi } from "../hooks/useApi";
 import { Form } from "react-bootstrap";
 import TapirMailFormGroup from "./TapirMailFormGroup";
 import TapirDropdown from "./tapirDropdown";
 
 interface TriggerInputProps {
-  selectedTriggerId: string | null;
-  onTriggerSelected: (trigger_id: string | null) => void;
-  triggerData: any;
+  triggerData: TriggerDataRequest;
 }
 
-const TriggerInput: React.FC<TriggerInputProps> = ({
-  selectedTriggerId,
-  onTriggerSelected,
-  triggerData,
-}) => {
+const TriggerInput: React.FC<TriggerInputProps> = ({ triggerData }) => {
   const triggersApi = useApi(TriggersApi);
-  const [triggers, setTriggers] = useState<Trigger[]>([]);
-  const selectedTrigger =
-    triggers.find((trigger) => trigger.id === selectedTriggerId) ?? triggers[0];
+  const [triggerDefinitions, setTriggerDefinitions] = useState<
+    TriggerDefinition[]
+  >([]);
+  const selectedTriggerDefinition =
+    triggerDefinitions.find(
+      (trigger) => trigger.id === triggerData.triggerId,
+    ) ?? triggerDefinitions[0];
 
   useEffect(() => {
-    triggersApi.triggersList().then((triggers) => {
-      setTriggers(triggers);
-      if (!selectedTriggerId) {
-        onDropdownSelect(triggers[0]);
-      }
+    triggersApi.triggersList().then((triggerDefinitions) => {
+      setTriggerDefinitions(triggerDefinitions);
     });
   }, []);
 
-  function onDropdownSelect(trigger: Trigger | null) {
-    onTriggerSelected(trigger ? trigger.id : null);
+  function onDropdownSelect(triggerDefinition: TriggerDefinition | null) {
+    if (!triggerDefinition) return;
+    triggerData.triggerId = triggerDefinition?.id;
   }
 
   return (
@@ -42,21 +42,21 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
       <Form.Group>
         <Form.Label>Trigger</Form.Label>
         <TapirDropdown
-          choices={triggers}
+          choices={triggerDefinitions}
           onChoiceSelected={onDropdownSelect}
-          selectedChoice={selectedTrigger}
+          selectedChoice={selectedTriggerDefinition}
         />
       </Form.Group>
       <br />
-      {selectedTrigger &&
-        selectedTrigger.fieldDefinitions.map((fieldDefinition) => (
+      {selectedTriggerDefinition &&
+        selectedTriggerDefinition.fieldDefinitions.map((fieldDefinition) => (
           <>
             <TapirMailFormGroup
               label={fieldDefinition.label}
               type={fieldDefinition.type}
-              value={triggerData[fieldDefinition.fieldName]}
+              value={triggerData.triggerData[fieldDefinition.fieldName]}
               onChange={(value) => {
-                triggerData[fieldDefinition.fieldName] = value;
+                triggerData.triggerData[fieldDefinition.fieldName] = value;
               }}
             />
             <br />

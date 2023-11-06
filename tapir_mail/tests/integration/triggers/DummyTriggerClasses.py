@@ -34,11 +34,11 @@ class DummyTrigger(Trigger[DummyTriggerData]):
         ]
 
     @classmethod
-    def validate_data_and_return_object(cls, trigger_data):
-        if not trigger_data["a_number"].isnumeric():
+    def validate_field_values_and_return_object(cls, trigger_field_values):
+        if not trigger_field_values["a_number"].isnumeric():
             raise serializers.ValidationError("a_number is not a valid number")
 
-        return DummyTriggerData(a_number=float(trigger_data["a_number"]))
+        return DummyTriggerData(a_number=float(trigger_field_values["a_number"]))
 
     @classmethod
     def after_mail_sent(cls, email_configuration_dispatch: EmailConfigurationDispatch):

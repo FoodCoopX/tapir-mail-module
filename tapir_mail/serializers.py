@@ -12,39 +12,40 @@ from tapir_mail.models import (
     ReleaseStatus,
 )
 from tapir_mail.service.segment import filter_registry, segment_registry
-from tapir_mail.service.triggers import trigger_registry
+from tapir_mail.service.triggers import trigger_registry, Trigger
 
 
-class TriggerSerializationMixin(metaclass=serializers.SerializerMetaclass):
-    trigger = serializers.CharField(allow_null=True, required=False)
-    trigger_data = serializers.JSONField(allow_null=True, required=False)
+class TriggerDataSerializer(serializers.Serializer):
+    trigger_id = serializers.CharField()
+    trigger_field_values = serializers.DictField(child=serializers.CharField())
 
-    def validate_trigger(self, trigger_id):
-        if trigger_id and trigger_id not in trigger_registry.keys():
+    @staticmethod
+    def validate_trigger_id(trigger_id: str):
+        if trigger_id not in trigger_registry.keys():
             raise serializers.ValidationError(f"Invalid trigger id : {trigger_id}")
         return trigger_id
 
     def validate(self, data: dict):
-        trigger_name = data.get("trigger", None)
-        if not trigger_name:
-            return data
+        trigger_id = data.get("trigger_id", None)
+        if not trigger_id:
+            return
 
-        trigger_class = trigger_registry[trigger_name]
+        trigger_class = trigger_registry.get(data["trigger_id"], None)
+        if not trigger_class:
+            return
 
-        TriggerSerializationMixin.check_for_missing_fields(
-            trigger_class, data["trigger_data"]
-        )
+        self.check_for_missing_fields(trigger_class, data["trigger_values"])
 
-        trigger_class.validate_data_and_return_object(data["trigger_data"])
+        trigger_class.validate_field_values_and_return_object(data["trigger_values"])
 
         return data
 
     @staticmethod
-    def check_for_missing_fields(trigger_class, trigger_data):
+    def check_for_missing_fields(trigger_class: type[Trigger], trigger_field_values):
         expected_fields = [
             field.field_name for field in trigger_class.get_field_definitions()
         ]
-        received_fields = trigger_data.keys()
+        received_fields = trigger_field_values.keys()
         missing_fields = [
             field for field in expected_fields if field not in received_fields
         ]
@@ -52,6 +53,10 @@ class TriggerSerializationMixin(metaclass=serializers.SerializerMetaclass):
             raise serializers.ValidationError(
                 f"Invalid trigger data. Missing fields: {missing_fields}"
             )
+
+
+class TriggersSerializationMixin(metaclass=serializers.SerializerMetaclass):
+    triggers = serializers.ListSerializer(child=TriggerDataSerializer(), required=False)
 
 
 class EmailTemplateSerializer(serializers.ModelSerializer):
@@ -135,7 +140,7 @@ class SegmentDataSerializer(serializers.Serializer):
 
 
 class EmailConfigurationVersionSerializer(
-    TriggerSerializationMixin, serializers.ModelSerializer
+    TriggersSerializationMixin, serializers.ModelSerializer
 ):
     email_configuration = EmailConfigurationSerializer()
     segment_data = SegmentDataSerializer()
@@ -150,7 +155,7 @@ class RecipientSerializer(serializers.Serializer):
 
 
 class BundledEmailConfigurationSerializer(
-    TriggerSerializationMixin, serializers.Serializer
+    TriggersSerializationMixin, serializers.Serializer
 ):
     # EmailConfiguration fields
     name = serializers.CharField()
@@ -195,7 +200,7 @@ class TriggerFieldDefinitionSerializer(serializers.Serializer):
     field_name = serializers.CharField()
 
 
-class TriggerSerializer(serializers.Serializer):
+class TriggerDefinitionSerializer(serializers.Serializer):
     id = serializers.CharField()
     name = serializers.CharField()
     field_definitions = TriggerFieldDefinitionSerializer(many=True)
