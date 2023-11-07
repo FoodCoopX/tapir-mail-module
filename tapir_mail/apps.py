@@ -3,7 +3,9 @@ import subprocess
 from django.apps import AppConfig
 import pkg_resources
 
-from tapir_mail.service.triggers import register_trigger, TimeTrigger
+from tapir_mail.service.triggers import register_trigger
+from tapir_mail.triggers.time_trigger import TimeTrigger
+from tapir_mail.triggers.transactional_trigger import TransactionalTrigger
 
 
 class TapirMailConfig(AppConfig):
@@ -12,6 +14,7 @@ class TapirMailConfig(AppConfig):
 
     def ready(self):
         register_trigger(TimeTrigger)
+        register_trigger(TransactionalTrigger)
         configure_ui()
 
 

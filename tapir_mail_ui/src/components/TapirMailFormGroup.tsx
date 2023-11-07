@@ -1,14 +1,15 @@
-import React from "react";
 import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
-import "@fortawesome/fontawesome-free/css/solid.css";
 import "@fortawesome/fontawesome-free/css/fontawesome.css";
-import { Form } from "react-bootstrap";
+import "@fortawesome/fontawesome-free/css/solid.css";
+import React from "react";
+import { Alert, Form } from "react-bootstrap";
 import DateTimePicker from "./dateTimePicker";
 
 interface FormGroupProps {
   label: string;
   type: string;
   value: any;
+  additionalData?: any;
   onChange: (newValue: any) => void;
 }
 
@@ -16,6 +17,7 @@ const TapirMailFormGroup: React.FC<FormGroupProps> = ({
   label,
   type,
   value,
+  additionalData = {},
   onChange,
 }) => {
   function renderInput() {
@@ -34,6 +36,29 @@ const TapirMailFormGroup: React.FC<FormGroupProps> = ({
             defaultChecked={value}
           />
         );
+      case "dropdown":
+        if (!additionalData.choices || additionalData.choices.length === 0) {
+          return (
+            <Alert variant="warning">Trigger ist nicht konfiguriert</Alert>
+          );
+        }
+        return (
+          <Form.Control
+            as="select"
+            onChange={(e) => onChange(e.target.value)}
+            defaultValue={value}
+          >
+            {additionalData.choices.map((choice: any) => (
+              <option
+                key={choice.value}
+                value={choice.value}
+              >
+                {choice.label}
+              </option>
+            ))}
+          </Form.Control>
+        );
+
       default:
         return (
           <Form.Control
@@ -49,7 +74,7 @@ const TapirMailFormGroup: React.FC<FormGroupProps> = ({
   }
 
   return (
-    <Form.Group>
+    <Form.Group style={{ marginBottom: "1em" }}>
       <Form.Label>{label}</Form.Label>
       {renderInput()}
     </Form.Group>

@@ -1,0 +1,62 @@
+import datetime
+from dataclasses import dataclass
+
+from rest_framework import serializers
+
+from tapir_mail.service.triggers import Trigger
+
+
+@dataclass
+class TimeTriggerData:
+    scheduled_time: datetime.datetime
+
+
+class TimeTrigger(Trigger[TimeTriggerData]):
+    @classmethod
+    def get_scheduled_date(
+        cls, email_configuration_version, data: TimeTriggerData
+    ) -> datetime.datetime:
+        return data.scheduled_time
+
+    @classmethod
+    def get_id(cls) -> str:
+        return f"{__name__}.time_trigger"
+
+    @classmethod
+    def get_display_name(cls) -> str:
+        return "Zeitpunkt auswählen"
+
+    @classmethod
+    def get_field_definitions(cls) -> [Trigger.FieldDefinition]:
+        return [
+            cls.FieldDefinition(
+                field_name="scheduled_time", type="datetime", label="Scheduled time"
+            )
+        ]
+
+    @classmethod
+    def _on_create(cls, email_configuration_version):
+        from tapir_mail.models import EmailConfigurationDispatch
+
+        EmailConfigurationDispatch.objects.filter(
+            email_configuration_version__email_configuration=email_configuration_version.email_configuration
+        ).delete()
+
+        cls.fire_version(
+            email_configuration_version,
+            cls.validate_data_and_return_object(
+                email_configuration_version.trigger_data
+            ),
+        )
+
+    @classmethod
+    def validate_data_and_return_object(cls, trigger_data):
+        try:
+            scheduled_time = datetime.datetime.fromisoformat(
+                trigger_data["scheduled_time"]
+            )
+        except ValueError as ve:
+            raise serializers.ValidationError(
+                f"Invalid value for scheduled_time: {trigger_data['scheduled_time']}, error: {ve}"
+            )
+        return TimeTriggerData(scheduled_time=scheduled_time)

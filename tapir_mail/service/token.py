@@ -50,7 +50,7 @@ def replace_tokens(mjml, recipient=None):
             value = ""
         return re.sub(
             re.compile(r"\{\{\s*(" + re.escape(key) + r")\s*\}\}"),
-            value,
+            str(value),
             current_mjml,
         )
 

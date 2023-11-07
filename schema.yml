@@ -1850,9 +1850,6 @@ components:
         subject:
           type: string
           nullable: true
-        subtitle:
-          type: string
-          nullable: true
         release_status:
           type: string
         updated_at:
@@ -1888,9 +1885,6 @@ components:
           type: string
           minLength: 1
         subject:
-          type: string
-          nullable: true
-        subtitle:
           type: string
           nullable: true
         release_status:
@@ -2128,9 +2122,6 @@ components:
           nullable: true
         subject:
           type: string
-          maxLength: 255
-        subtitle:
-          type: string
           nullable: true
           maxLength: 255
         status:
@@ -2139,7 +2130,6 @@ components:
       - created_at
       - email_configuration
       - segment_data
-      - subject
       - updated_at
     EmailConfigurationVersionRequest:
       type: object
@@ -2166,10 +2156,6 @@ components:
           minLength: 1
         subject:
           type: string
-          minLength: 1
-          maxLength: 255
-        subtitle:
-          type: string
           nullable: true
           maxLength: 255
         status:
@@ -2177,7 +2163,6 @@ components:
       required:
       - email_configuration
       - segment_data
-      - subject
     EmailDispatch:
       type: object
       properties:
@@ -2311,9 +2296,6 @@ components:
           type: string
           minLength: 1
         subject:
-          type: string
-          nullable: true
-        subtitle:
           type: string
           nullable: true
         release_status:
@@ -2659,6 +2641,9 @@ components:
           type: string
         field_name:
           type: string
+        additional_data:
+          type: object
+          additionalProperties: {}
       required:
       - field_name
       - label
