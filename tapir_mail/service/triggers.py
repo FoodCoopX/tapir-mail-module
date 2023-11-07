@@ -1,4 +1,5 @@
 import datetime
+import logging
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import Dict, Generic, TypeVar
@@ -6,7 +7,11 @@ from typing import Dict, Generic, TypeVar
 from django.utils import timezone
 from rest_framework import serializers
 
+from tapir_mail.models import ReleaseStatus, EmailConfigurationDispatch
+
 TriggerData = TypeVar("TriggerData")
+
+LOG = logging.getLogger(__name__)
 
 
 class Trigger(Generic[TriggerData], ABC):
@@ -67,18 +72,38 @@ class Trigger(Generic[TriggerData], ABC):
         return []
 
     @staticmethod
-    def on_email_configuration_version_create(email_configuration_version):
-        if (
-            not email_configuration_version.trigger
-            or email_configuration_version.trigger not in trigger_registry.keys()
-        ):
+    def on_email_configuration_version_save(email_configuration_version):
+        if email_configuration_version.status != ReleaseStatus.RELEASED:
+            EmailConfigurationDispatch.objects.filter(
+                email_configuration_version=email_configuration_version
+            ).delete()
             return
-        trigger_registry[email_configuration_version.trigger]._on_create(
-            email_configuration_version
-        )
+
+        EmailConfigurationDispatch.objects.filter(
+            email_configuration_version__email_configuration=email_configuration_version.email_configuration
+        ).delete()
+
+        if not email_configuration_version.triggers:
+            return
+
+        for trigger_data in email_configuration_version.triggers:
+            if trigger_data.name not in trigger_registry.keys():
+                LOG.warning(
+                    f"EmailConfigurationVersion "
+                    f"{email_configuration_version.id} {email_configuration_version.email_configuration.name} "
+                    f"has an unknown trigger : {trigger_data.name}"
+                )
+                continue
+            trigger_class = trigger_registry[trigger_data.name]
+            trigger_class._on_create(
+                email_configuration_version,
+                trigger_class.validate_field_values_and_return_object(
+                    trigger_data.trigger_field_values
+                ),
+            )
 
     @classmethod
-    def _on_create(cls, email_configuration_version):
+    def _on_create(cls, email_configuration_version, trigger_data: TriggerData):
         # Override this method if your trigger must for example fire on create
         pass
 
@@ -90,8 +115,9 @@ class Trigger(Generic[TriggerData], ABC):
 
     @classmethod
     def validate_field_values_and_return_object(cls, trigger_field_values):
-        # Override this if you want to validate the content of the trigger_field_values variable from EmailConfigurationVersion
-        pass
+        # Override this if you want to validate the content of the trigger_field_values variable
+        # from EmailConfigurationVersion
+        return None
 
 
 @dataclass
@@ -138,14 +164,14 @@ class TimeTrigger(Trigger[TimeTriggerData]):
         )
 
     @classmethod
-    def validate_field_values_and_return_object(cls, trigger_data):
+    def validate_field_values_and_return_object(cls, trigger_field_values):
         try:
             scheduled_time = datetime.datetime.fromisoformat(
-                trigger_data["scheduled_time"]
+                trigger_field_values["scheduled_time"]
             )
         except ValueError as ve:
             raise serializers.ValidationError(
-                f"Invalid value for scheduled_time: {trigger_data['scheduled_time']}, error: {ve}"
+                f"Invalid value for scheduled_time: {trigger_field_values['scheduled_time']}, error: {ve}"
             )
         return TimeTriggerData(scheduled_time=scheduled_time)
 
