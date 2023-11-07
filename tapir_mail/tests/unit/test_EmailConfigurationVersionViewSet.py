@@ -46,12 +46,12 @@ class TestEmailConfigurationVersion(TapirUnitTest):
                 self.assertIsInstance(response, Response)
                 self.assertEqual(400, response.status_code)
 
-    @patch("tapir_mail.views.send_email")
+    @patch("tapir_mail.views.prepare_email")
     @patch("tapir_mail.views.get_object_or_404")
     def test_sendTestMail_validRecipient_sendsMailAndReturns200Response(
         self,
         mock_get_object_or_404: Mock,
-        mock_send_mail: Mock,
+        mock_prepare_mail: Mock,
     ):
         mock_request = Mock()
         recipients = ["test@test.de", "test2@mail.de"]
@@ -60,7 +60,6 @@ class TestEmailConfigurationVersion(TapirUnitTest):
         email_configuration_version = SimpleNamespace(
             content="<mjml><mj-body><mj-text>Test Email<mj-body><mj-text></mjml>",
             subject="TEST_SUBJECT",
-            subtitle="TEST_SUBTITLE",
         )
         mock_get_object_or_404.return_value = email_configuration_version
 
@@ -74,9 +73,8 @@ class TestEmailConfigurationVersion(TapirUnitTest):
         mock_request.data.get.assert_called_once_with("recipients", None)
         self.assertIsInstance(response, Response)
         self.assertEqual(200, response.status_code)
-        mock_send_mail.assert_called_once_with(
+        mock_prepare_mail.assert_called_once_with(
             mjml=email_configuration_version.content,
             subject=email_configuration_version.subject,
-            subtitle=email_configuration_version.subtitle,
             recipients=recipients,
         )

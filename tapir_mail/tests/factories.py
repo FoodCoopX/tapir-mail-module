@@ -45,7 +45,6 @@ class EmailConfigurationVersionFactory(factory.django.DjangoModelFactory):
         ).read()
     )
     subject = factory.Faker("sentence")
-    subtitle = factory.Faker("sentence")
     email_configuration = factory.SubFactory(EmailConfigurationFactory)
     status = factory.Faker(
         "random_element", elements=[choice[0] for choice in RELEASE_STATUS_CHOICES]
