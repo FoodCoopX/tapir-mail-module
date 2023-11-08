@@ -8,7 +8,7 @@ from tapir_mail.models import (
     EmailConfigurationDispatch,
 )
 from tapir_mail.service.shortcuts import make_timezone_aware
-from tapir_mail.service.triggers import TimeTrigger
+from tapir_mail.triggers.time_trigger import TimeTrigger
 from tapir_mail.tests.factories import (
     EmailConfigurationFactory,
     EmailConfigurationVersionFactory,

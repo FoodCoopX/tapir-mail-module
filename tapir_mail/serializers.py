@@ -192,6 +192,7 @@ class TriggerFieldDefinitionSerializer(serializers.Serializer):
     label = serializers.CharField()
     type = serializers.CharField()
     field_name = serializers.CharField()
+    additional_data = serializers.JSONField(required=False, default=dict)
 
 
 class TriggerSerializer(serializers.Serializer):

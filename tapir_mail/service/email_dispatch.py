@@ -68,6 +68,7 @@ class ResolveAndCreateEmailDispatches:
                 EmailDispatch(
                     email_configuration_dispatch=config_dispatch,
                     recipient=recipient.email,
+                    created_at=config_dispatch.scheduled_time,
                 )
                 for recipient in recipients
             ]

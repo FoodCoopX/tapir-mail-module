@@ -123,7 +123,6 @@ type EditorProps = {
   templateName?: string;
   content?: any;
   subject?: string;
-  subtitle?: string;
   onContentChange?: (values: IEmailTemplate) => void;
 };
 
@@ -134,7 +133,6 @@ const Editor: React.FC<EditorProps> = ({
   onContentChange,
   templateName = "",
   subject,
-  subtitle,
   content = EMPTY_PAGE,
 }) => {
   const api = useApi(TokensApi);
@@ -224,7 +222,7 @@ const Editor: React.FC<EditorProps> = ({
       <div>
         <EmailEditorProvider
           dashed={false}
-          data={{ subject: subject, subtitle: subtitle, content: content }}
+          data={{ subject: subject, content: content }}
           height={"calc(100vh)"}
           onUploadImage={handleUploadImage}
           autoComplete={false}

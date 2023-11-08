@@ -80,9 +80,6 @@ const EmailConfigurationVersionSelect = ({
           <span>
             <strong>Betreff:</strong>&nbsp;{selectedVersion.subject}
           </span>
-          <span>
-            <small>{selectedVersion.subtitle}</small>
-          </span>
           <HtmlInDiv htmlContent={mjmlToHtml(selectedVersion.content!!)} />
         </>
       )}
