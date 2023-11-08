@@ -31,7 +31,7 @@ from tapir_mail.serializers import (
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.segment import (
-    combine_segments_with_filters,
+    resolve_segments,
     filter_registry,
     segment_registry,
 )
@@ -262,7 +262,10 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
                 data={"message": f"Invalid recipients parameter: {str(e)}"},
             )
-        mjml = replace_tokens(email_version_configuration.content)
+        mjml = replace_tokens(
+            email_version_configuration.content,
+            {"email": email for email in recipients_list},
+        )
         email = prepare_email(
             mjml=mjml,
             subject=email_version_configuration.subject,
@@ -423,7 +426,7 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
         filter_list = request.data.get("filter_list", [])
 
         try:
-            combined = combine_segments_with_filters(
+            combined = resolve_segments(
                 add_segments=add_segments,
                 static_segments=static_segments,
                 remove_segments=remove_segments,

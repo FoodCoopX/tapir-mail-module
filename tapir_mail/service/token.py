@@ -44,7 +44,42 @@ def register_tokens(user_tokens: dict, general_tokens: dict):
     _register_general_tokens(general_tokens)
 
 
-def replace_tokens(mjml, recipient=None):
+def find_tokens(mjml: str, token_type: str = TOKEN_TYPE_RECIPIENT) -> dict:
+    """
+    Find all unique tokens enclosed in double curly braces in the given MJML string,
+    and resolve them using the provided token_registry.
+
+    :param mjml: The MJML string to search for tokens.
+    :param token_registry: A dictionary with the token types and keys.
+    :return: A dict containing the resolved tokens and their corresponding keys.
+    """
+    pattern = re.compile(r"\{\{\s*(.*?)\s*\}\}")
+    matches = pattern.findall(mjml)
+    unique_tokens = list(set(matches))
+
+    result_tokens = []
+    for token in unique_tokens:
+        t_type, key = token.split(".")
+        if t_type == token_type and key in token_registry[t_type]:
+            internal_key = token_registry[t_type][key]
+            result_tokens.append(internal_key)
+
+    return result_tokens
+
+
+def resolve_recipient_tokens(tokens_to_resolve: list[str], recipient: object) -> dict:
+    """
+    Resolve all tokens that are registered as recipient tokens and return them as a dict.
+
+    :return: A dict containing the resolved tokens.
+    """
+    recipient_tokens = {}
+    for token_value in tokens_to_resolve:
+        recipient_tokens[token_value] = str(getattr(recipient, token_value, "") or "")
+    return recipient_tokens
+
+
+def replace_tokens(mjml: str, recipient_tokens: dict = {}):
     def _do_replace(current_mjml, key, value):
         if value is None:
             value = ""
@@ -60,7 +95,7 @@ def replace_tokens(mjml, recipient=None):
                 mjml = _do_replace(
                     mjml,
                     f"{token_type}.{key}",
-                    getattr(recipient, value, "") if recipient != None else "",
+                    recipient_tokens.get(value, ""),
                 )
         elif token_type == TOKEN_TYPE_GENERAL:
             for key, value in tokens.items():

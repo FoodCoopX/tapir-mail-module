@@ -2183,6 +2183,10 @@ components:
           type: string
           format: email
           maxLength: 254
+        recipient_tokens:
+          type: object
+          additionalProperties: {}
+          nullable: true
         sent_time:
           type: string
           format: date-time

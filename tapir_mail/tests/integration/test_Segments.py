@@ -1,6 +1,6 @@
 from tapir_mail.models import StaticSegment, StaticSegmentRecipient
 from tapir_mail.service.segment import (
-    combine_segments_with_filters,
+    resolve_segments,
     register_filter,
     register_segment,
 )
@@ -60,11 +60,11 @@ class TestSegments(TapirIntegrationTest):
         register_filter(cls.FILTER_HAS_COOP_SHARES, has_coop_shares_filter)
 
     def test_combineSegmentsWithFilters_addSegments_returnsCorrectList(self):
-        result = combine_segments_with_filters(add_segments=[self.SEGMENT_ALL_USERS])
+        result = resolve_segments(add_segments=[self.SEGMENT_ALL_USERS])
         self.assertSetEqual(set(r.id for r in result), {1, 2, 3, 4})
 
     def test_combineSegmentsWithFilters_addAndRemoveSegments_returnsCorrectList(self):
-        result = combine_segments_with_filters(
+        result = resolve_segments(
             add_segments=[self.SEGMENT_ALL_USERS],
             remove_segments=[self.SEGMENT_NOT_COOP_MEMBERS],
         )
@@ -73,7 +73,7 @@ class TestSegments(TapirIntegrationTest):
     def test_combineSegmentsWithFilters_addDynamicAndStaticSegments_returnsCorrectList(
         self,
     ):
-        result = combine_segments_with_filters(
+        result = resolve_segments(
             add_segments=[self.SEGMENT_NOT_COOP_MEMBERS],
             static_segments=[self.STATIC_SEGMENT],
         )
@@ -86,14 +86,14 @@ class TestSegments(TapirIntegrationTest):
         )
 
     def test_combineSegmentsWithFilters_addSegmentWithFilter_returnsCorrectList(self):
-        result = combine_segments_with_filters(
+        result = resolve_segments(
             add_segments=[self.SEGMENT_ALL_USERS],
             filter_list=[self.FILTER_HAS_COOP_SHARES],
         )
         self.assertSetEqual(set(r.id for r in result), {1, 3})
 
     def test_combineSegmentsWithFilters_addStaticSegment_returnsCorrectList(self):
-        result = combine_segments_with_filters(static_segments=[self.STATIC_SEGMENT])
+        result = resolve_segments(static_segments=[self.STATIC_SEGMENT])
         self.assertSetEqual(
             set(r.email for r in result),
             {self.STATIC_RECIPIENT_1, self.STATIC_RECIPIENT_2},
