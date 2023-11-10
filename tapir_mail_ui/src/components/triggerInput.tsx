@@ -32,16 +32,12 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
   );
 
   useEffect(() => {
-    console.log("useEffect");
-    console.log(triggerData);
     triggersApi.triggersList().then((triggerDefinitions) => {
       setTriggerDefinitions(triggerDefinitions);
     });
   }, []);
 
   const onDropdownSelect = (triggerDefinition: TriggerDefinition | null) => {
-    console.log("onDropdownSelect");
-    console.log(triggerData);
     onTriggerIdSelected(triggerDefinition ? triggerDefinition.id : null);
 
     const defaultTriggerData: any = {};
@@ -72,12 +68,9 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
     }
 
     onTriggerFieldValuesChanged(defaultTriggerData);
-    console.log(defaultTriggerData);
   };
 
   const handleTriggerDataChange = (fieldName: string, value: any) => {
-    console.log("handleTriggerDataChange");
-    console.log(triggerData);
     const newTriggerData = { ...triggerData };
 
     if (!selectedTriggerDefinition) return;
@@ -92,7 +85,7 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
     }
 
     newTriggerData.triggerFieldValues[fieldName] = value;
-    onTriggerFieldValuesChanged(newTriggerData);
+    onTriggerFieldValuesChanged(newTriggerData.triggerFieldValues);
   };
 
   return (
@@ -106,7 +99,6 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
         border: "1px solid var(--color-neutral-3)",
       }}
     >
-      <span>{JSON.stringify(triggerData)}</span>
       <Form.Group>
         <TapirDropdown
           choices={triggerDefinitions}
