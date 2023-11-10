@@ -167,7 +167,6 @@ class BundledEmailConfigurationSerializer(
     # EmailConfigurationVersion fields
     content = serializers.CharField()
     subject = serializers.CharField(allow_null=True, allow_blank=True, required=False)
-    subtitle = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     release_status = serializers.CharField()
     updated_at = serializers.DateTimeField(allow_null=True, required=False)
     segment_data = SegmentDataSerializer(allow_null=True, required=False)
@@ -199,6 +198,7 @@ class TriggerFieldDefinitionSerializer(serializers.Serializer):
     label = serializers.CharField()
     type = serializers.CharField()
     field_name = serializers.CharField()
+    additional_data = serializers.JSONField(required=False, default=dict)
 
 
 class TriggerDefinitionSerializer(serializers.Serializer):

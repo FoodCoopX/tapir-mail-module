@@ -12,15 +12,15 @@ import {
   TriggerDataRequest,
 } from "../../api_client";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
+import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
 import Loading from "../../components/loading";
 import SegmentInput from "../../components/segments/segmentInput";
+import TriggerInput from "../../components/triggerInput";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
-import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
-import TriggerInput from "../../components/triggerInput";
 
 const ID_NEW_TEMPLATE = "<new>";
 
@@ -37,7 +37,6 @@ const EmailConfigurationEditor = () => {
   const [loading, setLoading] = useState<Boolean>(Boolean(id));
   const [mailingName, setMailingName] = useState("");
   const [subject, setSubject] = useState("");
-  const [subtitle, setSubtitle] = useState("");
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
   const [triggers, setTriggers] = useState<TriggerDataRequest[]>([]);
@@ -81,7 +80,6 @@ const EmailConfigurationEditor = () => {
           const content = data.content ? mjmlToJson(data.content) : EMPTY_PAGE;
 
           setSubject(data.subject || "");
-          setSubtitle(data.subtitle || "");
           setSegmentData(data.segmentData || undefined);
           setLoadedContent(content);
           setStatus(stringToStatus(data.releaseStatus) || StatusEnum.Draft);
@@ -107,7 +105,6 @@ const EmailConfigurationEditor = () => {
       const props = {
         description: "TODO",
         subject: subject,
-        subtitle: subtitle,
         content: jsonToMjml(content),
         name: mailingName,
         releaseStatus: newStatus,
@@ -292,16 +289,6 @@ const EmailConfigurationEditor = () => {
             </Form.Group>
             <br />
 
-            <Form.Group>
-              <Form.Label>Untertitel (2. Betreffzeile)</Form.Label>
-              <Form.Control
-                type="text"
-                value={subtitle}
-                onChange={(e) => setSubtitle(e.target.value)}
-              />
-            </Form.Group>
-            <br />
-
             {!id && (
               <>
                 <Form.Group>
@@ -348,7 +335,12 @@ const EmailConfigurationEditor = () => {
             <br />
 
             {triggers.map((trigger) => (
-              <TriggerInput triggerData={trigger} />
+              <TriggerInput
+                selectedTriggerId={triggerId}
+                onTriggerSelected={setTriggerId}
+                onTriggerDataChange={setTriggerData}
+                triggerData={trigger}
+              />
             ))}
 
             <hr />
@@ -383,7 +375,6 @@ const EmailConfigurationEditor = () => {
           <Editor
             content={loadedContent}
             subject={subject}
-            subtitle={subtitle}
             onContentChange={(values) => handleEditorChange(values.content)}
           />
         </div>

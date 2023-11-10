@@ -1,11 +1,9 @@
 import datetime
 import logging
 from abc import abstractmethod, ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Generic, TypeVar
-
 from django.utils import timezone
-from rest_framework import serializers
 
 TriggerData = TypeVar("TriggerData")
 
@@ -18,6 +16,22 @@ class Trigger(Generic[TriggerData], ABC):
         label: str
         type: str
         field_name: str
+        additional_data: dict = field(default_factory=dict)
+
+    @dataclass
+    class DropdownFieldDefinition(FieldDefinition):
+        @dataclass
+        class Choice:
+            label: str
+            value: str
+
+        type: str = field(init=False, default="dropdown")
+        choices: list[Choice] = field(default_factory=list)
+
+        def __post_init__(self):
+            self.additional_data["choices"] = [
+                dict(label=choice.label, value=choice.value) for choice in self.choices
+            ]
 
     @classmethod
     def fire_all_released_configs(cls, data: TriggerData):
@@ -123,54 +137,6 @@ class Trigger(Generic[TriggerData], ABC):
         # Override this if you want to validate the content of the trigger_field_values variable
         # from EmailConfigurationVersion
         return None
-
-
-@dataclass
-class TimeTriggerData:
-    scheduled_time: datetime.datetime
-
-
-class TimeTrigger(Trigger[TimeTriggerData]):
-    @classmethod
-    def get_scheduled_date(
-        cls, email_configuration_version, data: TimeTriggerData
-    ) -> datetime.datetime:
-        return data.scheduled_time
-
-    @classmethod
-    def get_id(cls) -> str:
-        return f"{__name__}.time_trigger"
-
-    @classmethod
-    def get_display_name(cls) -> str:
-        return "Time trigger"
-
-    @classmethod
-    def get_field_definitions(cls) -> [Trigger.FieldDefinition]:
-        return [
-            cls.FieldDefinition(
-                field_name="scheduled_time", type="datetime", label="Scheduled time"
-            )
-        ]
-
-    @classmethod
-    def _on_create(cls, email_configuration_version, trigger_data: TimeTriggerData):
-        cls.fire_version(
-            email_configuration_version,
-            trigger_data,
-        )
-
-    @classmethod
-    def validate_field_values_and_return_object(cls, trigger_field_values):
-        try:
-            scheduled_time = datetime.datetime.fromisoformat(
-                trigger_field_values["scheduled_time"]
-            )
-        except ValueError as ve:
-            raise serializers.ValidationError(
-                f"Invalid value for scheduled_time: {trigger_field_values['scheduled_time']}, error: {ve}"
-            )
-        return TimeTriggerData(scheduled_time=scheduled_time)
 
 
 trigger_registry: Dict[str, type[Trigger]] = {}

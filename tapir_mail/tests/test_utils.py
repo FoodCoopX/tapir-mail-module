@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.test import TestCase, Client, SimpleTestCase
 from rest_framework.test import APIClient
 
-from tapir_mail.service.triggers import TimeTrigger
+from tapir_mail.triggers.time_trigger import TimeTrigger
 
 
 class TapirFactoryMixin:

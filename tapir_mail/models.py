@@ -71,7 +71,6 @@ class EmailConfigurationVersion(BaseModel):
 
     content = models.TextField(null=True)
     subject = models.CharField(max_length=255, null=True, blank=True)
-    subtitle = models.CharField(max_length=255, null=True, blank=True)
     email_configuration = models.ForeignKey(
         EmailConfiguration, on_delete=models.CASCADE, related_name="versions"
     )
@@ -116,7 +115,7 @@ class EmailConfigurationDispatch(BaseModel):
     is_sent = models.BooleanField(default=False)
     override_recipients = models.JSONField(null=True)
 
-    def get_recipient_list(self):
+    def get_recipient_list(self) -> list[str]:
         if self.is_sent:
             return [dispatch.recipient for dispatch in self.emaildispatch_set.all()]
 

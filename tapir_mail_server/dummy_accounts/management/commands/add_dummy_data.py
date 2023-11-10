@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from random import choice
-
+from nanoid import generate
 from django.core.management.base import BaseCommand
 
 from tapir_mail_server.dummy_accounts.models import (
@@ -28,7 +28,9 @@ class Command(BaseCommand):
 
         total = kwargs["total"]
         for _ in range(total):
-            DummyTapirUserFactory.create()
+            DummyTapirUserFactory.create(
+                email=f"{generate(size=22)}@example.com",
+            )
 
         users = DummyTapirUser.objects.all()
         for user in users:

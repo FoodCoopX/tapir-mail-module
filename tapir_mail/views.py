@@ -29,7 +29,7 @@ from tapir_mail.serializers import (
     SegmentDataSerializer,
     TriggerDefinitionSerializer,
 )
-from tapir_mail.service.email import send_email
+from tapir_mail.service.email import prepare_email
 from tapir_mail.service.segment import (
     combine_segments_with_filters,
     filter_registry,
@@ -112,7 +112,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             email_configuration=email_configuration,
             content=serializer.validated_data["content"],
             subject=serializer.validated_data.get("subject", None),
-            subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
             triggers=serializer.validated_data.get("triggers", None),
             segment_data=serializer.validated_data.get("segment_data", None),
@@ -139,7 +138,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "description": email_configuration.description,
             "content": version.content,
             "subject": version.subject,
-            "subtitle": version.subtitle,
             "release_status": version.status,
             "segment_data": version.segment_data,
             "triggers": version.triggers,
@@ -161,7 +159,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         # Update EmailConfigurationVersion
         version.content = serializer.validated_data["content"]
         version.subject = serializer.validated_data.get("subject", None)
-        version.subtitle = serializer.validated_data.get("subtitle", None)
         version.status = serializer.validated_data["release_status"]
         version.triggers = serializer.validated_data.get("triggers", None)
         version.segment_data = serializer.validated_data.get("segment_data", None)
@@ -190,7 +187,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 "description": email_configuration.description,
                 "content": version.content,
                 "subject": version.subject,
-                "subtitle": version.subtitle,
                 "updated_at": version.updated_at,
                 "release_status": version.status,
                 "segment_data": version.segment_data,
@@ -266,12 +262,12 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 data={"message": f"Invalid recipients parameter: {str(e)}"},
             )
         mjml = replace_tokens(email_version_configuration.content)
-        send_email(
+        email = prepare_email(
             mjml=mjml,
             subject=email_version_configuration.subject,
-            subtitle=email_version_configuration.subtitle,
             recipients=recipients_list,
         )
+        email.send()
 
         LOG.info("Test email sent to: " + ", ".join(recipients_list))
 

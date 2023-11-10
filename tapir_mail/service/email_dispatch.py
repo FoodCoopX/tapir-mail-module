@@ -2,11 +2,12 @@ import logging
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.mail import get_connection
 from django.db import transaction
 from django.utils import timezone
 
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
-from tapir_mail.service.email import send_email
+from tapir_mail.service.email import prepare_email
 from tapir_mail.service.token import replace_tokens
 from tapir_mail.service.tracking import get_tracking_url
 from tapir_mail.service.triggers import trigger_registry
@@ -67,6 +68,7 @@ class ResolveAndCreateEmailDispatches:
                 EmailDispatch(
                     email_configuration_dispatch=config_dispatch,
                     recipient=recipient.email,
+                    created_at=config_dispatch.scheduled_time,
                 )
                 for recipient in recipients
             ]
@@ -113,35 +115,82 @@ class SendEmailBatch:
         finally:
             lock.release()
 
-    @staticmethod
-    def _send_batch(email_dispatches):
-        for email_dispatch in email_dispatches:
-            with transaction.atomic():
-                LOG.info("Sending email to %s", email_dispatch.recipient)
-                config_dispatch = email_dispatch.email_configuration_dispatch
-                recipient = email_dispatch.recipient
-                mjml = replace_tokens(
-                    config_dispatch.email_configuration_version.content, recipient
-                )
-                try:
-                    send_email(
-                        mjml=mjml,
-                        subject=config_dispatch.email_configuration_version.subject,
-                        subtitle=config_dispatch.email_configuration_version.subtitle,
-                        recipients=[recipient],
-                        tracking_url=get_tracking_url(email_dispatch),
-                    )
+    @classmethod
+    def _send_batch(cls, email_dispatches):
+        if not email_dispatches:
+            LOG.warning("Nothing to do in send_batch")
+            return
 
-                    trigger_class = trigger_registry.get(
-                        config_dispatch.email_configuration_version.trigger, None
-                    )
-                    if trigger_class:
-                        trigger_class.after_mail_sent(email_dispatch)
+        emails = cls._prepare_emails(email_dispatches)
+
+        if not emails:
+            LOG.warning(
+                f"No emails to send in batch for EmailConfigurationDispatch#{email_dispatches[0].email_configuration_dispatch.id}"
+            )
+            return
+
+        try:
+            with get_connection() as connection:
+                connection.send_messages([e[0] for e in emails])
+        except Exception as e:
+            LOG.error(f"Error while sending batch emails: {e}")
+            with transaction.atomic():
+                for _, email_dispatch in emails:
+                    email_dispatch.error_message = str(e)
+                    email_dispatch.save()
+            raise
+
+        LOG.info(f"Sent {len(emails)} emails in this batch")
+
+        cls._post_send(emails)
+
+    @classmethod
+    def _prepare_emails(cls, email_dispatches):
+        emails = []
+        for email_dispatch in email_dispatches:
+            config_dispatch = email_dispatch.email_configuration_dispatch
+            recipient = email_dispatch.recipient
+            mjml = replace_tokens(
+                config_dispatch.email_configuration_version.content, recipient
+            )
+            try:
+                email = prepare_email(
+                    mjml=mjml,
+                    subject=config_dispatch.email_configuration_version.subject,
+                    recipients=[recipient],
+                    tracking_url=get_tracking_url(email_dispatch),
+                )
+                emails.append((email, email_dispatch))
+            except Exception as e:
+                LOG.error(f"Error while preparing email to {recipient}: {e}")
+                with transaction.atomic():
+                    email_dispatch.error_message = str(e)
+                    email_dispatch.save()
+
+        return emails
+
+    @classmethod
+    def _post_send(cls, emails):
+        for email, email_dispatch in emails:
+            try:
+                with transaction.atomic():
+                    for trigger_data in (
+                        email_dispatch.email_configuration_dispatch.email_configuration_version.triggers
+                        or []
+                    ):
+                        trigger_class = trigger_registry.get(
+                            trigger_data["trigger_id"],
+                            None,
+                        )
+                        if trigger_class:
+                            trigger_class.after_mail_sent(email_dispatch)
 
                     email_dispatch.sent_time = timezone.now()
                     email_dispatch.save()
-                except Exception as e:
-                    LOG.error(f"Error while sending email to {recipient}: {e}")
+            except Exception as e:
+                LOG.error(
+                    f"Error after sending email to {email_dispatch.recipient}: {e}"
+                )
+                with transaction.atomic():
                     email_dispatch.error_message = str(e)
-                    email_dispatch.sent_time = timezone.now()
                     email_dispatch.save()

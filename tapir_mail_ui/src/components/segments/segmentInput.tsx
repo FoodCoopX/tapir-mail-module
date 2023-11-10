@@ -94,7 +94,6 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   }, []);
 
   useEffect(() => {
-    console.log(isFilterValid);
     if (
       !isFilterValid ||
       segmentsToAdd.length + staticSegmentsToAdd.length < 1
@@ -301,7 +300,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
               <Accordion.Item eventKey="0">
                 <Accordion.Header>
                   <span style={{ width: "100%" }}>
-                    Empfänger Vorschau&nbsp;
+                    Empfänger&nbsp;
                     <Badge
                       style={{ float: "right", marginRight: "1em" }}
                       bg="success"
@@ -310,11 +309,21 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
                     </Badge>
                   </span>
                 </Accordion.Header>
-                <Accordion.Body>
-                  {resultRecipients.map((recipient) => (
-                    <span key={recipient}>
-                      <small>{recipient}</small>
-                      <br />
+                <Accordion.Body
+                  className="p-0"
+                  style={{ textAlign: "left" }}
+                >
+                  {resultRecipients.map((recipient, idx) => (
+                    <span
+                      key={recipient}
+                      className={`d-block ${
+                        idx % 2 === 0 ? "bg-light" : ""
+                      } py-1 px-2`}
+                    >
+                      <small>
+                        <strong>{idx + 1}: </strong>
+                        {recipient}
+                      </small>
                     </span>
                   ))}
                 </Accordion.Body>

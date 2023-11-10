@@ -1,22 +1,26 @@
-import React, { useEffect, useState } from "react";
 import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
-import "@fortawesome/fontawesome-free/css/solid.css";
 import "@fortawesome/fontawesome-free/css/fontawesome.css";
-import {
-  TriggerDataRequest,
-  TriggerDefinition,
-  TriggersApi,
-} from "../api_client";
-import { useApi } from "../hooks/useApi";
+import "@fortawesome/fontawesome-free/css/solid.css";
+import React, { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
+import { Trigger, TriggersApi } from "../api_client";
+import { useApi } from "../hooks/useApi";
 import TapirMailFormGroup from "./TapirMailFormGroup";
 import TapirDropdown from "./tapirDropdown";
 
 interface TriggerInputProps {
-  triggerData: TriggerDataRequest;
+  selectedTriggerId: string | null;
+  onTriggerSelected: (trigger_id: string | null) => void;
+  onTriggerDataChange: (triggerData: any) => void;
+  triggerData: any;
 }
 
-const TriggerInput: React.FC<TriggerInputProps> = ({ triggerData }) => {
+const TriggerInput: React.FC<TriggerInputProps> = ({
+  selectedTriggerId,
+  onTriggerSelected,
+  onTriggerDataChange,
+  triggerData,
+}) => {
   const triggersApi = useApi(TriggersApi);
   const [triggerDefinitions, setTriggerDefinitions] = useState<
     TriggerDefinition[]
@@ -32,10 +36,54 @@ const TriggerInput: React.FC<TriggerInputProps> = ({ triggerData }) => {
     });
   }, []);
 
-  function onDropdownSelect(triggerDefinition: TriggerDefinition | null) {
-    if (!triggerDefinition) return;
-    triggerData.triggerId = triggerDefinition?.id;
-  }
+  const onDropdownSelect = (trigger: Trigger | null) => {
+    onTriggerSelected(trigger ? trigger.id : null);
+
+    const defaultTriggerData: any = {};
+    if (trigger) {
+      trigger.fieldDefinitions.forEach((fieldDefinition) => {
+        if (triggerData[fieldDefinition.fieldName]) {
+          defaultTriggerData[fieldDefinition.fieldName] =
+            triggerData[fieldDefinition.fieldName];
+          return;
+        }
+
+        switch (fieldDefinition.type) {
+          case "datetime":
+            defaultTriggerData[fieldDefinition.fieldName] = new Date();
+            break;
+          case "checkbox":
+            defaultTriggerData[fieldDefinition.fieldName] = false;
+            break;
+          case "dropdown":
+            defaultTriggerData[fieldDefinition.fieldName] =
+              fieldDefinition.additionalData?.choices[0].value;
+            break;
+          case "number":
+            defaultTriggerData[fieldDefinition.fieldName] = 0;
+            break;
+        }
+      });
+    }
+
+    onTriggerDataChange(defaultTriggerData);
+  };
+
+  const handleTriggerDataChange = (fieldName: string, value: any) => {
+    const newTriggerData = { ...triggerData };
+
+    const knownTriggerFields = selectedTrigger.fieldDefinitions.map(
+      (fieldDefinition) => fieldDefinition.fieldName,
+    );
+    for (const key in newTriggerData) {
+      if (!knownTriggerFields.includes(key)) {
+        delete newTriggerData[key];
+      }
+    }
+
+    newTriggerData[fieldName] = value;
+    onTriggerDataChange(newTriggerData);
+  };
 
   return (
     <>
@@ -48,19 +96,18 @@ const TriggerInput: React.FC<TriggerInputProps> = ({ triggerData }) => {
         />
       </Form.Group>
       <br />
-      {selectedTriggerDefinition &&
-        selectedTriggerDefinition.fieldDefinitions.map((fieldDefinition) => (
-          <>
-            <TapirMailFormGroup
-              label={fieldDefinition.label}
-              type={fieldDefinition.type}
-              value={triggerData.triggerData[fieldDefinition.fieldName]}
-              onChange={(value) => {
-                triggerData.triggerData[fieldDefinition.fieldName] = value;
-              }}
-            />
-            <br />
-          </>
+      {selectedTrigger &&
+        selectedTrigger.fieldDefinitions.map((fieldDefinition) => (
+          <TapirMailFormGroup
+            key={fieldDefinition.fieldName}
+            label={fieldDefinition.label}
+            type={fieldDefinition.type}
+            value={triggerData[fieldDefinition.fieldName]}
+            additionalData={fieldDefinition.additionalData}
+            onChange={(value) => {
+              handleTriggerDataChange(fieldDefinition.fieldName, value);
+            }}
+          />
         ))}
     </>
   );

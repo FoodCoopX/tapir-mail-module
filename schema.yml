@@ -1826,17 +1826,20 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TriggerDefinition'
+                  $ref: '#/components/schemas/Trigger'
           description: ''
 components:
   schemas:
     BundledEmailConfiguration:
       type: object
       properties:
-        triggers:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerData'
+        trigger:
+          type: string
+          nullable: true
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         name:
           type: string
         description:
@@ -1845,8 +1848,6 @@ components:
         content:
           type: string
         subject:
-          type: string
-        subtitle:
           type: string
           nullable: true
         release_status:
@@ -1863,14 +1864,17 @@ components:
       - content
       - name
       - release_status
-      - subject
     BundledEmailConfigurationRequest:
       type: object
       properties:
-        triggers:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerDataRequest'
+        trigger:
+          type: string
+          nullable: true
+          minLength: 1
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         name:
           type: string
           minLength: 1
@@ -1881,9 +1885,6 @@ components:
           type: string
           minLength: 1
         subject:
-          type: string
-          minLength: 1
-        subtitle:
           type: string
           nullable: true
         release_status:
@@ -1901,7 +1902,6 @@ components:
       - content
       - name
       - release_status
-      - subject
     DeliveryDayEnum:
       enum:
       - 0
@@ -2098,10 +2098,13 @@ components:
         id:
           type: string
           maxLength: 10
-        triggers:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerData'
+        trigger:
+          type: string
+          nullable: true
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         email_configuration:
           $ref: '#/components/schemas/EmailConfiguration'
         segment_data:
@@ -2119,9 +2122,6 @@ components:
           nullable: true
         subject:
           type: string
-          maxLength: 255
-        subtitle:
-          type: string
           nullable: true
           maxLength: 255
         status:
@@ -2130,7 +2130,6 @@ components:
       - created_at
       - email_configuration
       - segment_data
-      - subject
       - updated_at
     EmailConfigurationVersionRequest:
       type: object
@@ -2139,10 +2138,14 @@ components:
           type: string
           minLength: 1
           maxLength: 10
-        triggers:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerDataRequest'
+        trigger:
+          type: string
+          nullable: true
+          minLength: 1
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         email_configuration:
           $ref: '#/components/schemas/EmailConfigurationRequest'
         segment_data:
@@ -2153,10 +2156,6 @@ components:
           minLength: 1
         subject:
           type: string
-          minLength: 1
-          maxLength: 255
-        subtitle:
-          type: string
           nullable: true
           maxLength: 255
         status:
@@ -2164,7 +2163,6 @@ components:
       required:
       - email_configuration
       - segment_data
-      - subject
     EmailDispatch:
       type: object
       properties:
@@ -2280,10 +2278,14 @@ components:
     PatchedBundledEmailConfigurationRequest:
       type: object
       properties:
-        triggers:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerDataRequest'
+        trigger:
+          type: string
+          nullable: true
+          minLength: 1
+        trigger_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
         name:
           type: string
           minLength: 1
@@ -2294,9 +2296,6 @@ components:
           type: string
           minLength: 1
         subject:
-          type: string
-          minLength: 1
-        subtitle:
           type: string
           nullable: true
         release_status:
@@ -2618,33 +2617,7 @@ components:
       - upload_id
       - upload_name
       - upload_type
-    TriggerData:
-      type: object
-      properties:
-        trigger_id:
-          type: string
-        trigger_data:
-          type: object
-          additionalProperties:
-            type: string
-      required:
-      - trigger_data
-      - trigger_id
-    TriggerDataRequest:
-      type: object
-      properties:
-        trigger_id:
-          type: string
-          minLength: 1
-        trigger_data:
-          type: object
-          additionalProperties:
-            type: string
-            minLength: 1
-      required:
-      - trigger_data
-      - trigger_id
-    TriggerDefinition:
+    Trigger:
       type: object
       properties:
         id:
@@ -2668,6 +2641,9 @@ components:
           type: string
         field_name:
           type: string
+        additional_data:
+          type: object
+          additionalProperties: {}
       required:
       - field_name
       - label
