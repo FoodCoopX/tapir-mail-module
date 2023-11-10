@@ -3,9 +3,12 @@ import unittest
 from unittest.mock import patch
 
 import factory.random
+import faker
 from django.core.cache import cache
 from django.test import TestCase, Client, SimpleTestCase
 from rest_framework.test import APIClient
+
+from tapir_mail.service.triggers import TimeTrigger
 
 
 class TapirFactoryMixin:
@@ -40,3 +43,14 @@ def mock_timezone_now(test: unittest.TestCase, now: datetime.datetime) -> None:
     test.mock_now = patcher.start()
     test.addCleanup(patcher.stop)
     test.mock_now.return_value = now
+
+
+def build_time_trigger_dict(scheduled_time: datetime.datetime | None = None):
+    return {
+        "trigger_id": TimeTrigger.get_id(),
+        "trigger_field_values": {
+            "scheduled_time": scheduled_time.isoformat()
+            if scheduled_time
+            else faker.Faker().date_time_this_decade().isoformat(),
+        },
+    }

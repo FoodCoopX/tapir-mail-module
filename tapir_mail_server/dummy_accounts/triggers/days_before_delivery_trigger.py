@@ -38,7 +38,11 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
         return "Days before delivery"
 
     @classmethod
-    def _on_create(cls, email_configuration_version: EmailConfigurationVersion):
+    def _on_create(
+        cls,
+        email_configuration_version: EmailConfigurationVersion,
+        trigger_data: DaysTriggerData,
+    ):
         for recipient in segment_data_to_recipient_list(
             email_configuration_version.segment_data
         ):
@@ -60,8 +64,13 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
     @classmethod
     def on_pickup_location_updated(cls, location: DummyPickupLocation):
         for version in EmailConfigurationVersion.objects.filter(
-            trigger=cls.get_id(), status=ReleaseStatus.RELEASED
+            status=ReleaseStatus.RELEASED
         ):
+            if cls.get_id() not in [
+                trigger_data["trigger_id"] for trigger_data in version.triggers
+            ]:
+                continue
+
             for recipient in segment_data_to_recipient_list(version.segment_data):
                 cls._delete_unsent_config_dispatch(version=version, recipient=recipient)
                 if (
@@ -73,12 +82,20 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
 
     @classmethod
     def on_recipient_updated(cls, recipient: DummyTapirUser):
+        if not hasattr(recipient, "pickup_location"):
+            return
         for version in EmailConfigurationVersion.objects.filter(
-            trigger=cls.get_id(), status=ReleaseStatus.RELEASED
+            status=ReleaseStatus.RELEASED
         ):
-            cls._delete_unsent_config_dispatch(version=version, recipient=recipient)
+            if cls.get_id() not in [
+                trigger_data["trigger_id"] for trigger_data in version.triggers
+            ]:
+                continue
+
             if recipient not in segment_data_to_recipient_list(version.segment_data):
                 continue
+
+            cls._delete_unsent_config_dispatch(version=version, recipient=recipient)
             cls._create_new_config_dispatch(version=version, recipient=recipient)
 
     @classmethod
@@ -95,13 +112,20 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
     def _create_new_config_dispatch(
         cls, version: EmailConfigurationVersion, recipient: DummyTapirUser
     ):
-        EmailConfigurationDispatch.objects.create(
-            email_configuration_version=version,
-            override_recipients=[recipient.email],
-            scheduled_time=cls.get_next_weekday(recipient.pickup_location.delivery_day)
-            - datetime.timedelta(days=int(version.trigger_data["number_of_days"])),
-            is_sent=False,
-        )
+        for trigger_data in version.triggers:
+            if trigger_data["trigger_id"] != cls.get_id():
+                continue
+            EmailConfigurationDispatch.objects.create(
+                email_configuration_version=version,
+                override_recipients=[recipient.email],
+                scheduled_time=cls.get_next_weekday(
+                    recipient.pickup_location.delivery_day
+                )
+                - datetime.timedelta(
+                    days=int(trigger_data["trigger_field_values"]["number_of_days"])
+                ),
+                is_sent=False,
+            )
 
     @classmethod
     def get_field_definitions(cls):

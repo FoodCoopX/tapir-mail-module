@@ -91,18 +91,19 @@ class Trigger(Generic[TriggerData], ABC):
             return
 
         for trigger_data in email_configuration_version.triggers:
-            if trigger_data.name not in trigger_registry.keys():
+            trigger_id = trigger_data["trigger_id"]
+            if trigger_id not in trigger_registry.keys():
                 LOG.warning(
                     f"EmailConfigurationVersion "
                     f"{email_configuration_version.id} {email_configuration_version.email_configuration.name} "
-                    f"has an unknown trigger : {trigger_data.name}"
+                    f"has an unknown trigger : {trigger_id}"
                 )
                 continue
-            trigger_class = trigger_registry[trigger_data.name]
+            trigger_class = trigger_registry[trigger_id]
             trigger_class._on_create(
                 email_configuration_version,
                 trigger_class.validate_field_values_and_return_object(
-                    trigger_data.trigger_field_values
+                    trigger_data["trigger_field_values"]
                 ),
             )
 
@@ -153,12 +154,10 @@ class TimeTrigger(Trigger[TimeTriggerData]):
         ]
 
     @classmethod
-    def _on_create(cls, email_configuration_version, trigger_data: TriggerData):
+    def _on_create(cls, email_configuration_version, trigger_data: TimeTriggerData):
         cls.fire_version(
             email_configuration_version,
-            cls.validate_field_values_and_return_object(
-                email_configuration_version.trigger_field_values
-            ),
+            trigger_data,
         )
 
     @classmethod

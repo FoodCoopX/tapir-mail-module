@@ -1,15 +1,12 @@
-import datetime
-
 from tapir_mail.models import (
     EmailConfigurationVersion,
     ReleaseStatus,
 )
 from tapir_mail.service.segment import register_segment
-from tapir_mail.service.triggers import TimeTrigger
 from tapir_mail.tests.factories import (
     EmailConfigurationVersionFactory,
 )
-from tapir_mail.tests.test_utils import TapirIntegrationTest
+from tapir_mail.tests.test_utils import TapirIntegrationTest, build_time_trigger_dict
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 
 
@@ -51,11 +48,7 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
             "remove_segments": [self.TEST_SEGMENT],
             "filter_list": [],
         }
-        scheduled_time = datetime.datetime(year=2021, month=1, day=1)
-        trigger = {
-            "trigger_id": TimeTrigger.get_id(),
-            "trigger_field_values": {"scheduled_time": scheduled_time.isoformat()},
-        }
+        trigger = build_time_trigger_dict()
         put_data = {
             "name": "Name after",
             "description": "Description after",
