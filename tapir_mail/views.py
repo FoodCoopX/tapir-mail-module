@@ -111,15 +111,16 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version = EmailConfigurationVersion.objects.create(
             email_configuration=email_configuration,
             content=serializer.validated_data["content"],
-            subject=serializer.validated_data["subject"],
+            subject=serializer.validated_data.get("subject", None),
             subtitle=serializer.validated_data.get("subtitle", None),
             status=serializer.validated_data["release_status"],
             triggers=serializer.validated_data.get("triggers", None),
             segment_data=serializer.validated_data.get("segment_data", None),
         )
 
+        Trigger.on_email_configuration_version_save(version)
+
         if version.status == ReleaseStatus.RELEASED:
-            Trigger.on_email_configuration_version_create(version)
             for version in EmailConfigurationVersion.objects.filter(
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
@@ -141,8 +142,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "subtitle": version.subtitle,
             "release_status": version.status,
             "segment_data": version.segment_data,
-            "trigger": version.trigger,
-            "trigger_data": version.trigger_data,
+            "triggers": version.triggers,
         }
         serializer = BundledEmailConfigurationSerializer(
             data=request.data, initial=initial_data
@@ -163,10 +163,11 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version.subject = serializer.validated_data.get("subject", None)
         version.subtitle = serializer.validated_data.get("subtitle", None)
         version.status = serializer.validated_data["release_status"]
-        version.trigger = serializer.validated_data.get("trigger", None)
-        version.trigger_data = serializer.validated_data.get("trigger_data", None)
+        version.triggers = serializer.validated_data.get("triggers", None)
         version.segment_data = serializer.validated_data.get("segment_data", None)
         version.save()
+
+        Trigger.on_email_configuration_version_save(version)
 
         if version.status == ReleaseStatus.RELEASED:
             for version in EmailConfigurationVersion.objects.filter(

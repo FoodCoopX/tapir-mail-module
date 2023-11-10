@@ -10,6 +10,7 @@ from tapir_mail.models import (
     StaticSegment,
     StaticSegmentRecipient,
 )
+from tapir_mail.service.triggers import TimeTrigger
 
 
 class EmailTemplateFactory(factory.django.DjangoModelFactory):
@@ -94,3 +95,9 @@ class StaticSegmentRecipientFactory(factory.django.DjangoModelFactory):
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
     email = factory.Faker("email")
+
+
+class TriggerFactory(factory.Factory):
+    trigger_id = TimeTrigger.get_id()
+    scheduled_time = factory.Faker("date_this_decade")
+    trigger_field_values = {"scheduled_time": scheduled_time}

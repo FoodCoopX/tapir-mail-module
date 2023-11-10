@@ -32,7 +32,11 @@ class DaysAfterSubscriptionStartTrigger(Trigger[DaysTriggerData]):
         return "Days after subscription"
 
     @classmethod
-    def _on_create(cls, email_configuration_version: EmailConfigurationVersion):
+    def _on_create(
+        cls,
+        email_configuration_version: EmailConfigurationVersion,
+        trigger_data: DaysTriggerData,
+    ):
         for recipient in segment_data_to_recipient_list(
             email_configuration_version.segment_data
         ):
@@ -45,19 +49,20 @@ class DaysAfterSubscriptionStartTrigger(Trigger[DaysTriggerData]):
                 )
                 continue
             for subscription in recipient.dummysubscription_set.all():
-                cls.on_subscription_updated(subscription)
+                cls.create_dispatch_if_relevant(
+                    email_configuration_version, subscription
+                )
 
     @classmethod
     def on_subscription_updated(cls, subscription: DummySubscription):
         for version in EmailConfigurationVersion.objects.filter(
-            trigger=cls.get_id(), status=ReleaseStatus.RELEASED
+            status=ReleaseStatus.RELEASED
         ):
-            EmailConfigurationDispatch.objects.filter(
-                email_configuration_version=version,
-                override_recipients=[subscription.user.email],
-                is_sent=False,
-            ).delete()
-            cls.create_dispatch_if_relevant(version=version, subscription=subscription)
+            if cls.get_id() not in [
+                trigger["trigger_id"] for trigger in version.triggers
+            ]:
+                continue
+            Trigger.on_email_configuration_version_save(version)
 
     @staticmethod
     def create_dispatch_if_relevant(

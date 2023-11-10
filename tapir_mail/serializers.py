@@ -34,9 +34,10 @@ class TriggerDataSerializer(serializers.Serializer):
         if not trigger_class:
             raise serializers.ValidationError(f"Unknown trigger: {trigger_id}")
 
-        self.check_for_missing_fields(trigger_class, data["trigger_values"])
+        trigger_values = data.get("trigger_field_values", {})
+        self.check_for_missing_fields(trigger_class, trigger_values)
 
-        trigger_class.validate_field_values_and_return_object(data["trigger_values"])
+        trigger_class.validate_field_values_and_return_object(trigger_values)
 
         return data
 
@@ -165,7 +166,7 @@ class BundledEmailConfigurationSerializer(
 
     # EmailConfigurationVersion fields
     content = serializers.CharField()
-    subject = serializers.CharField()
+    subject = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     subtitle = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     release_status = serializers.CharField()
     updated_at = serializers.DateTimeField(allow_null=True, required=False)

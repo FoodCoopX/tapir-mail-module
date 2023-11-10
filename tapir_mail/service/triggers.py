@@ -7,8 +7,6 @@ from typing import Dict, Generic, TypeVar
 from django.utils import timezone
 from rest_framework import serializers
 
-from tapir_mail.models import ReleaseStatus, EmailConfigurationDispatch
-
 TriggerData = TypeVar("TriggerData")
 
 LOG = logging.getLogger(__name__)
@@ -28,8 +26,12 @@ class Trigger(Generic[TriggerData], ABC):
         from tapir_mail.models import EmailConfigurationVersion
 
         for version in EmailConfigurationVersion.objects.filter(
-            trigger=cls.get_id(), status=ReleaseStatus.RELEASED
+            status=ReleaseStatus.RELEASED
         ):
+            if cls.get_id() not in [
+                trigger["trigger_id"] for trigger in version.triggers
+            ]:
+                continue
             cls.fire_version(version, data)
 
     @classmethod
@@ -73,6 +75,8 @@ class Trigger(Generic[TriggerData], ABC):
 
     @staticmethod
     def on_email_configuration_version_save(email_configuration_version):
+        from tapir_mail.models import ReleaseStatus, EmailConfigurationDispatch
+
         if email_configuration_version.status != ReleaseStatus.RELEASED:
             EmailConfigurationDispatch.objects.filter(
                 email_configuration_version=email_configuration_version
@@ -149,13 +153,7 @@ class TimeTrigger(Trigger[TimeTriggerData]):
         ]
 
     @classmethod
-    def _on_create(cls, email_configuration_version):
-        from tapir_mail.models import EmailConfigurationDispatch
-
-        EmailConfigurationDispatch.objects.filter(
-            email_configuration_version__email_configuration=email_configuration_version.email_configuration
-        ).delete()
-
+    def _on_create(cls, email_configuration_version, trigger_data: TriggerData):
         cls.fire_version(
             email_configuration_version,
             cls.validate_field_values_and_return_object(

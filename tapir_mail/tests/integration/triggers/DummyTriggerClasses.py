@@ -5,11 +5,11 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from tapir_mail.models import EmailConfigurationDispatch
-from tapir_mail.serializers import TriggerSerializationMixin
+from tapir_mail.serializers import TriggersSerializationMixin
 from tapir_mail.service.triggers import Trigger
 
 
-class DummySerializer(TriggerSerializationMixin, serializers.Serializer):
+class DummySerializer(TriggersSerializationMixin, serializers.Serializer):
     pass
 
 

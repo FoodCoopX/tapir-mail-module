@@ -52,14 +52,17 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
             "filter_list": [],
         }
         scheduled_time = datetime.datetime(year=2021, month=1, day=1)
+        trigger = {
+            "trigger_id": TimeTrigger.get_id(),
+            "trigger_field_values": {"scheduled_time": scheduled_time.isoformat()},
+        }
         put_data = {
             "name": "Name after",
             "description": "Description after",
             "content": "Content after",
             "subject": "Subject after",
             "release_status": "Status after",
-            "trigger": TimeTrigger.get_id(),
-            "trigger_data": {"scheduled_time": scheduled_time.isoformat()},
+            "triggers": [trigger],
             "segment_data": segment_data_after,
         }
         response = self._send_request(version.id, put_data)
@@ -71,10 +74,7 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         self.assertEqual("Content after", version.content)
         self.assertEqual("Subject after", version.subject)
         self.assertEqual("Status after", version.status)
-        self.assertEqual(TimeTrigger.get_id(), version.trigger)
-        self.assertEqual(
-            {"scheduled_time": scheduled_time.isoformat()}, version.trigger_data
-        )
+        self.assertEqual([trigger], version.triggers)
         self.assertEqual(
             segment_data_after,
             version.segment_data,
