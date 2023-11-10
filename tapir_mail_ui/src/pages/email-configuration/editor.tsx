@@ -15,12 +15,12 @@ import Editor, { EMPTY_PAGE } from "../../components/editor";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
 import Loading from "../../components/loading";
 import SegmentInput from "../../components/segments/segmentInput";
-import TriggerInput from "../../components/triggerInput";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
+import MultipleTriggerInput from "../../components/multipleTriggerInput";
 
 const ID_NEW_TEMPLATE = "<new>";
 
@@ -334,14 +334,10 @@ const EmailConfigurationEditor = () => {
             </div>
             <br />
 
-            {triggers.map((trigger) => (
-              <TriggerInput
-                selectedTriggerId={triggerId}
-                onTriggerSelected={setTriggerId}
-                onTriggerDataChange={setTriggerData}
-                triggerData={trigger}
-              />
-            ))}
+            <MultipleTriggerInput
+              initialTriggers={triggers}
+              onChange={setTriggers}
+            />
 
             <hr />
             <Button

@@ -3,48 +3,53 @@ import "@fortawesome/fontawesome-free/css/fontawesome.css";
 import "@fortawesome/fontawesome-free/css/solid.css";
 import React, { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
-import { Trigger, TriggersApi } from "../api_client";
+import {
+  TriggerDataRequest,
+  TriggerDefinition,
+  TriggersApi,
+} from "../api_client";
 import { useApi } from "../hooks/useApi";
 import TapirMailFormGroup from "./TapirMailFormGroup";
 import TapirDropdown from "./tapirDropdown";
 
 interface TriggerInputProps {
-  selectedTriggerId: string | null;
-  onTriggerSelected: (trigger_id: string | null) => void;
-  onTriggerDataChange: (triggerData: any) => void;
-  triggerData: any;
+  onTriggerIdSelected: (trigger_id: string | null) => void;
+  onTriggerFieldValuesChanged: (triggerData: any) => void;
+  triggerData: TriggerDataRequest;
 }
 
 const TriggerInput: React.FC<TriggerInputProps> = ({
-  selectedTriggerId,
-  onTriggerSelected,
-  onTriggerDataChange,
+  onTriggerIdSelected,
+  onTriggerFieldValuesChanged,
   triggerData,
 }) => {
   const triggersApi = useApi(TriggersApi);
   const [triggerDefinitions, setTriggerDefinitions] = useState<
     TriggerDefinition[]
   >([]);
-  const selectedTriggerDefinition =
-    triggerDefinitions.find(
-      (trigger) => trigger.id === triggerData.triggerId,
-    ) ?? triggerDefinitions[0];
+  const selectedTriggerDefinition = triggerDefinitions.find(
+    (trigger) => trigger.id === triggerData.triggerId,
+  );
 
   useEffect(() => {
+    console.log("useEffect");
+    console.log(triggerData);
     triggersApi.triggersList().then((triggerDefinitions) => {
       setTriggerDefinitions(triggerDefinitions);
     });
   }, []);
 
-  const onDropdownSelect = (trigger: Trigger | null) => {
-    onTriggerSelected(trigger ? trigger.id : null);
+  const onDropdownSelect = (triggerDefinition: TriggerDefinition | null) => {
+    console.log("onDropdownSelect");
+    console.log(triggerData);
+    onTriggerIdSelected(triggerDefinition ? triggerDefinition.id : null);
 
     const defaultTriggerData: any = {};
-    if (trigger) {
-      trigger.fieldDefinitions.forEach((fieldDefinition) => {
-        if (triggerData[fieldDefinition.fieldName]) {
+    if (triggerDefinition) {
+      triggerDefinition.fieldDefinitions.forEach((fieldDefinition) => {
+        if (triggerData.triggerFieldValues[fieldDefinition.fieldName]) {
           defaultTriggerData[fieldDefinition.fieldName] =
-            triggerData[fieldDefinition.fieldName];
+            triggerData.triggerFieldValues[fieldDefinition.fieldName];
           return;
         }
 
@@ -66,29 +71,43 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
       });
     }
 
-    onTriggerDataChange(defaultTriggerData);
+    onTriggerFieldValuesChanged(defaultTriggerData);
+    console.log(defaultTriggerData);
   };
 
   const handleTriggerDataChange = (fieldName: string, value: any) => {
+    console.log("handleTriggerDataChange");
+    console.log(triggerData);
     const newTriggerData = { ...triggerData };
 
-    const knownTriggerFields = selectedTrigger.fieldDefinitions.map(
+    if (!selectedTriggerDefinition) return;
+
+    const knownTriggerFields = selectedTriggerDefinition.fieldDefinitions.map(
       (fieldDefinition) => fieldDefinition.fieldName,
     );
-    for (const key in newTriggerData) {
+    for (const key in newTriggerData.triggerFieldValues) {
       if (!knownTriggerFields.includes(key)) {
-        delete newTriggerData[key];
+        delete newTriggerData.triggerFieldValues[key];
       }
     }
 
-    newTriggerData[fieldName] = value;
-    onTriggerDataChange(newTriggerData);
+    newTriggerData.triggerFieldValues[fieldName] = value;
+    onTriggerFieldValuesChanged(newTriggerData);
   };
 
   return (
-    <>
+    <div
+      style={{
+        backgroundColor: "var(--color-neutral-2)",
+        padding: "1em",
+        marginLeft: "-0.5em",
+        marginRight: "-0.5em",
+        borderRadius: "6px",
+        border: "1px solid var(--color-neutral-3)",
+      }}
+    >
+      <span>{JSON.stringify(triggerData)}</span>
       <Form.Group>
-        <Form.Label>Trigger</Form.Label>
         <TapirDropdown
           choices={triggerDefinitions}
           onChoiceSelected={onDropdownSelect}
@@ -96,20 +115,20 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
         />
       </Form.Group>
       <br />
-      {selectedTrigger &&
-        selectedTrigger.fieldDefinitions.map((fieldDefinition) => (
+      {selectedTriggerDefinition &&
+        selectedTriggerDefinition.fieldDefinitions.map((fieldDefinition) => (
           <TapirMailFormGroup
             key={fieldDefinition.fieldName}
             label={fieldDefinition.label}
             type={fieldDefinition.type}
-            value={triggerData[fieldDefinition.fieldName]}
+            value={triggerData.triggerFieldValues[fieldDefinition.fieldName]}
             additionalData={fieldDefinition.additionalData}
             onChange={(value) => {
               handleTriggerDataChange(fieldDefinition.fieldName, value);
             }}
           />
         ))}
-    </>
+    </div>
   );
 };
 
