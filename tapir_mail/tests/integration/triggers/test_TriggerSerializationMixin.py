@@ -5,7 +5,7 @@ from tapir_mail.tests.integration.triggers.DummyTriggerClasses import (
     DummySerializer,
     DummyTrigger,
 )
-from tapir_mail.tests.test_utils import TapirIntegrationTest
+from tapir_mail.tests.test_utils import TapirIntegrationTest, build_time_trigger_dict
 
 
 class TestTriggerSerializationMixin(TapirIntegrationTest):
@@ -62,3 +62,15 @@ class TestTriggerSerializationMixin(TapirIntegrationTest):
         self.assertEqual(
             [valid_trigger], serializer.validated_data.get("triggers", None)
         )
+
+    def test_isValid_multipleTriggers_returnsTrue(self):
+        register_trigger(DummyTrigger)
+        dummy_trigger = {
+            "trigger_id": DummyTrigger.get_id(),
+            "trigger_field_values": {"a_number": "123"},
+        }
+        triggers = [dummy_trigger, build_time_trigger_dict()]
+        serializer = DummySerializer(data={"triggers": triggers})
+
+        self.assertTrue(serializer.is_valid(raise_exception=True))
+        self.assertEqual(triggers, serializer.validated_data.get("triggers", None))

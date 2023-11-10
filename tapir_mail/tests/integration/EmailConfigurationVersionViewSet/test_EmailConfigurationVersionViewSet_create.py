@@ -105,6 +105,18 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
             [trigger], config_dispatch.email_configuration_version.triggers
         )
 
+    def test_creatingReleaseVersionWithMultipleTriggers_allTriggersExecuted(self):
+        post_data = self.get_minimal_post_data()
+        post_data["release_status"] = ReleaseStatus.RELEASED
+        triggers = [build_time_trigger_dict(), build_time_trigger_dict()]
+        post_data["triggers"] = triggers
+        response = self._send_request(post_data)
+
+        self.assertStatusCode(response, 201)
+        self.assertEqual(2, EmailConfigurationDispatch.objects.count())
+        email_configuration_version = EmailConfigurationVersion.objects.get()
+        self.assertEqual(triggers, email_configuration_version.triggers)
+
     def test_creatingReleaseVersion_olderReleaseGetsArchived(self):
         older_release: EmailConfigurationVersion = (
             EmailConfigurationVersionFactory.create(status=ReleaseStatus.RELEASED)
