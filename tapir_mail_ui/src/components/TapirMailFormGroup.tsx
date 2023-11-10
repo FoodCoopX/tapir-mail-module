@@ -61,17 +61,14 @@ const TapirMailFormGroup: React.FC<FormGroupProps> = ({
 
       default:
         return (
-          <>
-            <span>YOYOYO {value}</span>
-            <Form.Control
-              required={true}
-              type={type}
-              defaultValue={value}
-              onChange={(e) => {
-                onChange(e.target.value);
-              }}
-            />
-          </>
+          <Form.Control
+            required={true}
+            type={type}
+            defaultValue={value}
+            onChange={(e) => {
+              onChange(e.target.value);
+            }}
+          />
         );
     }
   }

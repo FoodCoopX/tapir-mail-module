@@ -37,6 +37,12 @@ const MultipleTriggerInput: React.FC<MultipleTriggerInputProps> = ({
     onChange(newTriggers);
   }
 
+  function onTriggerDeleteClicked(index: number) {
+    let newTriggers = [...initialTriggers];
+    newTriggers.splice(index, 1);
+    onChange(newTriggers);
+  }
+
   return (
     <div
       style={{
@@ -60,6 +66,9 @@ const MultipleTriggerInput: React.FC<MultipleTriggerInputProps> = ({
             onTriggerFieldValuesChanged(index, fieldValues);
           }}
           triggerData={trigger}
+          onTriggerDeleteClicked={() => {
+            onTriggerDeleteClicked(index);
+          }}
         />
       ))}
       <TapirButton

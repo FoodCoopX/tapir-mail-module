@@ -11,17 +11,20 @@ import {
 import { useApi } from "../hooks/useApi";
 import TapirMailFormGroup from "./TapirMailFormGroup";
 import TapirDropdown from "./tapirDropdown";
+import { MinusCircleIcon } from "@heroicons/react/24/outline";
 
 interface TriggerInputProps {
   onTriggerIdSelected: (trigger_id: string | null) => void;
   onTriggerFieldValuesChanged: (triggerData: any) => void;
   triggerData: TriggerDataRequest;
+  onTriggerDeleteClicked: () => void;
 }
 
 const TriggerInput: React.FC<TriggerInputProps> = ({
   onTriggerIdSelected,
   onTriggerFieldValuesChanged,
   triggerData,
+  onTriggerDeleteClicked,
 }) => {
   const triggersApi = useApi(TriggersApi);
   const [triggerDefinitions, setTriggerDefinitions] = useState<
@@ -99,11 +102,16 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
         border: "1px solid var(--color-neutral-3)",
       }}
     >
-      <Form.Group>
+      <Form.Group className="d-flex justify-content-center">
         <TapirDropdown
           choices={triggerDefinitions}
           onChoiceSelected={onDropdownSelect}
           selectedChoice={selectedTriggerDefinition}
+        />
+        <MinusCircleIcon
+          color="red"
+          onClick={onTriggerDeleteClicked}
+          width="3em"
         />
       </Form.Group>
       <br />
