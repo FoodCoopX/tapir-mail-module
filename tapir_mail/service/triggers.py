@@ -1,7 +1,8 @@
 import datetime
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Dict, Generic, TypeVar
+
 from django.utils import timezone
 
 TriggerData = TypeVar("TriggerData")
@@ -32,14 +33,12 @@ class Trigger(Generic[TriggerData], ABC):
 
     @classmethod
     def fire_all_released_configs(cls, data: TriggerData):
-        from tapir_mail.models import ReleaseStatus
-
-        from tapir_mail.models import EmailConfigurationVersion
+        from tapir_mail.models import EmailConfigurationVersion, ReleaseStatus
 
         for version in EmailConfigurationVersion.objects.filter(
             trigger=cls.get_id(), status=ReleaseStatus.RELEASED
         ):
-            cls.fire_version(version, data)
+            cls.fire_version(email_configuration_version=version, data=data)
 
     @classmethod
     def fire_version(cls, email_configuration_version, data: TriggerData):
@@ -48,7 +47,7 @@ class Trigger(Generic[TriggerData], ABC):
         EmailConfigurationDispatch.objects.create(
             email_configuration_version=email_configuration_version,
             override_recipients=cls.get_recipients_override(
-                email_configuration_version, data
+                email_configuration_version=email_configuration_version, data=data
             ),
             scheduled_time=cls.get_scheduled_date(email_configuration_version, data),
             is_sent=False,
