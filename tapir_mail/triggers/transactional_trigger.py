@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
-from tapir_mail.service.segment import BASE_QUERYSET
 
 from tapir_mail.service.triggers import Trigger
 
@@ -37,11 +36,16 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
         from tapir_mail.models import EmailConfigurationVersion, ReleaseStatus
 
         for version in EmailConfigurationVersion.objects.filter(
-            trigger=cls.get_id(),
             status=ReleaseStatus.RELEASED,
-            trigger_data__key=data.key,
         ):
-            cls.fire_version(version, data)
+            for trigger in (
+                t for t in version.triggers or [] if t.get("trigger_id") == cls.get_id()
+            ):
+                if trigger["trigger_field_values"]["key"] == data.key:
+                    cls.fire_version(
+                        version,
+                        data,
+                    )
 
     @classmethod
     def get_recipients_override(cls, email_configuration_version, data) -> [str]:
