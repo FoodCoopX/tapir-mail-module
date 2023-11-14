@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 from django.core import mail
 
 from tapir_mail.models import EmailDispatch, ReleaseStatus
+from tapir_mail.service.email import HEADER_NAME_EMAIL_TRACKING_ID
 from tapir_mail.service.email_dispatch import SendEmailBatch
 from tapir_mail.tests.factories import (
     EmailConfigurationDispatchFactory,
@@ -54,7 +55,7 @@ class SendEmailBatchTest(TapirIntegrationTest):
         return dispatches
 
     def test_sendEmailDispatches_normalCase_sendsEmails(self):
-        self.create_email_dispatches(10)
+        dispatches = self.create_email_dispatches(10)
         SendEmailBatch.send_email_dispatches()
         self.assertEqual(
             EmailDispatch.objects.filter(sent_time__isnull=True).count(), 0
@@ -64,6 +65,10 @@ class SendEmailBatchTest(TapirIntegrationTest):
             self.assertEqual(email.to, [f"test{i}@example.com"])
             self.assertEqual(email.subject, self.SUBJECT)
             self.assertTrue("This is a dummy email!" in str(email.body))
+            self.assertEqual(
+                dispatches[i].id,
+                email.extra_headers[HEADER_NAME_EMAIL_TRACKING_ID],
+            )
 
     def test_sendEmailDispatches_noEmailDispatches_noEmailsSent(self):
         SendEmailBatch.send_email_dispatches()
