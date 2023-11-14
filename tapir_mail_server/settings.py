@@ -118,6 +118,7 @@ elif EMAIL_ENV == "prod":
     EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
     EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
     EMAIL_PORT = env.str("EMAIL_PORT", default=587)
+    EMAIL_PORT_IMAP = env.str("EMAIL_PORT_IMAP", default=993)
     # the next 2 options are mutually exclusive!
     EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
     EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)

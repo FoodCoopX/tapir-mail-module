@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **kwargs):
-        mail = imaplib.IMAP4_SSL(settings.EMAIL_HOST)
+        mail = imaplib.IMAP4_SSL(settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP)
         mail.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
         mail.select(readonly=settings.DEBUG)
 
