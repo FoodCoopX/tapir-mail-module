@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 from random import choice
-from nanoid import generate
+
 from django.core.management.base import BaseCommand
+from django.utils import timezone
+from nanoid import generate
 
 from tapir_mail_server.dummy_accounts.models import (
     DummySubscription,
@@ -38,7 +40,7 @@ class Command(BaseCommand):
                 user=user,
                 start_date=datetime.now().date(),
                 end_date=(datetime.now() + timedelta(days=365)).date(),
-                cancellation_ts=None if choice([True, False]) else datetime.now(),
+                cancellation_ts=None if choice([True, False]) else timezone.now(),
             )
 
         self.stdout.write(
