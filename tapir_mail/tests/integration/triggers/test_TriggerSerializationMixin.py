@@ -5,19 +5,32 @@ from tapir_mail.tests.integration.triggers.DummyTriggerClasses import (
     DummySerializer,
     DummyTrigger,
 )
-from tapir_mail.tests.test_utils import TapirIntegrationTest
+from tapir_mail.tests.test_utils import TapirIntegrationTest, build_time_trigger_dict
 
 
 class TestTriggerSerializationMixin(TapirIntegrationTest):
     def test_isValid_invalidTriggerName_raisesException(self):
-        serializer = DummySerializer(data={"trigger": "invalid trigger name"})
+        serializer = DummySerializer(
+            data={
+                "triggers": [
+                    {
+                        "trigger_id": "invalid_id",
+                        "trigger_field_values": {"a_number": "123"},
+                    }
+                ]
+            }
+        )
         with self.assertRaises(serializers.ValidationError):
             serializer.is_valid(raise_exception=True)
 
     def test_isValid_missingFieldInTriggerData_raisesException(self):
         register_trigger(DummyTrigger)
         serializer = DummySerializer(
-            data={"trigger": DummyTrigger.get_id(), "trigger_data": {}}
+            data={
+                "triggers": [
+                    {"trigger_id": DummyTrigger.get_id(), "trigger_field_values": {}}
+                ]
+            }
         )
         with self.assertRaises(serializers.ValidationError):
             serializer.is_valid(raise_exception=True)
@@ -25,15 +38,39 @@ class TestTriggerSerializationMixin(TapirIntegrationTest):
     def test_isValid_triggerDataFieldHasInvalidValue_raisesException(self):
         register_trigger(DummyTrigger)
         serializer = DummySerializer(
-            data={"trigger": DummyTrigger.get_id(), "trigger_data": {"a_number": "aaa"}}
+            data={
+                "triggers": [
+                    {
+                        "trigger_id": DummyTrigger.get_id(),
+                        "trigger_field_values": {"a_number": "aaa"},
+                    }
+                ]
+            }
         )
         with self.assertRaises(serializers.ValidationError):
             serializer.is_valid(raise_exception=True)
 
     def test_isValid_serializerHasValidData_returnsTrue(self):
         register_trigger(DummyTrigger)
-        serializer = DummySerializer(
-            data={"trigger": DummyTrigger.get_id(), "trigger_data": {"a_number": "123"}}
+        valid_trigger = {
+            "trigger_id": DummyTrigger.get_id(),
+            "trigger_field_values": {"a_number": "123"},
+        }
+        serializer = DummySerializer(data={"triggers": [valid_trigger]})
+
+        self.assertTrue(serializer.is_valid(raise_exception=True))
+        self.assertEqual(
+            [valid_trigger], serializer.validated_data.get("triggers", None)
         )
 
-        self.assertTrue(serializer.is_valid())
+    def test_isValid_multipleTriggers_returnsTrue(self):
+        register_trigger(DummyTrigger)
+        dummy_trigger = {
+            "trigger_id": DummyTrigger.get_id(),
+            "trigger_field_values": {"a_number": "123"},
+        }
+        triggers = [dummy_trigger, build_time_trigger_dict()]
+        serializer = DummySerializer(data={"triggers": triggers})
+
+        self.assertTrue(serializer.is_valid(raise_exception=True))
+        self.assertEqual(triggers, serializer.validated_data.get("triggers", None))

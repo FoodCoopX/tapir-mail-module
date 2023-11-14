@@ -1,4 +1,5 @@
 import datetime
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Dict, Generic, TypeVar
@@ -6,6 +7,8 @@ from typing import Dict, Generic, TypeVar
 from django.utils import timezone
 
 TriggerData = TypeVar("TriggerData")
+
+LOG = logging.getLogger(__name__)
 
 
 class Trigger(Generic[TriggerData], ABC):
@@ -36,8 +39,12 @@ class Trigger(Generic[TriggerData], ABC):
         from tapir_mail.models import EmailConfigurationVersion, ReleaseStatus
 
         for version in EmailConfigurationVersion.objects.filter(
-            trigger=cls.get_id(), status=ReleaseStatus.RELEASED
+            status=ReleaseStatus.RELEASED
         ):
+            if cls.get_id() not in [
+                trigger["trigger_id"] for trigger in version.triggers
+            ]:
+                continue
             cls.fire_version(email_configuration_version=version, data=data)
 
     @classmethod
@@ -80,18 +87,41 @@ class Trigger(Generic[TriggerData], ABC):
         return []
 
     @staticmethod
-    def on_email_configuration_version_create(email_configuration_version):
-        if (
-            not email_configuration_version.trigger
-            or email_configuration_version.trigger not in trigger_registry.keys()
-        ):
+    def on_email_configuration_version_save(email_configuration_version):
+        from tapir_mail.models import ReleaseStatus, EmailConfigurationDispatch
+
+        if email_configuration_version.status != ReleaseStatus.RELEASED:
+            EmailConfigurationDispatch.objects.filter(
+                email_configuration_version=email_configuration_version
+            ).delete()
             return
-        trigger_registry[email_configuration_version.trigger]._on_create(
-            email_configuration_version
-        )
+
+        EmailConfigurationDispatch.objects.filter(
+            email_configuration_version__email_configuration=email_configuration_version.email_configuration
+        ).delete()
+
+        if not email_configuration_version.triggers:
+            return
+
+        for trigger_data in email_configuration_version.triggers:
+            trigger_id = trigger_data["trigger_id"]
+            if trigger_id not in trigger_registry.keys():
+                LOG.warning(
+                    f"EmailConfigurationVersion "
+                    f"{email_configuration_version.id} {email_configuration_version.email_configuration.name} "
+                    f"has an unknown trigger : {trigger_id}"
+                )
+                continue
+            trigger_class = trigger_registry[trigger_id]
+            trigger_class._on_create(
+                email_configuration_version,
+                trigger_class.validate_field_values_and_return_object(
+                    trigger_data["trigger_field_values"]
+                ),
+            )
 
     @classmethod
-    def _on_create(cls, email_configuration_version):
+    def _on_create(cls, email_configuration_version, trigger_data: TriggerData):
         # Override this method if your trigger must for example fire on create
         pass
 
@@ -102,9 +132,10 @@ class Trigger(Generic[TriggerData], ABC):
         pass
 
     @classmethod
-    def validate_data_and_return_object(cls, trigger_data):
-        # Override this if you want to validate the content of the trigger_data variable from EmailConfigurationVersion
-        pass
+    def validate_field_values_and_return_object(cls, trigger_field_values):
+        # Override this if you want to validate the content of the trigger_field_values variable
+        # from EmailConfigurationVersion
+        return None
 
 
 trigger_registry: Dict[str, type[Trigger]] = {}

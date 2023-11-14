@@ -1826,20 +1826,17 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Trigger'
+                  $ref: '#/components/schemas/TriggerDefinition'
           description: ''
 components:
   schemas:
     BundledEmailConfiguration:
       type: object
       properties:
-        trigger:
-          type: string
-          nullable: true
-        trigger_data:
-          type: object
-          additionalProperties: {}
-          nullable: true
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerData'
         name:
           type: string
         description:
@@ -1867,14 +1864,10 @@ components:
     BundledEmailConfigurationRequest:
       type: object
       properties:
-        trigger:
-          type: string
-          nullable: true
-          minLength: 1
-        trigger_data:
-          type: object
-          additionalProperties: {}
-          nullable: true
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerDataRequest'
         name:
           type: string
           minLength: 1
@@ -2098,13 +2091,10 @@ components:
         id:
           type: string
           maxLength: 10
-        trigger:
-          type: string
-          nullable: true
-        trigger_data:
-          type: object
-          additionalProperties: {}
-          nullable: true
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerData'
         email_configuration:
           $ref: '#/components/schemas/EmailConfiguration'
         segment_data:
@@ -2138,14 +2128,10 @@ components:
           type: string
           minLength: 1
           maxLength: 10
-        trigger:
-          type: string
-          nullable: true
-          minLength: 1
-        trigger_data:
-          type: object
-          additionalProperties: {}
-          nullable: true
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerDataRequest'
         email_configuration:
           $ref: '#/components/schemas/EmailConfigurationRequest'
         segment_data:
@@ -2282,14 +2268,10 @@ components:
     PatchedBundledEmailConfigurationRequest:
       type: object
       properties:
-        trigger:
-          type: string
-          nullable: true
-          minLength: 1
-        trigger_data:
-          type: object
-          additionalProperties: {}
-          nullable: true
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggerDataRequest'
         name:
           type: string
           minLength: 1
@@ -2621,7 +2603,33 @@ components:
       - upload_id
       - upload_name
       - upload_type
-    Trigger:
+    TriggerData:
+      type: object
+      properties:
+        trigger_id:
+          type: string
+        trigger_field_values:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - trigger_field_values
+      - trigger_id
+    TriggerDataRequest:
+      type: object
+      properties:
+        trigger_id:
+          type: string
+          minLength: 1
+        trigger_field_values:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+      required:
+      - trigger_field_values
+      - trigger_id
+    TriggerDefinition:
       type: object
       properties:
         id:

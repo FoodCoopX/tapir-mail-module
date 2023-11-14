@@ -27,7 +27,7 @@ from tapir_mail.serializers import (
     EmailTemplateSerializer,
     RecipientSerializer,
     SegmentDataSerializer,
-    TriggerSerializer,
+    TriggerDefinitionSerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.segment import (
@@ -113,13 +113,13 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             content=serializer.validated_data["content"],
             subject=serializer.validated_data.get("subject", None),
             status=serializer.validated_data["release_status"],
-            trigger=serializer.validated_data.get("trigger", None),
-            trigger_data=serializer.validated_data.get("trigger_data", None),
+            triggers=serializer.validated_data.get("triggers", None),
             segment_data=serializer.validated_data.get("segment_data", None),
         )
 
+        Trigger.on_email_configuration_version_save(version)
+
         if version.status == ReleaseStatus.RELEASED:
-            Trigger.on_email_configuration_version_create(version)
             for version in EmailConfigurationVersion.objects.filter(
                 email_configuration=email_configuration,
                 status=ReleaseStatus.RELEASED,
@@ -140,8 +140,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "subject": version.subject,
             "release_status": version.status,
             "segment_data": version.segment_data,
-            "trigger": version.trigger,
-            "trigger_data": version.trigger_data,
+            "triggers": version.triggers,
         }
         serializer = BundledEmailConfigurationSerializer(
             data=request.data, initial=initial_data
@@ -161,10 +160,11 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         version.content = serializer.validated_data["content"]
         version.subject = serializer.validated_data.get("subject", None)
         version.status = serializer.validated_data["release_status"]
-        version.trigger = serializer.validated_data.get("trigger", None)
-        version.trigger_data = serializer.validated_data.get("trigger_data", None)
+        version.triggers = serializer.validated_data.get("triggers", None)
         version.segment_data = serializer.validated_data.get("segment_data", None)
         version.save()
+
+        Trigger.on_email_configuration_version_save(version)
 
         if version.status == ReleaseStatus.RELEASED:
             for version in EmailConfigurationVersion.objects.filter(
@@ -190,8 +190,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 "updated_at": version.updated_at,
                 "release_status": version.status,
                 "segment_data": version.segment_data,
-                "trigger": version.trigger,
-                "trigger_data": version.trigger_data,
+                "triggers": version.triggers,
             }
         )
 
@@ -329,12 +328,12 @@ class EmailConfigurationDispatchViewSet(viewsets.ModelViewSet):
 class TriggerListView(viewsets.ViewSet):
     @extend_schema(
         responses={
-            200: TriggerSerializer,
+            200: TriggerDefinitionSerializer,
         },
         description="Get a list of available triggers.",
     )
     def list(self, request):
-        serializer = TriggerSerializer(
+        serializer = TriggerDefinitionSerializer(
             [
                 {
                     "id": trigger.get_id(),

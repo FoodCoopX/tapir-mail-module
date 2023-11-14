@@ -1,4 +1,3 @@
-import datetime
 import json
 
 from tapir_mail.models import (
@@ -7,13 +6,11 @@ from tapir_mail.models import (
     EmailConfiguration,
     EmailConfigurationDispatch,
 )
-from tapir_mail.service.shortcuts import make_timezone_aware
-from tapir_mail.triggers.time_trigger import TimeTrigger
 from tapir_mail.tests.factories import (
     EmailConfigurationFactory,
     EmailConfigurationVersionFactory,
 )
-from tapir_mail.tests.test_utils import TapirIntegrationTest
+from tapir_mail.tests.test_utils import TapirIntegrationTest, build_time_trigger_dict
 
 
 class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
@@ -51,14 +48,13 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
 
     def test_default_emailConfigurationVersionGetsCreated(self):
         config = EmailConfigurationFactory.create()
-        scheduled_time = datetime.datetime(year=2021, month=1, day=1)
+        trigger = build_time_trigger_dict()
         post_data = {
             "name": config.name,
             "content": self.VERSION_CONTENT,
             "subject": self.VERSION_SUBJECT,
             "release_status": "Test status",
-            "trigger": TimeTrigger.get_id(),
-            "trigger_data": {"scheduled_time": scheduled_time.isoformat()},
+            "triggers": [trigger],
             "segment_data": {
                 "add_segments": [],
                 "static_segments": [],
@@ -74,10 +70,7 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
         self.assertEqual(self.VERSION_CONTENT, version.content)
         self.assertEqual(self.VERSION_SUBJECT, version.subject)
         self.assertEqual("Test status", version.status)
-        self.assertEqual(TimeTrigger.get_id(), version.trigger)
-        self.assertEqual(
-            {"scheduled_time": scheduled_time.isoformat()}, version.trigger_data
-        )
+        self.assertEqual([trigger], version.triggers)
         self.assertEqual(
             {
                 "add_segments": [],
@@ -92,9 +85,7 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
     def test_creatingDraftVersion_triggerNotExecuted(self):
         post_data = self.get_minimal_post_data()
         post_data["release_status"] = ReleaseStatus.DRAFT
-        post_data["trigger"] = TimeTrigger.get_id()
-        scheduled_time = datetime.datetime(year=2021, month=1, day=1)
-        post_data["trigger_data"] = {"scheduled_time": scheduled_time.isoformat()}
+        post_data["triggers"] = [build_time_trigger_dict()]
         response = self._send_request(post_data)
 
         self.assertStatusCode(response, 201)
@@ -103,17 +94,28 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
     def test_creatingReleaseVersion_triggerExecuted(self):
         post_data = self.get_minimal_post_data()
         post_data["release_status"] = ReleaseStatus.RELEASED
-        post_data["trigger"] = TimeTrigger.get_id()
-        scheduled_time = make_timezone_aware(
-            datetime.datetime(year=2021, month=1, day=1)
-        )
-        post_data["trigger_data"] = {"scheduled_time": scheduled_time.isoformat()}
+        trigger = build_time_trigger_dict()
+        post_data["triggers"] = [trigger]
         response = self._send_request(post_data)
 
         self.assertStatusCode(response, 201)
         self.assertEqual(1, EmailConfigurationDispatch.objects.count())
         config_dispatch = EmailConfigurationDispatch.objects.get()
-        self.assertEqual(scheduled_time, config_dispatch.scheduled_time)
+        self.assertEqual(
+            [trigger], config_dispatch.email_configuration_version.triggers
+        )
+
+    def test_creatingReleaseVersionWithMultipleTriggers_allTriggersExecuted(self):
+        post_data = self.get_minimal_post_data()
+        post_data["release_status"] = ReleaseStatus.RELEASED
+        triggers = [build_time_trigger_dict(), build_time_trigger_dict()]
+        post_data["triggers"] = triggers
+        response = self._send_request(post_data)
+
+        self.assertStatusCode(response, 201)
+        self.assertEqual(2, EmailConfigurationDispatch.objects.count())
+        email_configuration_version = EmailConfigurationVersion.objects.get()
+        self.assertEqual(triggers, email_configuration_version.triggers)
 
     def test_creatingReleaseVersion_olderReleaseGetsArchived(self):
         older_release: EmailConfigurationVersion = (

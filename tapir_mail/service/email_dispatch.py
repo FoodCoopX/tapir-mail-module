@@ -189,12 +189,16 @@ class SendEmailBatch:
         for email, email_dispatch in emails:
             try:
                 with transaction.atomic():
-                    trigger_class = trigger_registry.get(
-                        email_dispatch.email_configuration_dispatch.email_configuration_version.trigger,
-                        None,
-                    )
-                    if trigger_class:
-                        trigger_class.after_mail_sent(email_dispatch)
+                    for trigger_data in (
+                        email_dispatch.email_configuration_dispatch.email_configuration_version.triggers
+                        or []
+                    ):
+                        trigger_class = trigger_registry.get(
+                            trigger_data["trigger_id"],
+                            None,
+                        )
+                        if trigger_class:
+                            trigger_class.after_mail_sent(email_dispatch)
 
                     email_dispatch.sent_time = timezone.now()
                     email_dispatch.save()

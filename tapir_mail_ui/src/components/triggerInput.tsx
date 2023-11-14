@@ -3,47 +3,52 @@ import "@fortawesome/fontawesome-free/css/fontawesome.css";
 import "@fortawesome/fontawesome-free/css/solid.css";
 import React, { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
-import { Trigger, TriggersApi } from "../api_client";
+import {
+  TriggerDataRequest,
+  TriggerDefinition,
+  TriggersApi,
+} from "../api_client";
 import { useApi } from "../hooks/useApi";
 import TapirMailFormGroup from "./TapirMailFormGroup";
 import TapirDropdown from "./tapirDropdown";
+import { MinusCircleIcon } from "@heroicons/react/24/outline";
 
 interface TriggerInputProps {
-  selectedTriggerId: string | null;
-  onTriggerSelected: (trigger_id: string | null) => void;
-  onTriggerDataChange: (triggerData: any) => void;
-  triggerData: any;
+  onTriggerIdSelected: (trigger_id: string | null) => void;
+  onTriggerFieldValuesChanged: (triggerData: any) => void;
+  triggerData: TriggerDataRequest;
+  onTriggerDeleteClicked: () => void;
 }
 
 const TriggerInput: React.FC<TriggerInputProps> = ({
-  selectedTriggerId,
-  onTriggerSelected,
-  onTriggerDataChange,
+  onTriggerIdSelected,
+  onTriggerFieldValuesChanged,
   triggerData,
+  onTriggerDeleteClicked,
 }) => {
   const triggersApi = useApi(TriggersApi);
-  const [triggers, setTriggers] = useState<Trigger[]>([]);
-  const selectedTrigger =
-    triggers.find((trigger) => trigger.id === selectedTriggerId) ?? triggers[0];
+  const [triggerDefinitions, setTriggerDefinitions] = useState<
+    TriggerDefinition[]
+  >([]);
+  const selectedTriggerDefinition = triggerDefinitions.find(
+    (trigger) => trigger.id === triggerData.triggerId,
+  );
 
   useEffect(() => {
-    triggersApi.triggersList().then((triggers) => {
-      setTriggers(triggers);
-      if (!selectedTriggerId) {
-        onDropdownSelect(triggers[0]);
-      }
+    triggersApi.triggersList().then((triggerDefinitions) => {
+      setTriggerDefinitions(triggerDefinitions);
     });
   }, []);
 
-  const onDropdownSelect = (trigger: Trigger | null) => {
-    onTriggerSelected(trigger ? trigger.id : null);
+  const onDropdownSelect = (triggerDefinition: TriggerDefinition | null) => {
+    onTriggerIdSelected(triggerDefinition ? triggerDefinition.id : null);
 
     const defaultTriggerData: any = {};
-    if (trigger) {
-      trigger.fieldDefinitions.forEach((fieldDefinition) => {
-        if (triggerData[fieldDefinition.fieldName]) {
+    if (triggerDefinition) {
+      triggerDefinition.fieldDefinitions.forEach((fieldDefinition) => {
+        if (triggerData.triggerFieldValues[fieldDefinition.fieldName]) {
           defaultTriggerData[fieldDefinition.fieldName] =
-            triggerData[fieldDefinition.fieldName];
+            triggerData.triggerFieldValues[fieldDefinition.fieldName];
           return;
         }
 
@@ -65,50 +70,65 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
       });
     }
 
-    onTriggerDataChange(defaultTriggerData);
+    onTriggerFieldValuesChanged(defaultTriggerData);
   };
 
   const handleTriggerDataChange = (fieldName: string, value: any) => {
     const newTriggerData = { ...triggerData };
 
-    const knownTriggerFields = selectedTrigger.fieldDefinitions.map(
+    if (!selectedTriggerDefinition) return;
+
+    const knownTriggerFields = selectedTriggerDefinition.fieldDefinitions.map(
       (fieldDefinition) => fieldDefinition.fieldName,
     );
-    for (const key in newTriggerData) {
+    for (const key in newTriggerData.triggerFieldValues) {
       if (!knownTriggerFields.includes(key)) {
-        delete newTriggerData[key];
+        delete newTriggerData.triggerFieldValues[key];
       }
     }
 
-    newTriggerData[fieldName] = value;
-    onTriggerDataChange(newTriggerData);
+    newTriggerData.triggerFieldValues[fieldName] = value;
+    onTriggerFieldValuesChanged(newTriggerData.triggerFieldValues);
   };
 
   return (
-    <>
-      <Form.Group>
-        <Form.Label>Trigger</Form.Label>
+    <div
+      style={{
+        backgroundColor: "var(--color-neutral-2)",
+        padding: "1em",
+        marginLeft: "-0.5em",
+        marginRight: "-0.5em",
+        borderRadius: "6px",
+        border: "1px solid var(--color-neutral-3)",
+      }}
+    >
+      <Form.Group className="d-flex justify-content-center">
         <TapirDropdown
-          choices={triggers}
+          choices={triggerDefinitions}
           onChoiceSelected={onDropdownSelect}
-          selectedChoice={selectedTrigger}
+          selectedChoice={selectedTriggerDefinition}
+        />
+        <MinusCircleIcon
+          color="red"
+          onClick={onTriggerDeleteClicked}
+          width="3em"
         />
       </Form.Group>
       <br />
-      {selectedTrigger &&
-        selectedTrigger.fieldDefinitions.map((fieldDefinition) => (
+      {selectedTriggerDefinition &&
+        selectedTriggerDefinition.fieldDefinitions.map((fieldDefinition) => (
           <TapirMailFormGroup
             key={fieldDefinition.fieldName}
             label={fieldDefinition.label}
             type={fieldDefinition.type}
-            value={triggerData[fieldDefinition.fieldName]}
+            value={triggerData.triggerFieldValues[fieldDefinition.fieldName]}
             additionalData={fieldDefinition.additionalData}
             onChange={(value) => {
               handleTriggerDataChange(fieldDefinition.fieldName, value);
             }}
           />
         ))}
-    </>
+    </div>
   );
 };
 

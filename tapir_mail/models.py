@@ -77,8 +77,9 @@ class EmailConfigurationVersion(BaseModel):
         choices=RELEASE_STATUS_CHOICES,
         default=ReleaseStatus.DRAFT,
     )
-    trigger = models.CharField(max_length=255, null=True)
-    trigger_data = models.JSONField(null=True, blank=True)
+    # See TriggerSerializationMixin for the expected content of this field
+    triggers = models.JSONField(null=True, blank=True)
+    # See SegmentDataSerializer for the expected content of this field
     segment_data = models.JSONField(null=True, blank=True)
 
     @transaction.atomic

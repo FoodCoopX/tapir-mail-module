@@ -1,15 +1,12 @@
-import datetime
-
 from tapir_mail.models import (
     EmailConfigurationVersion,
     ReleaseStatus,
 )
 from tapir_mail.service.segment import register_segment
-from tapir_mail.triggers.time_trigger import TimeTrigger
 from tapir_mail.tests.factories import (
     EmailConfigurationVersionFactory,
 )
-from tapir_mail.tests.test_utils import TapirIntegrationTest
+from tapir_mail.tests.test_utils import TapirIntegrationTest, build_time_trigger_dict
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 
 
@@ -41,8 +38,7 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
             subject="Subject before",
             status="Status before",
             segment_data=segment_data_before,
-            trigger=None,
-            trigger_data=None,
+            triggers=None,
         )
 
         segment_data_after = {
@@ -51,15 +47,14 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
             "remove_segments": [self.TEST_SEGMENT],
             "filter_list": [],
         }
-        scheduled_time = datetime.datetime(year=2021, month=1, day=1)
+        trigger = build_time_trigger_dict()
         put_data = {
             "name": "Name after",
             "description": "Description after",
             "content": "Content after",
             "subject": "Subject after",
             "release_status": "Status after",
-            "trigger": TimeTrigger.get_id(),
-            "trigger_data": {"scheduled_time": scheduled_time.isoformat()},
+            "triggers": [trigger],
             "segment_data": segment_data_after,
         }
         response = self._send_request(version.id, put_data)
@@ -71,10 +66,7 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         self.assertEqual("Content after", version.content)
         self.assertEqual("Subject after", version.subject)
         self.assertEqual("Status after", version.status)
-        self.assertEqual(TimeTrigger.get_id(), version.trigger)
-        self.assertEqual(
-            {"scheduled_time": scheduled_time.isoformat()}, version.trigger_data
-        )
+        self.assertEqual([trigger], version.triggers)
         self.assertEqual(
             segment_data_after,
             version.segment_data,

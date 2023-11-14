@@ -12,7 +12,7 @@ interface Choice {
 interface DropdownProps<T extends Choice> {
   choices: T[];
   onChoiceSelected: (choice_id: T | null) => void;
-  selectedChoice: T;
+  selectedChoice?: T;
 }
 
 const TapirDropdown = <T extends Choice>({
