@@ -79,7 +79,10 @@ def resolve_recipient_tokens(tokens_to_resolve: list[str], recipient: object) ->
     return recipient_tokens
 
 
-def replace_tokens(mjml: str, recipient_tokens: dict = {}):
+def replace_tokens(mjml: str, recipient_tokens=None):
+    if recipient_tokens is None:
+        recipient_tokens = {}
+
     def _do_replace(current_mjml, key, value):
         if value is None:
             value = ""
