@@ -1,5 +1,6 @@
 import datetime
 
+from django.db.models import Q
 from rest_framework import serializers
 
 from tapir_mail.models import (
@@ -191,7 +192,13 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
         return obj.emaildispatch_set.filter(opened_time__isnull=False).count()
 
     def get_error_count(self, obj) -> int:
-        return obj.emaildispatch_set.filter(error_message__isnull=False).count()
+        return (
+            obj.emaildispatch_set.filter(
+                Q(error_message__isnull=False) | Q(bounce_message__isnull=False)
+            )
+            .distinct()
+            .count()
+        )
 
 
 class TriggerFieldDefinitionSerializer(serializers.Serializer):

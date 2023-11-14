@@ -9,11 +9,12 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import datetime
 import os
 from pathlib import Path
 
 import environ
+
+from tapir_mail_server.celery_tasks_schedule import CELERY_BEAT_SCHEDULE
 
 env = environ.Env()
 
@@ -230,16 +231,7 @@ MJML_EXEC_CMD = [
 
 CELERY_BROKER_URL = "redis://redis:6379"
 
-CELERY_BEAT_SCHEDULE = {
-    "resolve_segment_and_create_email_dispatches_task": {
-        "task": "tapir_mail.tasks.resolve_segment_and_create_email_dispatches_task",
-        "schedule": datetime.timedelta(minutes=1),
-    },
-    "send_email_dispatch_batch_task": {
-        "task": "tapir_mail.tasks.send_email_dispatch_batch_task",
-        "schedule": datetime.timedelta(minutes=1),
-    },
-}
+CELERY_BEAT_SCHEDULE = CELERY_BEAT_SCHEDULE
 
 
 CACHES = {

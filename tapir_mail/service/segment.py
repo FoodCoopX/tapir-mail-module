@@ -114,7 +114,7 @@ def resolve_segments(
     remove_segments=None,
     filter_list=None,
     override_recipients: list[str] = None,
-) -> list[object]:
+) -> list:
     if filter_list is None:
         filter_list = []
     if remove_segments is None:
