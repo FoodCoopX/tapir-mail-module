@@ -108,9 +108,13 @@ def _precedence(operator):
         return 0
 
 
-def combine_segments_with_filters(
-    add_segments=None, static_segments=None, remove_segments=None, filter_list=None
-):
+def resolve_segments(
+    add_segments=None,
+    static_segments=None,
+    remove_segments=None,
+    filter_list=None,
+    override_recipients: list[str] = None,
+) -> list[object]:
     if filter_list is None:
         filter_list = []
     if remove_segments is None:
@@ -127,6 +131,10 @@ def combine_segments_with_filters(
 
     try:
         combined = BASE_QUERYSET.none()
+
+        # Start with override recipients if set, to avoid unnecessary DB queries
+        if override_recipients:
+            combined = combined.filter(email__in=override_recipients)
 
         # Combine segments using union
         for segment in add_segments:
@@ -154,6 +162,10 @@ def combine_segments_with_filters(
             LOG.info(f"Adding static segment {segment.name}")
             result.extend(segment.recipients.all())
 
+        # apply override recipients again, to filter out static segment recipients
+        if override_recipients:
+            result = [r for r in result if r.email in override_recipients]
+
         return result
     except Exception as e:
         LOG.error(
@@ -161,7 +173,3 @@ def combine_segments_with_filters(
         )
         traceback.print_exc()
         raise e
-
-
-def segment_data_to_recipient_list(segment_data):
-    return combine_segments_with_filters(**segment_data)

@@ -4,9 +4,7 @@ from django.db import models, transaction
 from django.utils import timezone
 from nanoid import generate
 
-from tapir_mail.service.segment import (
-    segment_data_to_recipient_list,
-)
+from tapir_mail.service.segment import resolve_segments
 
 ID_LENGTH = 10
 
@@ -119,12 +117,10 @@ class EmailConfigurationDispatch(BaseModel):
         if self.is_sent:
             return [dispatch.recipient for dispatch in self.emaildispatch_set.all()]
 
-        if self.override_recipients:
-            return self.override_recipients
-
         if self.email_configuration_version.segment_data is not None:
-            return segment_data_to_recipient_list(
-                self.email_configuration_version.segment_data
+            return resolve_segments(
+                **self.email_configuration_version.segment_data,
+                override_recipients=self.override_recipients,
             )
 
         return []
@@ -159,6 +155,7 @@ class EmailDispatch(BaseModel):
         EmailConfigurationDispatch, on_delete=models.CASCADE
     )
     recipient = models.EmailField()
+    recipient_tokens = models.JSONField(null=True)
     sent_time = models.DateTimeField(null=True, blank=True)
     opened_time = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(null=True, blank=True)

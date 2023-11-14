@@ -9,7 +9,7 @@ from tapir_mail.models import (
     ReleaseStatus,
     EmailConfigurationDispatch,
 )
-from tapir_mail.service.segment import segment_data_to_recipient_list
+from tapir_mail.service.segment import resolve_segments
 from tapir_mail.service.triggers import Trigger
 from tapir_mail_server.dummy_accounts.models import DummyPickupLocation, DummyTapirUser
 from tapir_mail_server.dummy_accounts.triggers.days_after_subscription_start_trigger import (
@@ -43,9 +43,7 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
         email_configuration_version: EmailConfigurationVersion,
         trigger_data: DaysTriggerData,
     ):
-        for recipient in segment_data_to_recipient_list(
-            email_configuration_version.segment_data
-        ):
+        for recipient in resolve_segments(**email_configuration_version.segment_data):
             cls._delete_unsent_config_dispatch(
                 version=email_configuration_version, recipient=recipient
             )

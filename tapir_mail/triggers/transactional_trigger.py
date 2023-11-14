@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from tapir_mail.service.segment import BASE_QUERYSET
 
 from tapir_mail.service.triggers import Trigger
 
@@ -10,6 +11,7 @@ from tapir_mail.service.triggers import Trigger
 @dataclass
 class TransactionalTriggerData:
     key: str
+    recipient_email: str
 
 
 class TransactionalTrigger(Trigger[TransactionalTriggerData]):
@@ -20,18 +22,19 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
         cls.transactional_trigger_registry[key] = name
 
     @classmethod
-    def fire_action(cls, key):
+    def fire_action(cls, key, recipient_email):
         if key not in cls.transactional_trigger_registry:
             raise Exception(
                 f"Action '{key}' not registered. Available: {set(cls.transactional_trigger_registry.keys())}"
             )
 
-        cls.fire_all_released_configs(TransactionalTriggerData(key=key))
+        cls.fire_all_released_configs(
+            TransactionalTriggerData(key=key, recipient_email=recipient_email)
+        )
 
     @classmethod
     def fire_all_released_configs(cls, data: TransactionalTriggerData):
-        from tapir_mail.models import ReleaseStatus
-        from tapir_mail.models import EmailConfigurationVersion
+        from tapir_mail.models import EmailConfigurationVersion, ReleaseStatus
 
         for version in EmailConfigurationVersion.objects.filter(
             trigger=cls.get_id(),
@@ -39,6 +42,10 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
             trigger_data__key=data.key,
         ):
             cls.fire_version(version, data)
+
+    @classmethod
+    def get_recipients_override(cls, email_configuration_version, data) -> [str]:
+        return [data.recipient_email]
 
     @classmethod
     def get_scheduled_date(

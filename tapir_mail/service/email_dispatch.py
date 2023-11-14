@@ -8,7 +8,11 @@ from django.utils import timezone
 
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import prepare_email
-from tapir_mail.service.token import replace_tokens
+from tapir_mail.service.token import (
+    find_tokens,
+    replace_tokens,
+    resolve_recipient_tokens,
+)
 from tapir_mail.service.tracking import get_tracking_url
 from tapir_mail.service.triggers import trigger_registry
 
@@ -63,11 +67,18 @@ class ResolveAndCreateEmailDispatches:
                 f"No recipients found for EmailConfigurationDispatch#{config_dispatch.id}!"
             )
 
+        recipient_tokens = find_tokens(
+            config_dispatch.email_configuration_version.content
+        )
+
         EmailDispatch.objects.bulk_create(
             [
                 EmailDispatch(
                     email_configuration_dispatch=config_dispatch,
                     recipient=recipient.email,
+                    recipient_tokens=resolve_recipient_tokens(
+                        recipient_tokens, recipient
+                    ),
                     created_at=config_dispatch.scheduled_time,
                 )
                 for recipient in recipients
@@ -149,20 +160,24 @@ class SendEmailBatch:
         emails = []
         for email_dispatch in email_dispatches:
             config_dispatch = email_dispatch.email_configuration_dispatch
-            recipient = email_dispatch.recipient
+
             mjml = replace_tokens(
-                config_dispatch.email_configuration_version.content, recipient
+                config_dispatch.email_configuration_version.content,
+                email_dispatch.recipient_tokens,
             )
+
             try:
                 email = prepare_email(
                     mjml=mjml,
                     subject=config_dispatch.email_configuration_version.subject,
-                    recipients=[recipient],
+                    recipients=[email_dispatch.recipient],
                     tracking_url=get_tracking_url(email_dispatch),
                 )
                 emails.append((email, email_dispatch))
             except Exception as e:
-                LOG.error(f"Error while preparing email to {recipient}: {e}")
+                LOG.error(
+                    f"Error while preparing email to {email_dispatch.recipient}: {e}"
+                )
                 with transaction.atomic():
                     email_dispatch.error_message = str(e)
                     email_dispatch.save()
