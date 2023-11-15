@@ -61,5 +61,7 @@ def _build_from_email(email_host_sender: str, tracking_id: str):
 
 def _get_dispatch_id_from_email_return_path(email_from: str):
     prefix, _ = email_from.split("@")
-    _, dispatch_id = prefix.split("_")
+    if "+" not in prefix:
+        return None
+    _, dispatch_id = prefix.split("+")
     return dispatch_id

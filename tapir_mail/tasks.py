@@ -1,6 +1,6 @@
 from celery import shared_task
-from django.core.management import call_command
 
+from tapir_mail.service.email_bounces import EmailBounces
 from tapir_mail.service.email_dispatch import (
     ResolveAndCreateEmailDispatches,
     SendEmailBatch,
@@ -19,4 +19,4 @@ def send_email_dispatch_batch_task():
 
 @shared_task
 def check_email_bounces():
-    call_command("check_email_bounces")
+    EmailBounces.check_for_bounces()
