@@ -3,8 +3,6 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template import Context, Template
 
-HEADER_NAME_EMAIL_TRACKING_ID = "tapir-tracking-id"
-
 
 def prepare_email(
     mjml: str = None,
@@ -33,19 +31,15 @@ def prepare_email(
     if tracking_url:
         email_body = _add_tracking_pixel(email_body, tracking_url)
 
-    headers = {HEADER_NAME_EMAIL_TRACKING_ID: tracking_id}
-    if hasattr(settings, "EMAIL_HOST_SENDER_NAME"):
-        headers[
-            "From"
-        ] = f"{settings.EMAIL_HOST_SENDER_NAME} <{settings.EMAIL_HOST_SENDER}>"
-
     email = EmailMultiAlternatives(
         subject=subject,
         body=email_body,
         to=recipients if isinstance(recipients, list) else [recipients],
         bcc=[getattr(settings, "EMAIL_AUTO_BCC", None)],
-        from_email=settings.EMAIL_HOST_SENDER,
-        headers=headers,
+        from_email=_build_from_email(settings.EMAIL_HOST_SENDER, tracking_id),
+        headers={
+            "From": f"{settings.EMAIL_HOST_SENDER_NAME} <{settings.EMAIL_HOST_SENDER}>",
+        },
     )
     email.content_subtype = "html"
 
@@ -58,3 +52,14 @@ def _add_tracking_pixel(html_content, pixel_url):
     img_tag = soup.new_tag("img", src=pixel_url, style="display:none")
     body.append(img_tag)
     return str(soup)
+
+
+def _build_from_email(email_host_sender: str, tracking_id: str):
+    prefix, suffix = email_host_sender.split("@")
+    return f"{prefix}+{tracking_id}@{suffix}"
+
+
+def _get_dispatch_id_from_email_return_path(email_from: str):
+    prefix, _ = email_from.split("@")
+    _, dispatch_id = prefix.split("_")
+    return dispatch_id

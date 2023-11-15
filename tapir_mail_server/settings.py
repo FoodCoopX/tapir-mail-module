@@ -107,7 +107,8 @@ EMAIL_DISPATCH_BATCH_SIZE = (
 EMAIL_ENV = env("EMAIL_ENV", default="dev")
 if EMAIL_ENV == "dev":
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-    EMAIL_HOST_SENDER = "dev@example.com"
+    EMAIL_HOST_SENDER = "test_host_sender@mail.net"
+    EMAIL_HOST_SENDER_NAME = "Test host sender"
 elif EMAIL_ENV == "test":
     # Local SMTP
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

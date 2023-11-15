@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from tapir_mail.models import EmailDispatch
-from tapir_mail.service.email import HEADER_NAME_EMAIL_TRACKING_ID
+from tapir_mail.service.email import _get_dispatch_id_from_email_return_path
 from tapir_mail_server import settings
 
 LOG = logging.getLogger(__name__)
@@ -42,20 +42,21 @@ class Command(BaseCommand):
             )
 
         message = email.message_from_bytes(message_bytes[0][1])
-        dispatch_id = message.get(HEADER_NAME_EMAIL_TRACKING_ID, None)
+        return_path = message.get("Return-Path", None)
+        dispatch_id = _get_dispatch_id_from_email_return_path(return_path)
         email_dispatch: EmailDispatch = EmailDispatch.objects.filter(
-            id=message[HEADER_NAME_EMAIL_TRACKING_ID]
+            id=dispatch_id
         ).first()
 
-        message_id = message.get("Message-Id", None)
+        message_uid = message.get("Message-Id", None)
         if email_dispatch:
             email_dispatch.bounce_message = (
-                f"Email could not be delivered, bounce message id : {message_id}"
+                f"Email could not be delivered, bounce message id : {message_uid}"
             )
             email_dispatch.save()
         else:
             LOG.warning(
-                f"Received bounce mail but could not find the corresponding dispatch. Dispatch id: {dispatch_id}, message id: {message_id}"
+                f"Received bounce mail but could not find the corresponding dispatch. Dispatch id: {dispatch_id}, message id: {message_uid}"
             )
 
         mail.store(message_id, "+FLAGS", "(SEEN)")

@@ -2184,6 +2184,9 @@ components:
         error_message:
           type: string
           nullable: true
+        bounce_message:
+          type: string
+          nullable: true
       required:
       - created_at
       - email_configuration_dispatch
