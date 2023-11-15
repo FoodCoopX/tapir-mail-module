@@ -113,7 +113,7 @@ class EmailConfigurationDispatch(BaseModel):
     is_sent = models.BooleanField(default=False)
     override_recipients = models.JSONField(null=True)
 
-    def get_recipient_list(self) -> list[str]:
+    def get_recipient_list(self) -> list:
         if self.is_sent:
             return [dispatch.recipient for dispatch in self.emaildispatch_set.all()]
 
@@ -159,6 +159,7 @@ class EmailDispatch(BaseModel):
     sent_time = models.DateTimeField(null=True, blank=True)
     opened_time = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(null=True, blank=True)
+    bounce_message = models.TextField(null=True, blank=True)
 
     class Meta:
         unique_together = (

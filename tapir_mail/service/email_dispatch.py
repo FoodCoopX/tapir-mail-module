@@ -34,11 +34,13 @@ class ResolveAndCreateEmailDispatches:
             return
 
         try:
-            config_dispatches: EmailConfigurationDispatch = (
-                cls._get_email_configuration_dispatches_that_should_be_sent().order_by(
-                    "scheduled_time"
-                )[:10]
-            )
+            config_dispatches: [
+                EmailConfigurationDispatch
+            ] = cls._get_email_configuration_dispatches_that_should_be_sent().order_by(
+                "scheduled_time"
+            )[
+                :10
+            ]
             if not config_dispatches:
                 return
 
@@ -172,6 +174,7 @@ class SendEmailBatch:
                     subject=config_dispatch.email_configuration_version.subject,
                     recipients=[email_dispatch.recipient],
                     tracking_url=get_tracking_url(email_dispatch),
+                    tracking_id=email_dispatch.id,
                 )
                 emails.append((email, email_dispatch))
             except Exception as e:

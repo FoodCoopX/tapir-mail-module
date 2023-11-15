@@ -9,11 +9,12 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import datetime
 import os
 from pathlib import Path
 
 import environ
+
+from tapir_mail_server.celery_tasks_schedule import CELERY_BEAT_SCHEDULE
 
 env = environ.Env()
 
@@ -106,7 +107,8 @@ EMAIL_DISPATCH_BATCH_SIZE = (
 EMAIL_ENV = env("EMAIL_ENV", default="dev")
 if EMAIL_ENV == "dev":
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-    EMAIL_HOST_SENDER = "dev@example.com"
+    EMAIL_HOST_SENDER = "test_host_sender@mail.net"
+    EMAIL_HOST_SENDER_NAME = "Test host sender"
 elif EMAIL_ENV == "test":
     # Local SMTP
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -117,6 +119,7 @@ elif EMAIL_ENV == "prod":
     EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
     EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
     EMAIL_PORT = env.str("EMAIL_PORT", default=587)
+    EMAIL_PORT_IMAP = env.str("EMAIL_PORT_IMAP", default=993)
     # the next 2 options are mutually exclusive!
     EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
     EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
@@ -230,16 +233,7 @@ MJML_EXEC_CMD = [
 
 CELERY_BROKER_URL = "redis://redis:6379"
 
-CELERY_BEAT_SCHEDULE = {
-    "resolve_segment_and_create_email_dispatches_task": {
-        "task": "tapir_mail.tasks.resolve_segment_and_create_email_dispatches_task",
-        "schedule": datetime.timedelta(minutes=1),
-    },
-    "send_email_dispatch_batch_task": {
-        "task": "tapir_mail.tasks.send_email_dispatch_batch_task",
-        "schedule": datetime.timedelta(minutes=1),
-    },
-}
+CELERY_BEAT_SCHEDULE = CELERY_BEAT_SCHEDULE
 
 
 CACHES = {

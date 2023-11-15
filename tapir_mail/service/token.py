@@ -1,5 +1,6 @@
 import logging
 import re
+from typing import Any
 
 from tapir_mail.service.segment import _check_base_queryset
 
@@ -44,7 +45,7 @@ def register_tokens(user_tokens: dict, general_tokens: dict):
     _register_general_tokens(general_tokens)
 
 
-def find_tokens(mjml: str, token_type: str = TOKEN_TYPE_RECIPIENT) -> dict:
+def find_tokens(mjml: str, token_type: str = TOKEN_TYPE_RECIPIENT) -> list[Any]:
     """
     Find all unique tokens enclosed in double curly braces in the given MJML string,
     and resolve them using the provided token_registry.
