@@ -25,13 +25,6 @@ function Dashboard() {
             icon={PhotoIcon}
           />
         </Link>
-        <Link to={Paths.dummyAccounts}>
-          <TapirButton
-            variant="primary"
-            text="Test users"
-            icon={UserIcon}
-          />
-        </Link>
       </div>
 
       <div

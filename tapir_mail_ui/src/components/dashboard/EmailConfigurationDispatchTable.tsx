@@ -88,8 +88,7 @@ const EmailConfigurationDispatchTable: React.FC<
           >
             <thead>
               <tr>
-                <th>Name des Mailings</th>
-                <th>Betreff</th>
+                <th>Name</th>
                 {content === "last-sent" && (
                   <>
                     <th>Gesendet am</th>
@@ -125,12 +124,6 @@ const EmailConfigurationDispatchTable: React.FC<
                       {
                         emailConfigurationDispatch.emailConfigurationVersion
                           .emailConfiguration.name
-                      }
-                    </td>
-                    <td>
-                      {
-                        emailConfigurationDispatch.emailConfigurationVersion
-                          .subject
                       }
                     </td>
                     <td>
