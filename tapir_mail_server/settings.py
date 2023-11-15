@@ -105,8 +105,12 @@ EMAIL_DISPATCH_BATCH_SIZE = (
 
 # django-environ EMAIL_URL mechanism is a bit hairy with passwords with slashes in them, so use this instead
 EMAIL_ENV = env("EMAIL_ENV", default="dev")
+EMAIL_PORT_IMAP = env.str("EMAIL_PORT_IMAP", default=993)
 if EMAIL_ENV == "dev":
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    EMAIL_HOST = "email_host"
+    EMAIL_HOST_USER = "email_host_user"
+    EMAIL_HOST_PASSWORD = "email_host_password"
     EMAIL_HOST_SENDER = "test_host_sender@mail.net"
     EMAIL_HOST_SENDER_NAME = "Test host sender"
 elif EMAIL_ENV == "test":
@@ -119,7 +123,6 @@ elif EMAIL_ENV == "prod":
     EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
     EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
     EMAIL_PORT = env.str("EMAIL_PORT", default=587)
-    EMAIL_PORT_IMAP = env.str("EMAIL_PORT_IMAP", default=993)
     # the next 2 options are mutually exclusive!
     EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
     EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)

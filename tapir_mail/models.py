@@ -145,6 +145,19 @@ models.signals.post_save.connect(
 )
 
 
+class BounceType:
+    SOFT = "soft"
+    HARD = "hard"
+    UNKNOWN = "unknown"
+
+
+BOUNCE_TYPE_CHOICES = [
+    (BounceType.SOFT, "Soft"),
+    (BounceType.HARD, "Hard"),
+    (BounceType.UNKNOWN, "Unknown"),
+]
+
+
 class EmailDispatch(BaseModel):
     """
     This represents an email that has been sent to a single recipient.
@@ -160,6 +173,13 @@ class EmailDispatch(BaseModel):
     opened_time = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(null=True, blank=True)
     bounce_message = models.TextField(null=True, blank=True)
+    bounce_type = models.CharField(
+        max_length=255,
+        choices=BOUNCE_TYPE_CHOICES,
+        default=None,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         unique_together = (
