@@ -27,7 +27,7 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
     : {};
 
   return (
-    <div style={{ marginBottom: "1em" }}>
+    <div style={{ marginBottom: "0.5em" }}>
       <h6 className="chained-badges">
         {segmentData.addSegments.map((segment, idx) => (
           <Fragment key={segment}>
