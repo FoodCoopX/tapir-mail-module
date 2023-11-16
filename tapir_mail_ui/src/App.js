@@ -1,20 +1,42 @@
 import { AnimatePresence, motion } from "framer-motion";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import {
-  BrowserRouter as Router,
   Route,
+  BrowserRouter as Router,
   Routes,
   useLocation,
 } from "react-router-dom";
 import "./App.css";
 import Loading from "./components/loading";
 import { AlertProvider } from "./contexts/alerts";
-import { routes } from "./routing";
 import env from "./env";
+import { routes } from "./routing";
 
 // add new routes in routing.ts
 
 const InnerApp = () => {
+  useEffect(() => {
+    const setCookie = (name, value) => {
+      document.cookie = name + "=" + value + "; Path=/; SameSite=Lax;";
+    };
+
+    const handleMessage = (event) => {
+      if (!env.REACT_APP_API_ROOT.startsWith(event.origin)) {
+        console.log("Ignoring message from unknown origin", event.origin);
+        return;
+      }
+
+      if (event.data.type === "NEW_TOKEN") {
+        const newToken = event.data.token;
+        setCookie("token", newToken);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   const location = useLocation();
   return (
     <motion.div

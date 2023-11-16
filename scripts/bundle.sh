@@ -7,8 +7,8 @@ set -e
 export PUBLIC_URL=/static/
 cd tapir_mail_ui
 rm -rf build
-npm install
-{ npm run build; } 2>&1 | ( ! grep -i "error" ) || exit 1
+npm install || exit 1
+npm run build || exit 1
 
 # Copy build files to Django's static directory
 rm -rf ../tapir_mail/__static__/
