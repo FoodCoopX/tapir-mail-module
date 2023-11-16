@@ -39,7 +39,9 @@ const EmailConfigurationEditor = () => {
   const [subject, setSubject] = useState("");
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
-  const [triggers, setTriggers] = useState<TriggerDataRequest[]>([]);
+  const [triggers, setTriggers] = useState<TriggerDataRequest[]>([
+    { triggerId: "", triggerFieldValues: {} },
+  ]);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
@@ -228,7 +230,11 @@ const EmailConfigurationEditor = () => {
         (segmentData.staticSegments?.length || 0) > 0)) ||
     (id !== undefined && content !== loadedContent);
   const releaseButtonDisabled =
-    saveButtonDisabled || !subject || !segmentChoosen;
+    saveButtonDisabled ||
+    !subject ||
+    !segmentChoosen ||
+    !triggers ||
+    triggers.filter((t) => t.triggerId).length === 0;
   return loading ? (
     <Loading />
   ) : (
