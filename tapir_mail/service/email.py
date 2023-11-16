@@ -36,7 +36,7 @@ def prepare_email(
         body=email_body,
         to=recipients if isinstance(recipients, list) else [recipients],
         bcc=[getattr(settings, "EMAIL_AUTO_BCC", None)],
-        from_email=_build_from_email(settings.EMAIL_HOST_SENDER, tracking_id),
+        from_email=_build_from_email(settings.EMAIL_BOUNCE_ADDRESS, tracking_id),
         headers={
             "From": f"{settings.EMAIL_HOST_SENDER_NAME} <{settings.EMAIL_HOST_SENDER}>",
         },
