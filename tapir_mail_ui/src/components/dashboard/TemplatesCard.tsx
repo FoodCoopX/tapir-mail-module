@@ -21,10 +21,6 @@ const TemplatesCard = () => {
   const showAlert = useAlert();
   const navigate = useNavigate();
   const api = useApi(EmailTemplateApi);
-  const deleteConfirmMessage =
-    "Möchten Sie wirklich das template '" +
-    templateToDelete?.name +
-    "' löschen?";
 
   useEffect(() => {
     if (!api || !showAlert) return;
@@ -138,7 +134,11 @@ const TemplatesCard = () => {
         </Card.Body>
       </Card>
       <ConfirmDeleteModal
-        message={deleteConfirmMessage}
+        message={
+          "Möchten Sie wirklich das template '" +
+          templateToDelete?.name +
+          "' löschen?"
+        }
         open={!!templateToDelete}
         onConfirm={onDeleteTemplateConfirmed}
         onCancel={onDeleteTemplateCancelled}

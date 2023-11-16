@@ -1,7 +1,6 @@
 import React from "react";
-import { Modal } from "react-bootstrap";
-import TapirButton from "./TapirButton";
-import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import ConfirmModal from "./ConfirmModal";
 
 interface ConfirmDeleteModalProps {
   message: string;
@@ -17,29 +16,16 @@ const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({
   onCancel,
 }) => {
   return (
-    <Modal
-      show={open}
-      onHide={onCancel}
-    >
-      <Modal.Header closeButton>
-        <Modal.Title>Löschen bestätigen</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>{message}</Modal.Body>
-      <Modal.Footer style={{ display: "flex", justifyContent: "flex-end" }}>
-        <TapirButton
-          variant="secondary"
-          text="Abbrechen"
-          icon={XMarkIcon}
-          onClick={onCancel}
-        />
-        <TapirButton
-          variant="danger"
-          text="Löschen"
-          icon={TrashIcon}
-          onClick={onConfirm}
-        />
-      </Modal.Footer>
-    </Modal>
+    <ConfirmModal
+      message={message}
+      title={"Löschen bestätigen"}
+      open={open}
+      confirmButtonText={"Löschen"}
+      confirmButtonIcon={TrashIcon}
+      confirmButtonVariant="danger"
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
   );
 };
 
