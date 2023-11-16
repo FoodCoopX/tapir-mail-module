@@ -174,7 +174,7 @@ class EmailDispatch(BaseModel):
     error_message = models.TextField(null=True, blank=True)
     bounce_message = models.TextField(null=True, blank=True)
     bounce_type = models.CharField(
-        max_length=255,
+        max_length=16,
         choices=BOUNCE_TYPE_CHOICES,
         default=None,
         null=True,
