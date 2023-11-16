@@ -1,5 +1,7 @@
+from email.message import Message
 from unittest.mock import patch, Mock, call
 
+from tapir_mail.models import BounceType, EmailDispatch
 from tapir_mail.service.email_bounces import EmailBounces
 from tapir_mail.tests.test_utils import TapirUnitTest
 from tapir_mail_server import settings
@@ -7,24 +9,45 @@ from tapir_mail_server import settings
 
 class TestEmailBounces(TapirUnitTest):
     @patch("tapir_mail.service.email_bounces.IMAP4_SSL")
-    def test_checkForBounces_searchFails_raisesException(
+    def test_checkForBounces_loginFails_raisesException(
         self, mock_mail_client_constructor: Mock
     ):
         mock_mail_client = Mock()
         mock_mail_client_constructor.return_value = mock_mail_client
+        mock_mail_client.login.return_value = ("ERROR", [])
+
+        with self.assertRaises(Exception):
+            EmailBounces.check_for_bounces()
+
+        mock_mail_client_constructor.assert_called_once_with(
+            settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP
+        )
+        mock_mail_client.login.assert_called_once_with(
+            settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
+        )
+        mock_mail_client.search.assert_not_called()
+
+    @patch("tapir_mail.service.email_bounces.IMAP4_SSL")
+    def test_checkForBounces_searchFails_raisesExceptionAndLogsOut(
+        self, mock_mail_client_constructor: Mock
+    ):
+        mock_mail_client = Mock()
+        mock_mail_client_constructor.return_value = mock_mail_client
+        mock_mail_client.login.return_value = ("OK", None)
         mock_mail_client.search.return_value = ("ERROR", [])
 
         with self.assertRaises(Exception):
             EmailBounces.check_for_bounces()
 
+        mock_mail_client_constructor.assert_called_once_with(
+            settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP
+        )
         mock_mail_client.login.assert_called_once_with(
             settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
         )
         mock_mail_client.select.assert_called_once_with(readonly=True)
-        mock_mail_client_constructor.assert_called_once_with(
-            settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP
-        )
         mock_mail_client.search.assert_called_once_with(None, "(UNSEEN)")
+        mock_mail_client.logout.assert_called_once_with()
 
     @patch("tapir_mail.service.email_bounces.IMAP4_SSL")
     @patch("tapir_mail.service.email_bounces.EmailBounces.process_message")
@@ -33,17 +56,18 @@ class TestEmailBounces(TapirUnitTest):
     ):
         mock_mail_client = Mock()
         mock_mail_client_constructor.return_value = mock_mail_client
+        mock_mail_client.login.return_value = ("OK", None)
         mock_mail_client.search.return_value = ("OK", ["a b c", "d e f"])
 
         EmailBounces.check_for_bounces()
 
+        mock_mail_client_constructor.assert_called_once_with(
+            settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP
+        )
         mock_mail_client.login.assert_called_once_with(
             settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
         )
         mock_mail_client.select.assert_called_once_with(readonly=True)
-        mock_mail_client_constructor.assert_called_once_with(
-            settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP
-        )
         mock_mail_client.search.assert_called_once_with(None, "(UNSEEN)")
         self.assertEqual(6, mock_process_message.call_count)
         mock_process_message.assert_has_calls(
@@ -51,4 +75,157 @@ class TestEmailBounces(TapirUnitTest):
                 call(mock_mail_client, message_id)
                 for message_id in ["a", "b", "c", "d", "e", "f"]
             ]
+        )
+        mock_mail_client.logout.assert_called_once_with()
+
+    @patch("tapir_mail.service.email_bounces.all_failures")
+    def test_determineBounceType_recipientAddressIsInBothSoftAndHard_returnsHard(
+        self, mock_all_failures: Mock
+    ):
+        message = Message()
+        recipient_address = "test@test.de"
+        mock_all_failures.return_value = ([recipient_address], [recipient_address])
+
+        result = EmailBounces.determine_bounce_type(message, recipient_address)
+
+        mock_all_failures.assert_called_once_with(message)
+        self.assertEqual(BounceType.HARD, result)
+
+    @patch("tapir_mail.service.email_bounces.all_failures")
+    def test_determineBounceType_recipientAddressIsOnlyInHard_returnsHard(
+        self, mock_all_failures: Mock
+    ):
+        message = Message()
+        recipient_address = "test@test.de"
+        mock_all_failures.return_value = (["other@test.de"], [recipient_address])
+
+        result = EmailBounces.determine_bounce_type(message, recipient_address)
+
+        mock_all_failures.assert_called_once_with(message)
+        self.assertEqual(BounceType.HARD, result)
+
+    @patch("tapir_mail.service.email_bounces.all_failures")
+    def test_determineBounceType_recipientAddressIsOnlyInSoft_returnsHard(
+        self, mock_all_failures: Mock
+    ):
+        message = Message()
+        recipient_address = "test@test.de"
+        mock_all_failures.return_value = ([recipient_address], ["other@test.de"])
+
+        result = EmailBounces.determine_bounce_type(message, recipient_address)
+
+        mock_all_failures.assert_called_once_with(message)
+        self.assertEqual(BounceType.SOFT, result)
+
+    @patch("tapir_mail.service.email_bounces.all_failures")
+    def test_determineBounceType_recipientAddressIsNotReturned_returnsUnknown(
+        self, mock_all_failures: Mock
+    ):
+        message = Message()
+        recipient_address = "test@test.de"
+        mock_all_failures.return_value = (["other@test.de"], ["other@test.de"])
+
+        result = EmailBounces.determine_bounce_type(message, recipient_address)
+
+        mock_all_failures.assert_called_once_with(message)
+        self.assertEqual(BounceType.UNKNOWN, result)
+
+    def test_processMessage_fetchFails_raisesException(self):
+        mail_client = Mock()
+        mail_client.fetch.side_effect = Exception()
+        message_id = "message_id"
+
+        with self.assertRaises(Exception):
+            EmailBounces.process_message(mail_client, message_id)
+
+        mail_client.fetch.assert_called_once_with(message_id, "(RFC822)")
+
+    @patch("tapir_mail.service.email_bounces.email.message_from_bytes")
+    def test_processMessage_noDispatchId_doesNothing(
+        self, mock_message_from_bytes: Mock
+    ):
+        mail_client = Mock()
+        message_content = Mock()
+        message_bytes = [[None, message_content]]
+        mail_client.fetch.return_value = ("OK", message_bytes)
+        message_id = "message_id"
+        message = Message()
+        message["Return-Path"] = "no_dispatch_id@test.de"
+        mock_message_from_bytes.return_value = message
+
+        EmailBounces.process_message(mail_client, message_id)
+
+        mail_client.fetch.assert_called_once_with(message_id, "(RFC822)")
+        mock_message_from_bytes.assert_called_once_with(message_content)
+
+    @patch("tapir_mail.service.email_bounces.LOG")
+    @patch.object(EmailDispatch.objects, "filter")
+    @patch("tapir_mail.service.email_bounces.email.message_from_bytes")
+    def test_processMessage_noDispatchForId_logsWarningAndMarksEmailAsRead(
+        self, mock_message_from_bytes: Mock, mock_filter: Mock, mock_log: Mock
+    ):
+        mail_client = Mock()
+        message_content = Mock()
+        message_bytes = [[None, message_content]]
+        mail_client.fetch.return_value = ("OK", message_bytes)
+        message_id = "message_id"
+        message = Message()
+        message["Return-Path"] = "test+dispatch_id@test.de"
+        mock_message_from_bytes.return_value = message
+        mock_filter.return_value = Mock()
+        mock_filter.return_value.first.return_value = None
+
+        EmailBounces.process_message(mail_client, message_id)
+
+        mail_client.fetch.assert_called_once_with(message_id, "(RFC822)")
+        mock_message_from_bytes.assert_called_once_with(message_content)
+        mail_client.store.assert_called_once_with(message_id, "+FLAGS", "(SEEN)")
+        mock_filter.assert_called_once_with(id="dispatch_id")
+        mock_log.warning.assert_called_once()
+        mock_filter.return_value.first.assert_called_once_with()
+
+    @patch("tapir_mail.service.email_bounces.EmailBounces.determine_bounce_type")
+    @patch.object(EmailDispatch.objects, "filter")
+    @patch("tapir_mail.service.email_bounces.email.message_from_bytes")
+    def test_processMessage_dispatchFound_dispatchGetsUpdated(
+        self,
+        mock_message_from_bytes: Mock,
+        mock_filter: Mock,
+        mock_determine_bounce_type: Mock,
+    ):
+        mail_client = Mock()
+        message_content = Mock()
+        message_bytes = [[None, message_content]]
+        mail_client.fetch.return_value = ("OK", message_bytes)
+        message_id = "message_id"
+        message_uid = "message_uid"
+        message = Message()
+        message["Message-Id"] = message_uid
+        message["Return-Path"] = "test+dispatch_id@test.de"
+        mock_message_from_bytes.return_value = message
+        mock_filter.return_value = Mock()
+        mock_dispatch = Mock()
+        mock_dispatch.recipient = "recipient.@test.de"
+        mock_filter.return_value.first.return_value = mock_dispatch
+        mock_determine_bounce_type.return_value = "test_bounce_type"
+
+        EmailBounces.process_message(mail_client, message_id)
+
+        self.assertEqual(
+            f"Email could not be delivered, bounce message id : {message_uid}",
+            mock_dispatch.bounce_message,
+        )
+        self.assertEqual(
+            "test_bounce_type",
+            mock_dispatch.bounce_type,
+        )
+        mock_dispatch.save.assert_called_once_with()
+
+        mail_client.fetch.assert_called_once_with(message_id, "(RFC822)")
+        mock_message_from_bytes.assert_called_once_with(message_content)
+        mail_client.store.assert_called_once_with(message_id, "+FLAGS", "(SEEN)")
+        mock_filter.assert_called_once_with(id="dispatch_id")
+        mock_filter.return_value.first.assert_called_once_with()
+        mock_determine_bounce_type.assert_called_once_with(
+            message, "recipient.@test.de"
         )

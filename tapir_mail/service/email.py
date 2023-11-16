@@ -60,6 +60,8 @@ def _build_from_email(email_host_sender: str, tracking_id: str):
 
 
 def _get_dispatch_id_from_email_return_path(email_from: str):
+    if not email_from or "@" not in email_from:
+        return None
     prefix, _ = email_from.split("@")
     if "+" not in prefix:
         return None
