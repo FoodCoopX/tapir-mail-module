@@ -95,7 +95,7 @@ const TemplatesCard = () => {
                   <th>Name</th>
                   <th>Erzeugt am</th>
                   <th>Aktualisiert am</th>
-                  <th>Actions</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>

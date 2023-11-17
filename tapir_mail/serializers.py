@@ -74,6 +74,7 @@ class EmailConfigurationSerializer(serializers.ModelSerializer):
 
     released_date = serializers.SerializerMethodField()
     last_updated_draft_date = serializers.SerializerMethodField()
+    can_be_deleted = serializers.SerializerMethodField()
 
     def get_released_date(self, obj: EmailConfiguration) -> datetime.datetime | None:
         released_version = obj.versions.filter(status=ReleaseStatus.RELEASED).first()
@@ -88,6 +89,13 @@ class EmailConfigurationSerializer(serializers.ModelSerializer):
             .first()
         )
         return last_updated_draft.updated_at if last_updated_draft else None
+
+    @staticmethod
+    def get_can_be_deleted(configuration: EmailConfiguration) -> bool:
+        for version in configuration.versions.all():
+            if not EmailConfigurationVersionSerializer.get_can_be_deleted(version):
+                return False
+        return True
 
 
 class SegmentDataSerializer(serializers.Serializer):

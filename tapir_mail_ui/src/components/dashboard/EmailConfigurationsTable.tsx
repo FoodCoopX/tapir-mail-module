@@ -7,10 +7,12 @@ import { formatDate } from "../../utils/formatDate";
 import { EMAIL_CONFIGURATION_VERSION_STATUS_PROPS } from "../../utils/emailConfigurationVersionStatusProps";
 import { useApi } from "../../hooks/useApi";
 import SelectVersionModal from "./SelectVersionModal";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import TapirButton from "../TapirButton";
 import Paths from "../../routing";
 import { Link } from "react-router-dom";
+import ConfirmDeleteModal from "../ConfirmDeleteModal";
+import TapirTooltip from "../TapirTooltip";
 
 const EmailConfigurationTable = () => {
   const showAlert = useAlert();
@@ -20,6 +22,8 @@ const EmailConfigurationTable = () => {
   >([]);
   const [selectedEmailConfiguration, setSelectedEmailConfiguration] =
     useState<EmailConfiguration | null>(null);
+  const [configurationToDelete, setConfigurationToDelete] =
+    useState<EmailConfiguration>();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const api = useApi(EmailConfigurationApi);
 
@@ -46,6 +50,28 @@ const EmailConfigurationTable = () => {
   };
 
   const handleCloseEditModal = () => setEditModalOpen(false);
+
+  const onDeleteTemplateConfirmed = () => {
+    if (!configurationToDelete) return;
+
+    api
+      .emailConfigurationDestroy({ id: configurationToDelete.id! })
+      .then(() => {
+        showAlert("E-Mail gelöscht : " + configurationToDelete.name, "success");
+        setEmailConfigurations(
+          emailConfigurations.filter(
+            (config) => config.id !== configurationToDelete.id,
+          ),
+        );
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim löschen des E-Mail", "danger");
+      })
+      .finally(() => {
+        setConfigurationToDelete(undefined);
+      });
+  };
 
   return (
     <>
@@ -82,6 +108,7 @@ const EmailConfigurationTable = () => {
                   <th>Erstellt am</th>
                   <th>Veröffentlicht am</th>
                   <th>Letzter Entwurf aktualisiert am</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -120,6 +147,26 @@ const EmailConfigurationTable = () => {
                         </Badge>
                       )}
                     </td>
+                    <td className="d-flex justify-content-center">
+                      <TapirTooltip
+                        id={"delete-button-config" + emailConfiguration.id}
+                        text={
+                          "Diese E-Mail kann nicht gelöscht werden weil manche Versionen schon geschickt worden sind."
+                        }
+                        enabled={!emailConfiguration.canBeDeleted}
+                      >
+                        <TapirButton
+                          variant={"danger"}
+                          text={""}
+                          icon={TrashIcon}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setConfigurationToDelete(emailConfiguration);
+                          }}
+                          disabled={!emailConfiguration.canBeDeleted}
+                        />
+                      </TapirTooltip>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -131,6 +178,18 @@ const EmailConfigurationTable = () => {
         open={editModalOpen}
         emailConfiguration={selectedEmailConfiguration!!}
         onClose={handleCloseEditModal}
+      />
+      <ConfirmDeleteModal
+        message={
+          "Wollen Sie wirklich die E-Mail " +
+          configurationToDelete?.name +
+          " löschen? Alle damit verbundene Versionen und Versand werden auch gelöscht."
+        }
+        open={!!configurationToDelete}
+        onConfirm={onDeleteTemplateConfirmed}
+        onCancel={() => {
+          setConfigurationToDelete(undefined);
+        }}
       />
     </>
   );
