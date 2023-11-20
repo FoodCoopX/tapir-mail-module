@@ -3,18 +3,14 @@ import { Badge, Dropdown, Form } from "react-bootstrap";
 import { EmailConfigurationVersion, StatusEnum } from "../api_client";
 import { EMAIL_CONFIGURATION_VERSION_STATUS_PROPS } from "../utils/emailConfigurationVersionStatusProps";
 import { formatDate } from "../utils/formatDate";
-import { mjmlToHtml } from "../utils/mjml";
-import HtmlInDiv from "./htmlInDiv";
 
 const EmailConfigurationVersionSelect = ({
   versions,
   selectedVersionId,
-  preview = false,
   onChange,
 }: {
   versions: EmailConfigurationVersion[];
   selectedVersionId: string;
-  preview?: boolean;
   onChange: (version: string) => void;
 }) => {
   const handleSelect = (key: any, event: any) => {
@@ -74,15 +70,6 @@ const EmailConfigurationVersionSelect = ({
           </Dropdown>
         </Form.Group>
       </Form>
-      {preview && selectedVersion && (
-        <>
-          <hr />
-          <span>
-            <strong>Betreff:</strong>&nbsp;{selectedVersion.subject}
-          </span>
-          <HtmlInDiv htmlContent={mjmlToHtml(selectedVersion.content!!)} />
-        </>
-      )}
     </div>
   );
 };

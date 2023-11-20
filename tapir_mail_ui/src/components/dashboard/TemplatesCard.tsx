@@ -1,4 +1,4 @@
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
 import { Card, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,10 +9,14 @@ import Loading from "../loading";
 import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import TapirButton from "../TapirButton";
+import ConfirmDeleteModal from "../ConfirmDeleteModal";
 
 const TemplatesCard = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [templateToDelete, setTemplateToDelete] = useState<
+    EmailTemplate | undefined
+  >();
 
   const showAlert = useAlert();
   const navigate = useNavigate();
@@ -33,65 +37,113 @@ const TemplatesCard = () => {
       });
   }, []);
 
+  function onDeleteTemplateConfirmed() {
+    if (!templateToDelete) return;
+
+    api
+      .emailtemplatesDestroy({ id: templateToDelete.id! })
+      .then(() => {
+        showAlert("Template gelöscht : " + templateToDelete.name, "success");
+        setTemplates(
+          templates.filter((template) => template.id !== templateToDelete.id),
+        );
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim löschen des Templates", "danger");
+      })
+      .finally(() => {
+        setTemplateToDelete(undefined);
+      });
+  }
+
+  function onDeleteTemplateCancelled() {
+    setTemplateToDelete(undefined);
+  }
+
   return (
-    <Card>
-      <Card.Header
-        as="h5"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <span>Vorlagen</span>
-        <Link to={Paths.templateEditorCreate}>
-          <TapirButton
-            variant="primary"
-            text="Neue Vorlage erstellen"
-            icon={PlusCircleIcon}
-          />
-        </Link>
-      </Card.Header>
-      <Card.Body style={{ padding: 0, border: "none" }}>
-        {loading ? (
-          <Loading />
-        ) : (
-          <Table
-            striped
-            hover
-            style={{ margin: "0" }}
-          >
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Erzeugt am</th>
-                <th>Aktualisiert am</th>
-              </tr>
-            </thead>
-            <tbody>
-              {templates.map((template) => (
-                <tr
-                  key={template.id}
-                  style={{ cursor: "pointer" }}
-                  onClick={() =>
-                    navigate(
-                      Paths.templateEditorEdit.replace(
-                        ":templateId",
-                        template.id!!,
-                      ),
-                    )
-                  }
-                >
-                  <td>{template.name}</td>
-                  <td>{formatDate(template.createdAt)}</td>
-                  <td>{formatDate(template.updatedAt)}</td>
+    <>
+      <Card>
+        <Card.Header
+          as="h5"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span>Vorlagen</span>
+          <Link to={Paths.templateEditorCreate}>
+            <TapirButton
+              variant="primary"
+              text="Neue Vorlage erstellen"
+              icon={PlusCircleIcon}
+            />
+          </Link>
+        </Card.Header>
+        <Card.Body style={{ padding: 0, border: "none" }}>
+          {loading ? (
+            <Loading />
+          ) : (
+            <Table
+              striped
+              hover
+              style={{ margin: "0" }}
+            >
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Erzeugt am</th>
+                  <th>Aktualisiert am</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
-      </Card.Body>
-    </Card>
+              </thead>
+              <tbody>
+                {templates.map((template) => (
+                  <tr
+                    key={template.id}
+                    style={{ cursor: "pointer" }}
+                    onClick={() =>
+                      navigate(
+                        Paths.templateEditorEdit.replace(
+                          ":templateId",
+                          template.id!!,
+                        ),
+                      )
+                    }
+                  >
+                    <td>{template.name}</td>
+                    <td>{formatDate(template.createdAt)}</td>
+                    <td>{formatDate(template.updatedAt)}</td>
+                    <td className="d-flex justify-content-center">
+                      <TapirButton
+                        variant={"danger"}
+                        text={""}
+                        icon={TrashIcon}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setTemplateToDelete(template);
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Card.Body>
+      </Card>
+      <ConfirmDeleteModal
+        message={
+          "Möchten Sie wirklich das template '" +
+          templateToDelete?.name +
+          "' löschen?"
+        }
+        open={!!templateToDelete}
+        onConfirm={onDeleteTemplateConfirmed}
+        onCancel={onDeleteTemplateCancelled}
+      />
+    </>
   );
 };
 
