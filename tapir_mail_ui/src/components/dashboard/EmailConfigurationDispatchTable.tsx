@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Card, ProgressBar, Table } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
 import {
   EmailConfigurationDispatch,
   EmailConfigurationDispatchApi,
+  EmailConfigurationVersion,
 } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
-import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import Loading from "../loading";
 import SegmentsDisplay from "../segmentsDisplay";
 import FilterDisplay from "../segments/filterDisplay";
 import { guessElementType } from "../segments/common";
+import SelectVersionModal from "./SelectVersionModal";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -24,155 +24,162 @@ const EmailConfigurationDispatchTable: React.FC<
 > = ({ cardTitle, content }) => {
   const api = useApi(EmailConfigurationDispatchApi);
   const showAlert = useAlert();
-  const navigate = useNavigate();
 
   const [emailConfigurationDispatches, setEmailConfigurationDispatches] =
     useState<EmailConfigurationDispatch[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [
+    selectedEmailConfigurationVersion,
+    setSelectedEmailConfigurationVersion,
+  ] = useState<EmailConfigurationVersion>();
+
+  const fetchEmailConfigurationDispatch = () => {
+    let call;
+    switch (content) {
+      case "last-sent":
+        call = api.emailConfigurationDispatchLastSentList.bind(api);
+        break;
+      case "next-sends":
+        call = api.emailConfigurationDispatchNextSendsList.bind(api);
+        break;
+    }
+
+    call({ limit: 10 })
+      .then(setEmailConfigurationDispatches)
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim Laden der Emails", "danger");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
-    const fetchData = () => {
-      let call;
-      switch (content) {
-        case "last-sent":
-          call = api.emailConfigurationDispatchLastSentList.bind(api);
-          break;
-        case "next-sends":
-          call = api.emailConfigurationDispatchNextSendsList.bind(api);
-          break;
-      }
-
-      call({ limit: 10 })
-        .then(setEmailConfigurationDispatches)
-        .catch((err) => {
-          console.error(err);
-          showAlert(
-            "Error loading the emails : " + content, //TODO translation
-            "danger",
-          );
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    };
-
-    fetchData();
+    fetchEmailConfigurationDispatch();
 
     const interval = setInterval(() => {
-      fetchData();
+      fetchEmailConfigurationDispatch();
     }, 30000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <Card>
-      <Card.Header
-        as="h5"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <span>{cardTitle}</span>
-      </Card.Header>
-      <Card.Body style={{ padding: 0, border: "none" }}>
-        {loading ? (
-          <Loading />
-        ) : (
-          <Table
-            striped
-            hover
-            style={{ margin: "0" }}
-          >
-            <thead>
-              <tr>
-                <th>Name</th>
-                {content === "last-sent" && (
-                  <>
-                    <th>Gesendet am</th>
-                    <th>Empfänger</th>
-                    <th>Öffnungsrate</th>
-                  </>
-                )}
-                {content === "next-sends" && (
-                  <>
-                    <th>Versandzeitpunkt</th>
-                    <th>Empfänger</th>
-                  </>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {emailConfigurationDispatches.map(
-                (emailConfigurationDispatch) => (
-                  <tr
-                    style={{ cursor: "pointer" }}
-                    key={content + "-" + emailConfigurationDispatch.id}
-                    onClick={() =>
-                      navigate(
-                        Paths.emailConfigurationEdit.replace(
-                          ":id",
-                          emailConfigurationDispatch.emailConfigurationVersion
-                            .id!!,
-                        ),
-                      )
-                    }
-                  >
-                    <td>
-                      {
-                        emailConfigurationDispatch.emailConfigurationVersion
-                          .emailConfiguration.name
-                      }
-                    </td>
-                    <td>
-                      {formatDate(emailConfigurationDispatch.scheduledTime)}
-                    </td>
-                    <td>
-                      {/* FIXME: */}
-                      {emailConfigurationDispatch.overrideRecipients ? (
-                        JSON.stringify(
-                          emailConfigurationDispatch.overrideRecipients,
+    <>
+      <Card>
+        <Card.Header
+          as="h5"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span>{cardTitle}</span>
+        </Card.Header>
+        <Card.Body style={{ padding: 0, border: "none" }}>
+          {loading ? (
+            <Loading />
+          ) : (
+            <Table
+              striped
+              hover
+              style={{ margin: "0" }}
+            >
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  {content === "last-sent" && (
+                    <>
+                      <th>Gesendet am</th>
+                      <th>Empfänger</th>
+                      <th>Öffnungsrate</th>
+                    </>
+                  )}
+                  {content === "next-sends" && (
+                    <>
+                      <th>Versandzeitpunkt</th>
+                      <th>Empfänger</th>
+                    </>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {emailConfigurationDispatches.map(
+                  (emailConfigurationDispatch) => (
+                    <tr
+                      style={{ cursor: "pointer" }}
+                      key={content + "-" + emailConfigurationDispatch.id}
+                      onClick={() =>
+                        setSelectedEmailConfigurationVersion(
+                          emailConfigurationDispatch.emailConfigurationVersion,
                         )
-                      ) : (
-                        <>
-                          <SegmentsDisplay
-                            segmentData={
+                      }
+                    >
+                      <td>
+                        {
+                          emailConfigurationDispatch.emailConfigurationVersion
+                            .emailConfiguration.name
+                        }
+                      </td>
+                      <td>
+                        {formatDate(emailConfigurationDispatch.scheduledTime)}
+                      </td>
+                      <td>
+                        {/* FIXME: */}
+                        {emailConfigurationDispatch.overrideRecipients ? (
+                          JSON.stringify(
+                            emailConfigurationDispatch.overrideRecipients,
+                          )
+                        ) : (
+                          <>
+                            <SegmentsDisplay
+                              segmentData={
+                                emailConfigurationDispatch
+                                  .emailConfigurationVersion.segmentData
+                              }
+                            />
+                            <FilterDisplay
+                              filter={emailConfigurationDispatch.emailConfigurationVersion.segmentData.filterList.map(
+                                (filter) => {
+                                  return {
+                                    value: filter,
+                                    elementType: guessElementType(filter),
+                                  };
+                                },
+                              )}
+                            />
+                          </>
+                        )}
+                      </td>
+                      {content === "last-sent" && (
+                        <td style={{ padding: "0.1em", margin: "0" }}>
+                          <EmailConfigurationDispatchStatsColumn
+                            emailConfigurationDispatch={
                               emailConfigurationDispatch
-                                .emailConfigurationVersion.segmentData
                             }
                           />
-                          <FilterDisplay
-                            filter={emailConfigurationDispatch.emailConfigurationVersion.segmentData.filterList.map(
-                              (filter) => {
-                                return {
-                                  value: filter,
-                                  elementType: guessElementType(filter),
-                                };
-                              },
-                            )}
-                          />
-                        </>
+                        </td>
                       )}
-                    </td>
-                    {content === "last-sent" && (
-                      <td style={{ padding: "0.1em", margin: "0" }}>
-                        <EmailConfigurationDispatchStatsColumn
-                          emailConfigurationDispatch={
-                            emailConfigurationDispatch
-                          }
-                        />
-                      </td>
-                    )}
-                  </tr>
-                ),
-              )}
-            </tbody>
-          </Table>
-        )}
-      </Card.Body>
-    </Card>
+                    </tr>
+                  ),
+                )}
+              </tbody>
+            </Table>
+          )}
+        </Card.Body>
+      </Card>
+      <SelectVersionModal
+        open={!!selectedEmailConfigurationVersion}
+        emailConfiguration={
+          selectedEmailConfigurationVersion?.emailConfiguration!
+        }
+        onClose={() => setSelectedEmailConfigurationVersion(undefined)}
+        onDataChanged={fetchEmailConfigurationDispatch}
+        selectedVersionOnOpen={selectedEmailConfigurationVersion?.id}
+      />
+    </>
   );
 };
 
