@@ -14,14 +14,9 @@ const TapirTooltip: React.FC<TapirTooltipProps> = ({
   id,
   children,
   text,
-  enabled,
+  enabled = true,
 }) => {
-  const overlay =
-    enabled === undefined || enabled ? (
-      <Tooltip id={id}>{text}</Tooltip>
-    ) : (
-      <></>
-    );
+  const overlay = enabled ? <Tooltip id={id}>{text}</Tooltip> : <></>;
   return (
     <OverlayTrigger overlay={overlay}>
       <span>{children}</span>

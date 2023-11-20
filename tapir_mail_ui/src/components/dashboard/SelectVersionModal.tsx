@@ -1,40 +1,48 @@
 import {
-  EmailConfiguration,
-  EmailConfigurationApi,
-  EmailConfigurationVersion,
-  EmailConfigurationVersionApi,
-} from "../../api_client";
-import { useApi } from "../../hooks/useApi";
-import { useAlert } from "../../contexts/alerts";
-import { useNavigate } from "react-router-dom";
-import React, { useEffect, useState } from "react";
-import Paths from "../../routing";
-import { Modal } from "react-bootstrap";
-import EmailConfigurationVersionSelect from "../emailConfigurationVersionSelect";
-import SendTestMailModal from "./SendTestMailModal";
-import TapirButton from "../TapirButton";
-import {
   ArchiveBoxArrowDownIcon,
   PaperAirplaneIcon,
   PencilIcon,
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import HtmlInDiv from "../htmlInDiv";
-import { mjmlToHtml } from "../../utils/mjml";
-import TapirTooltip from "../TapirTooltip";
+import React, { useEffect, useState } from "react";
+import {
+  Button,
+  ButtonGroup,
+  Dropdown,
+  DropdownButton,
+  Modal,
+} from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import {
+  EmailConfiguration,
+  EmailConfigurationApi,
+  EmailConfigurationVersion,
+  EmailConfigurationVersionApi,
+} from "../../api_client";
+import { useAlert } from "../../contexts/alerts";
+import { useApi } from "../../hooks/useApi";
+import Paths from "../../routing";
 import { getDisplayName } from "../../utils/emailConfigurationVersionDisplayName";
+import { mjmlToHtml } from "../../utils/mjml";
 import ConfirmDeleteModal from "../ConfirmDeleteModal";
 import ConfirmModal from "../ConfirmModal";
+import TapirButton from "../TapirButton";
+import TapirTooltip from "../TapirTooltip";
+import EmailConfigurationVersionSelect from "../emailConfigurationVersionSelect";
+import HtmlInDiv from "../htmlInDiv";
+import SendTestMailModal from "./SendTestMailModal";
 
 const SelectVersionModal = ({
   emailConfiguration,
   open,
   onClose,
+  onDataChanged,
 }: {
   emailConfiguration: EmailConfiguration;
   open: boolean;
   onClose: () => void;
+  onDataChanged: () => void;
 }) => {
   const configApi = useApi(EmailConfigurationApi);
   const versionApi = useApi(EmailConfigurationVersionApi);
@@ -44,16 +52,36 @@ const SelectVersionModal = ({
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [versions, setVersions] = useState<EmailConfigurationVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string>("");
+
   const [confirmArchiveVersionModalOpen, setConfirmArchiveVersionModalOpen] =
     useState(false);
   const [confirmDeleteVersionModalOpen, setConfirmDeleteVersionModalOpen] =
     useState(false);
+  const [confirmDeleteEmailModalOpen, setConfirmDeleteEmailModalOpen] =
+    useState(false);
+
+  const onDeleteEmailConfigConfirmed = () => {
+    if (!emailConfiguration) return;
+
+    configApi
+      .emailConfigurationDestroy({ id: emailConfiguration.id! })
+      .then(() => {
+        showAlert("E-Mail gelöscht: " + emailConfiguration.name, "success");
+        onClose();
+        onDataChanged();
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim Löschen der E-Mail", "danger");
+      })
+      .finally(() => {
+        setConfirmDeleteEmailModalOpen(false);
+      });
+  };
 
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
 
-  useEffect(() => {
-    if (!emailConfiguration || !configApi || !emailConfiguration) return;
-
+  const fetchVersions = () =>
     configApi
       .emailConfigurationVersionsList({
         id: emailConfiguration!!.id!!,
@@ -67,6 +95,11 @@ const SelectVersionModal = ({
         console.error(err);
         showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
       });
+
+  useEffect(() => {
+    if (!emailConfiguration || !configApi || !emailConfiguration) return;
+
+    fetchVersions();
   }, [emailConfiguration]);
 
   const handleCloseSendModal = () => setSendModalOpen(false);
@@ -81,14 +114,15 @@ const SelectVersionModal = ({
       .emailConfigurationVersionArchiveCreate({ id: selectedVersionId })
       .then(() => {
         showAlert(
-          "Version archiviert : " + getDisplayName(selectedVersion),
+          "Version archiviert: " + getDisplayName(selectedVersion),
           "success",
         );
+        fetchVersions();
       })
       .catch((error) => {
         console.error(error);
         showAlert(
-          "Fehler beim archivieren von " + getDisplayName(selectedVersion),
+          "Fehler beim Archivieren von " + getDisplayName(selectedVersion),
           "danger",
         );
       })
@@ -103,14 +137,15 @@ const SelectVersionModal = ({
       .emailConfigurationVersionDestroy({ id: selectedVersionId })
       .then(() => {
         showAlert(
-          "Version gelöscht : " + getDisplayName(selectedVersion),
+          "Version gelöscht: " + getDisplayName(selectedVersion),
           "success",
         );
+        fetchVersions();
       })
       .catch((error) => {
         console.error(error);
         showAlert(
-          "Fehler beim löschen von " + getDisplayName(selectedVersion),
+          "Fehler beim Löschen von " + getDisplayName(selectedVersion),
           "danger",
         );
       })
@@ -119,6 +154,9 @@ const SelectVersionModal = ({
       });
   };
 
+  const archiveButtonDisabled = selectedVersion?.status !== "released";
+  const deleteDropdownDisabled =
+    !selectedVersion?.canBeDeleted && !emailConfiguration?.canBeDeleted;
   return (
     <>
       <Modal
@@ -126,7 +164,8 @@ const SelectVersionModal = ({
           Boolean(open) &&
           !sendModalOpen &&
           !confirmArchiveVersionModalOpen &&
-          !confirmDeleteVersionModalOpen
+          !confirmDeleteVersionModalOpen &&
+          !confirmDeleteEmailModalOpen
         }
         onHide={onClose}
         dialogClassName="preview-modal"
@@ -138,50 +177,103 @@ const SelectVersionModal = ({
         </Modal.Header>
         {emailConfiguration && (
           <Modal.Body>
-            Welche Version möchtest du editieren?
+            <div style={{ marginBottom: "0.5em", fontWeight: "bold" }}>
+              Welche Version möchtest du editieren?
+            </div>
             <div className="d-flex justify-content-between">
-              <EmailConfigurationVersionSelect
-                versions={versions}
-                selectedVersionId={selectedVersionId}
-                onChange={(id: string) => setSelectedVersionId(id)}
-              />
-              <span className="d-flex gap-2">
+              <div style={{ width: "100%", paddingRight: "10em" }}>
+                <EmailConfigurationVersionSelect
+                  versions={versions}
+                  selectedVersionId={selectedVersionId}
+                  onChange={(id: string) => setSelectedVersionId(id)}
+                />
+              </div>
+              <div className="d-flex gap-2">
                 <TapirTooltip
                   id={"archive-button"}
                   text={
-                    "Nur veröffentlichte Versionen können archiviert werden."
+                    archiveButtonDisabled
+                      ? "Nur veröffentlichte Versionen können archiviert werden."
+                      : "Archivieren"
                   }
-                  enabled={selectedVersion?.status !== "released"}
                 >
                   <TapirButton
-                    variant="danger"
-                    text="Archivieren"
+                    variant={
+                      archiveButtonDisabled ? "outline-secondary" : "danger"
+                    }
                     icon={ArchiveBoxArrowDownIcon}
-                    disabled={selectedVersion?.status !== "released"}
+                    disabled={archiveButtonDisabled}
                     onClick={() => setConfirmArchiveVersionModalOpen(true)}
                   />
                 </TapirTooltip>
+
                 <TapirTooltip
                   id={"delete-button"}
                   text={
-                    "Dieses Version kann nicht gelöscht werden weil sie ist schon verschickt worden."
+                    !selectedVersion?.canBeDeleted
+                      ? "Diese Version kann nicht gelöscht werden, da sie bereits verschickt wurde."
+                      : "Löschen"
                   }
-                  enabled={!selectedVersion?.canBeDeleted}
                 >
-                  <TapirButton
-                    variant="danger"
-                    text="Delete"
-                    icon={TrashIcon}
-                    disabled={!selectedVersion?.canBeDeleted}
-                    onClick={() => setConfirmDeleteVersionModalOpen(true)}
-                  />
+                  {versions.length > 1 ? (
+                    <DropdownButton
+                      disabled={deleteDropdownDisabled}
+                      as={ButtonGroup}
+                      variant={
+                        deleteDropdownDisabled ? "outline-secondary" : "danger"
+                      }
+                      title={<TrashIcon width="1.5em" />}
+                      id="bg-nested-dropdown"
+                    >
+                      <TapirTooltip
+                        id={"delete-button"}
+                        text={
+                          "Diese Version kann nicht gelöscht werden, da sie bereits verschickt wurde."
+                        }
+                        enabled={!selectedVersion?.canBeDeleted}
+                      >
+                        <Dropdown.Item
+                          disabled={!selectedVersion?.canBeDeleted}
+                          onClick={() => setConfirmDeleteVersionModalOpen(true)}
+                          eventKey="1"
+                        >
+                          Diese Version löschen
+                        </Dropdown.Item>
+                      </TapirTooltip>
+
+                      <TapirTooltip
+                        id={"delete-button-config" + emailConfiguration.id}
+                        text={
+                          "Diese E-Mail kann nicht gelöscht werden, da sie bereits verschickt wurde."
+                        }
+                        enabled={!emailConfiguration?.canBeDeleted}
+                      >
+                        <Dropdown.Item
+                          disabled={!emailConfiguration?.canBeDeleted}
+                          onClick={() => setConfirmDeleteEmailModalOpen(true)}
+                          eventKey="2"
+                        >
+                          Alle Versionen löschen
+                        </Dropdown.Item>
+                      </TapirTooltip>
+                    </DropdownButton>
+                  ) : (
+                    <TapirButton
+                      variant={
+                        deleteDropdownDisabled ? "outline-secondary" : "danger"
+                      }
+                      icon={TrashIcon}
+                      disabled={deleteDropdownDisabled}
+                      onClick={() => setConfirmDeleteEmailModalOpen(true)}
+                    />
+                  )}
                 </TapirTooltip>
-              </span>
+              </div>
             </div>
             <hr />
-            <span>
+            <div style={{ marginBottom: "0.5em" }}>
               <strong>Betreff:</strong>&nbsp;{selectedVersion?.subject}
-            </span>
+            </div>
             {selectedVersion?.content && (
               <HtmlInDiv htmlContent={mjmlToHtml(selectedVersion?.content)} />
             )}
@@ -198,7 +290,7 @@ const SelectVersionModal = ({
           />
           <div className="d-flex gap-2">
             <TapirButton
-              variant="primary"
+              variant="outline-primary"
               text="Testmail senden"
               icon={PaperAirplaneIcon}
               onClick={() => setSendModalOpen(true)}
@@ -219,9 +311,11 @@ const SelectVersionModal = ({
       />
       <ConfirmModal
         message={
-          "Möchten Sie wirklich die version '" +
-          getDisplayName(selectedVersion) +
-          "' archivieren?"
+          <>
+            Möchtest du wirklich die Version '
+            <strong>{getDisplayName(selectedVersion)}</strong>' der Email{" "}
+            <strong>{emailConfiguration?.name}</strong> archivieren?
+          </>
         }
         open={confirmArchiveVersionModalOpen}
         onConfirm={handleArchive}
@@ -233,13 +327,30 @@ const SelectVersionModal = ({
       />
       <ConfirmDeleteModal
         message={
-          "Möchten Sie wirklich die version '" +
-          getDisplayName(selectedVersion) +
-          "' löschen?"
+          <>
+            Möchtest du wirklich die Version '
+            <strong>{getDisplayName(selectedVersion)}</strong>' der Email{" "}
+            <strong>{emailConfiguration?.name}</strong> löschen?
+          </>
         }
         open={confirmDeleteVersionModalOpen}
         onConfirm={handleDelete}
         onCancel={() => setConfirmDeleteVersionModalOpen(false)}
+      />
+
+      <ConfirmDeleteModal
+        message={
+          <>
+            Möchtest du wirklich die E-Mail{" "}
+            <strong>{emailConfiguration?.name}</strong> löschen? Alle damit
+            verbundenen Versionen und Versand werden ebenfalls gelöscht.
+          </>
+        }
+        open={confirmDeleteEmailModalOpen}
+        onConfirm={onDeleteEmailConfigConfirmed}
+        onCancel={() => {
+          setConfirmDeleteEmailModalOpen(false);
+        }}
       />
     </>
   );

@@ -1,9 +1,9 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import ConfirmModal from "./ConfirmModal";
 
 interface ConfirmDeleteModalProps {
-  message: string;
+  message: ReactNode;
   open: boolean;
   onConfirm: () => void;
   onCancel: () => void;

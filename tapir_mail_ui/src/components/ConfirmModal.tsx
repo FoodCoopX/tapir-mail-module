@@ -1,11 +1,10 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Modal } from "react-bootstrap";
-import TapirButton from "./TapirButton";
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ButtonVariant } from "react-bootstrap/types";
+import TapirButton from "./TapirButton";
 
 interface ConfirmDeleteModalProps {
-  message: string;
+  message: ReactNode;
   title: string;
   open: boolean;
   confirmButtonText: string;
@@ -36,11 +35,12 @@ const ConfirmModal: React.FC<ConfirmDeleteModalProps> = ({
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
       <Modal.Body>{message}</Modal.Body>
-      <Modal.Footer style={{ display: "flex", justifyContent: "flex-end" }}>
+      <Modal.Footer
+        style={{ display: "flex", justifyContent: "space-between" }}
+      >
         <TapirButton
           variant="secondary"
           text="Abbrechen"
-          icon={XMarkIcon}
           onClick={onCancel}
         />
         <TapirButton
