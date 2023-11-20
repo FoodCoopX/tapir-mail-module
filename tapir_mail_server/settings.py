@@ -246,12 +246,12 @@ CACHES = {
     }
 }
 
-STATIC_SEGMENTS = {
-    "Tapir Mail Team": [
-        {
-            "email": "tapirmailtest@mkleimann.com",
-            "first_name": "M",
-            "last_name": "K",
-        },
-    ]
-}
+# STATIC_SEGMENTS = {
+#    "Tapir Mail Team": [
+#        {
+#            "email": "tapirmailtest@example.com",
+#            "first_name": "John",
+#            "last_name": "Doe",
+#        },
+#    ]
+# }
