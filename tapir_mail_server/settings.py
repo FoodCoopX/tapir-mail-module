@@ -127,6 +127,7 @@ elif EMAIL_ENV == "prod":
     EMAIL_HOST_SENDER = env.str(
         "EMAIL_HOST_SENDER"
     )  # The address that the client will see
+    EMAIL_HOST_SENDER_NAME = env.str("EMAIL_HOST_SENDER_NAME")
     EMAIL_BOUNCE_ADDRESS = env.str(
         "EMAIL_BOUNCE_ADDRESS"
     )  # The address that the mail will be sent from
