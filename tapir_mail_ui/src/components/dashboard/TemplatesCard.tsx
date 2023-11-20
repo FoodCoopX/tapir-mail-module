@@ -1,6 +1,6 @@
 import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
-import { Card, Table } from "react-bootstrap";
+import { Card, PageItem, Pagination, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { EmailTemplate, EmailTemplateApi } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
@@ -10,6 +10,7 @@ import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import TapirButton from "../TapirButton";
 import ConfirmDeleteModal from "../ConfirmDeleteModal";
+import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
 
 const TemplatesCard = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -17,6 +18,8 @@ const TemplatesCard = () => {
   const [templateToDelete, setTemplateToDelete] = useState<
     EmailTemplate | undefined
   >();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [templateCount, setTemplateCount] = useState(0);
 
   const showAlert = useAlert();
   const navigate = useNavigate();
@@ -26,8 +29,14 @@ const TemplatesCard = () => {
     if (!api || !showAlert) return;
 
     api
-      .emailtemplatesList()
-      .then(setTemplates)
+      .emailtemplatesList({
+        limit: DEFAULT_PAGE_SIZE,
+        offset: currentPage * DEFAULT_PAGE_SIZE,
+      })
+      .then((paginatedData) => {
+        setTemplates(paginatedData.results ?? []);
+        setTemplateCount(paginatedData.count ?? 0);
+      })
       .catch((err) => {
         console.error(err);
         showAlert("Fehler beim Laden der Vorlagen", "danger");
@@ -132,6 +141,16 @@ const TemplatesCard = () => {
             </Table>
           )}
         </Card.Body>
+        <Card.Footer>
+          <Pagination>
+            <Pagination.First />
+            <Pagination.Prev
+              onClick={() => setCurrentPage(currentPage - 1)}
+            ></Pagination.Prev>
+            <Pagination.Item>1</Pagination.Item>
+            <PageItem onClick={() => setCurrentPage(2)}>1</PageItem>
+          </Pagination>
+        </Card.Footer>
       </Card>
       <ConfirmDeleteModal
         message={

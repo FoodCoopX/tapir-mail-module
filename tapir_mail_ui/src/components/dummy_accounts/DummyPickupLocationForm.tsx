@@ -9,7 +9,6 @@ import {
 } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
-import { useNavigate } from "react-router-dom";
 import TapirDropdown from "../tapirDropdown";
 
 interface DummyPickupLocationFormProps {
@@ -28,7 +27,6 @@ const DummyPickupLocationForm: React.FC<DummyPickupLocationFormProps> = ({
 
   const showAlert = useAlert();
   const api = useApi(DummyAccountsApi);
-  const navigate = useNavigate();
 
   useEffect(() => {
     api

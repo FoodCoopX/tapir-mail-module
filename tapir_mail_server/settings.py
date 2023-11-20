@@ -116,6 +116,7 @@ elif EMAIL_ENV == "prod":
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = env.str("EMAIL_HOST")
     EMAIL_HOST_SENDER = env.str("EMAIL_HOST_SENDER")
+    EMAIL_HOST_SENDER_NAME = env.str("EMAIL_HOST_SENDER_NAME")
     EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
     EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
     EMAIL_PORT = env.str("EMAIL_PORT", default=587)

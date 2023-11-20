@@ -1,4 +1,4 @@
-import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
 import { Badge, Card, Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -8,9 +8,7 @@ import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { EMAIL_CONFIGURATION_VERSION_STATUS_PROPS } from "../../utils/emailConfigurationVersionStatusProps";
 import { formatDate } from "../../utils/formatDate";
-import ConfirmDeleteModal from "../ConfirmDeleteModal";
 import TapirButton from "../TapirButton";
-import TapirTooltip from "../TapirTooltip";
 import Loading from "../loading";
 import SelectVersionModal from "./SelectVersionModal";
 
