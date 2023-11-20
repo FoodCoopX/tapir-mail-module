@@ -10,8 +10,8 @@ from tapir_mail.service.email_dispatch import SendEmailBatch
 from tapir_mail.tests.factories import (
     EmailConfigurationDispatchFactory,
     EmailConfigurationVersionFactory,
-    EmailDispatchFactory,
 )
+from tapir_mail.tests.integration.utils import TestUtils
 from tapir_mail.tests.test_utils import TapirIntegrationTest
 
 
@@ -28,34 +28,10 @@ class SendEmailBatchTest(TapirIntegrationTest):
             email_configuration_version=self.email_config_version,
         )
 
-    def create_email_dispatches(
-        self,
-        count,
-        config_dispatch=None,
-        sent_time=None,
-        created_at=None,
-        recipient_prefix="test",
-    ):
-        dispatches = EmailDispatch.objects.bulk_create(
-            EmailDispatchFactory.build(
-                email_configuration_dispatch=config_dispatch
-                if config_dispatch
-                else self.config_dispatch,
-                recipient=f"{recipient_prefix}{i}@example.com",
-                sent_time=sent_time,
-            )
-            for i in range(count)
-        )
-
-        if created_at is not None:
-            EmailDispatch.objects.filter(id__in=[d.id for d in dispatches]).update(
-                created_at=created_at
-            )
-
-        return dispatches
-
     def test_sendEmailDispatches_normalCase_sendsEmails(self):
-        dispatches = self.create_email_dispatches(10)
+        dispatches = TestUtils.create_email_dispatches(
+            10, config_dispatch=self.config_dispatch
+        )
         SendEmailBatch.send_email_dispatches()
         self.assertEqual(
             EmailDispatch.objects.filter(sent_time__isnull=True).count(), 0
@@ -74,10 +50,10 @@ class SendEmailBatchTest(TapirIntegrationTest):
         SendEmailBatch.send_email_dispatches()
         self.assertEqual(len(mail.outbox), 0)
 
-        self.create_email_dispatches(1)
+        TestUtils.create_email_dispatches(1, config_dispatch=self.config_dispatch)
 
     def test_sendEmailDispatches_errorSendingEmail_logsError(self):
-        self.create_email_dispatches(1)
+        TestUtils.create_email_dispatches(1, config_dispatch=self.config_dispatch)
         with patch(
             "tapir_mail.service.email_dispatch.prepare_email",
             side_effect=Exception("Test exception"),
@@ -97,12 +73,14 @@ class SendEmailBatchTest(TapirIntegrationTest):
                 )
 
     def test_sendEmailDispatches_alreadySent_noEmailsSent(self):
-        self.create_email_dispatches(10, sent_time=self.NOW)
+        TestUtils.create_email_dispatches(
+            10, config_dispatch=self.config_dispatch, sent_time=self.NOW
+        )
         SendEmailBatch.send_email_dispatches()
         self.assertEqual(len(mail.outbox), 0)
 
     def test_sendEmailDispatches_batchSizeLimit_onlyLimitSent(self):
-        self.create_email_dispatches(10)
+        TestUtils.create_email_dispatches(10, config_dispatch=self.config_dispatch)
         SendEmailBatch.send_email_dispatches(batch_size=4)
         self.assertEqual(len(mail.outbox), 4)
         self.assertEqual(
@@ -117,13 +95,13 @@ class SendEmailBatchTest(TapirIntegrationTest):
             email_configuration_version=self.email_config_version,
         )
 
-        newer_dispatches = self.create_email_dispatches(
+        newer_dispatches = TestUtils.create_email_dispatches(
             10,
             config_dispatch=newer_config_dispatch,
             created_at=self.NOW,
             recipient_prefix="new",
         )
-        self.create_email_dispatches(
+        TestUtils.create_email_dispatches(
             10,
             config_dispatch=older_config_dispatch,
             created_at=self.NOW - relativedelta(days=2),
