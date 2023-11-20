@@ -125,7 +125,6 @@ const EmailConfigurationEditor = () => {
               },
             })
             .then(() => {
-              navigate(Paths.dashboard);
               resolve();
             })
             .catch(reject);

@@ -31,8 +31,8 @@ from tapir_mail.serializers import (
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.segment import (
-    resolve_segments,
     filter_registry,
+    resolve_segments,
     segment_registry,
 )
 from tapir_mail.service.token import replace_tokens, token_registry
@@ -203,6 +203,15 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             email_configuration_version=version
         ).delete()
         version.delete()
+
+        if (
+            EmailConfigurationVersion.objects.filter(
+                email_configuration=version.email_configuration
+            ).count()
+            == 0
+        ):
+            version.email_configuration.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(

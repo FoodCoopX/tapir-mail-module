@@ -1,16 +1,18 @@
+import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
+import { Badge, Card, Table } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { EmailConfiguration, EmailConfigurationApi } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
-import { Badge, Card, Table } from "react-bootstrap";
-import Loading from "../loading";
-import { formatDate } from "../../utils/formatDate";
-import { EMAIL_CONFIGURATION_VERSION_STATUS_PROPS } from "../../utils/emailConfigurationVersionStatusProps";
 import { useApi } from "../../hooks/useApi";
-import SelectVersionModal from "./SelectVersionModal";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
-import TapirButton from "../TapirButton";
 import Paths from "../../routing";
-import { Link } from "react-router-dom";
+import { EMAIL_CONFIGURATION_VERSION_STATUS_PROPS } from "../../utils/emailConfigurationVersionStatusProps";
+import { formatDate } from "../../utils/formatDate";
+import ConfirmDeleteModal from "../ConfirmDeleteModal";
+import TapirButton from "../TapirButton";
+import TapirTooltip from "../TapirTooltip";
+import Loading from "../loading";
+import SelectVersionModal from "./SelectVersionModal";
 
 const EmailConfigurationTable = () => {
   const showAlert = useAlert();
@@ -20,12 +22,11 @@ const EmailConfigurationTable = () => {
   >([]);
   const [selectedEmailConfiguration, setSelectedEmailConfiguration] =
     useState<EmailConfiguration | null>(null);
+
   const [editModalOpen, setEditModalOpen] = useState(false);
   const api = useApi(EmailConfigurationApi);
 
-  useEffect(() => {
-    if (!api || !showAlert) return;
-
+  const fetchEmailConfigurations = () =>
     api
       .emailConfigurationList()
       .then((data) => {
@@ -38,6 +39,11 @@ const EmailConfigurationTable = () => {
       .finally(() => {
         setLoading(false);
       });
+
+  useEffect(() => {
+    if (!api || !showAlert) return;
+
+    fetchEmailConfigurations();
   }, []);
 
   const handleSelectEmailConfiguration = (ec: EmailConfiguration) => {
@@ -131,6 +137,7 @@ const EmailConfigurationTable = () => {
         open={editModalOpen}
         emailConfiguration={selectedEmailConfiguration!!}
         onClose={handleCloseEditModal}
+        onDataChanged={fetchEmailConfigurations}
       />
     </>
   );
