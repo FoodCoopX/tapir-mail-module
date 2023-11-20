@@ -4,9 +4,10 @@ import { ButtonVariant } from "react-bootstrap/types";
 
 interface TapirButtonProps {
   variant: ButtonVariant;
-  text: string;
-  icon: React.ComponentType<{ style: any }>;
+  text?: string;
+  icon?: React.ComponentType<{ style: any }>;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
 }
 
 const TapirButton: React.FC<TapirButtonProps> = (props) => {
@@ -20,9 +21,14 @@ const TapirButton: React.FC<TapirButtonProps> = (props) => {
         gap: "2px",
       }}
       onClick={props.onClick}
+      disabled={props.disabled}
     >
-      <span>{props.text}</span>
-      <props.icon style={{ width: "1.5em" }} />
+      {props.text && <span>{props.text}</span>}
+      {props.icon && (
+        <props.icon
+          style={{ width: "1.5em", marginLeft: props.text ? "0.25em" : "0em" }}
+        />
+      )}
     </Button>
   );
 };
