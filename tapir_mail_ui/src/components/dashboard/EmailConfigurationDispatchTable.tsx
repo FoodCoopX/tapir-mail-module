@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Card, ProgressBar, Table } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
 import {
-  EmailConfiguration,
   EmailConfigurationDispatch,
   EmailConfigurationDispatchApi,
+  EmailConfigurationVersion,
 } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
@@ -25,44 +24,42 @@ const EmailConfigurationDispatchTable: React.FC<
 > = ({ cardTitle, content }) => {
   const api = useApi(EmailConfigurationDispatchApi);
   const showAlert = useAlert();
-  const navigate = useNavigate();
 
   const [emailConfigurationDispatches, setEmailConfigurationDispatches] =
     useState<EmailConfigurationDispatch[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedEmailConfiguration, setSelectedEmailConfiguration] =
-    useState<EmailConfiguration>();
+  const [
+    selectedEmailConfigurationVersion,
+    setSelectedEmailConfigurationVersion,
+  ] = useState<EmailConfigurationVersion>();
+
+  const fetchEmailConfigurationDispatch = () => {
+    let call;
+    switch (content) {
+      case "last-sent":
+        call = api.emailConfigurationDispatchLastSentList.bind(api);
+        break;
+      case "next-sends":
+        call = api.emailConfigurationDispatchNextSendsList.bind(api);
+        break;
+    }
+
+    call({ limit: 10 })
+      .then(setEmailConfigurationDispatches)
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim Laden der Emails", "danger");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
-    const fetchData = () => {
-      let call;
-      switch (content) {
-        case "last-sent":
-          call = api.emailConfigurationDispatchLastSentList.bind(api);
-          break;
-        case "next-sends":
-          call = api.emailConfigurationDispatchNextSendsList.bind(api);
-          break;
-      }
-
-      call({ limit: 10 })
-        .then(setEmailConfigurationDispatches)
-        .catch((err) => {
-          console.error(err);
-          showAlert(
-            "Error loading the emails : " + content, //TODO translation
-            "danger",
-          );
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    };
-
-    fetchData();
+    fetchEmailConfigurationDispatch();
 
     const interval = setInterval(() => {
-      fetchData();
+      fetchEmailConfigurationDispatch();
     }, 30000);
 
     return () => clearInterval(interval);
@@ -115,9 +112,8 @@ const EmailConfigurationDispatchTable: React.FC<
                       style={{ cursor: "pointer" }}
                       key={content + "-" + emailConfigurationDispatch.id}
                       onClick={() =>
-                        setSelectedEmailConfiguration(
-                          emailConfigurationDispatch.emailConfigurationVersion
-                            .emailConfiguration,
+                        setSelectedEmailConfigurationVersion(
+                          emailConfigurationDispatch.emailConfigurationVersion,
                         )
                       }
                     >
@@ -175,9 +171,13 @@ const EmailConfigurationDispatchTable: React.FC<
         </Card.Body>
       </Card>
       <SelectVersionModal
-        open={!!selectedEmailConfiguration}
-        emailConfiguration={selectedEmailConfiguration!}
-        onClose={() => setSelectedEmailConfiguration(undefined)}
+        open={!!selectedEmailConfigurationVersion}
+        emailConfiguration={
+          selectedEmailConfigurationVersion?.emailConfiguration!
+        }
+        onClose={() => setSelectedEmailConfigurationVersion(undefined)}
+        onDataChanged={fetchEmailConfigurationDispatch}
+        selectedVersionOnOpen={selectedEmailConfigurationVersion?.id}
       />
     </>
   );

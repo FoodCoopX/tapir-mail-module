@@ -6,13 +6,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
-import {
-  Button,
-  ButtonGroup,
-  Dropdown,
-  DropdownButton,
-  Modal,
-} from "react-bootstrap";
+import { ButtonGroup, Dropdown, DropdownButton, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import {
   EmailConfiguration,
@@ -38,11 +32,13 @@ const SelectVersionModal = ({
   open,
   onClose,
   onDataChanged,
+  selectedVersionOnOpen,
 }: {
   emailConfiguration: EmailConfiguration;
   open: boolean;
   onClose: () => void;
   onDataChanged: () => void;
+  selectedVersionOnOpen?: string;
 }) => {
   const configApi = useApi(EmailConfigurationApi);
   const versionApi = useApi(EmailConfigurationVersionApi);
@@ -89,7 +85,7 @@ const SelectVersionModal = ({
       .then((data) => {
         setVersions(data);
         data.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-        setSelectedVersionId(data[0].id!!);
+        setSelectedVersionId(selectedVersionOnOpen ?? data[0].id!);
       })
       .catch((err) => {
         console.error(err);
