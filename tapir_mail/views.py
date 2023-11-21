@@ -475,14 +475,18 @@ class TrackingView(viewsets.ViewSet):
         responses={200: None},
     )
     @action(detail=True, methods=["GET"], url_path="track")
-    @transaction.atomic
     def track(self, request, pk=None, *args, **kwargs):
         try:
-            email_dispatch = EmailDispatch.objects.get(id=pk)
-        except EmailDispatch.DoesNotExist:
-            LOG.error(f"EmailDispatch with id {pk} not found")
-            return Response(None, status=status.HTTP_200_OK)
+            with transaction.atomic():
+                try:
+                    email_dispatch = EmailDispatch.objects.get(id=pk)
+                except EmailDispatch.DoesNotExist:
+                    LOG.error(f"EmailDispatch with id {pk} not found")
+                    return Response(None, status=status.HTTP_200_OK)
 
-        track_email_opening(email_dispatch)
+                track_email_opening(email_dispatch)
+
+        except Exception as e:
+            LOG.error(f"Error while tracking email opening: {type(e)}: {str(e)}")
 
         return Response(None, status=status.HTTP_200_OK)
