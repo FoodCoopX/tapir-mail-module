@@ -69,10 +69,11 @@ const MultipleTriggerInput: React.FC<MultipleTriggerInputProps> = ({
           onTriggerDeleteClicked={() => {
             onTriggerDeleteClicked(index);
           }}
+          allowDelete={initialTriggers.length > 1}
         />
       ))}
       <TapirButton
-        variant={"success"}
+        variant={"outline-success"}
         text={"Trigger hinzufügen"}
         icon={PlusCircleIcon}
         onClick={addNewTrigger}

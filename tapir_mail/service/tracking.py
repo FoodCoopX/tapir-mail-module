@@ -16,3 +16,9 @@ def track_email_opening(email_dispatch: EmailDispatch):
 
 def get_tracking_url(email_dispatch: EmailDispatch):
     return f"{settings.SITE_URL}{reverse('tracking-track', args=[email_dispatch.id])}"
+
+
+def add_tracking_pixel(html_content: str, pixel_url: str):
+    return html_content.replace(
+        "</body>", f'<img src="{pixel_url}" style="display:none"/></body>', 1
+    )

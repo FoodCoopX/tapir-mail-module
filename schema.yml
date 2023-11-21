@@ -2012,6 +2012,9 @@ components:
           format: date-time
           nullable: true
           readOnly: true
+        can_be_deleted:
+          type: boolean
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -2027,6 +2030,7 @@ components:
           type: string
           nullable: true
       required:
+      - can_be_deleted
       - created_at
       - last_updated_draft_date
       - name
@@ -2111,6 +2115,9 @@ components:
           $ref: '#/components/schemas/EmailConfiguration'
         segment_data:
           $ref: '#/components/schemas/SegmentData'
+        can_be_deleted:
+          type: boolean
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -2129,6 +2136,7 @@ components:
         status:
           $ref: '#/components/schemas/StatusEnum'
       required:
+      - can_be_deleted
       - created_at
       - email_configuration
       - segment_data

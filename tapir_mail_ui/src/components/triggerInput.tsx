@@ -11,13 +11,14 @@ import {
 import { useApi } from "../hooks/useApi";
 import TapirMailFormGroup from "./TapirMailFormGroup";
 import TapirDropdown from "./tapirDropdown";
-import { MinusCircleIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 interface TriggerInputProps {
   onTriggerIdSelected: (trigger_id: string | null) => void;
   onTriggerFieldValuesChanged: (triggerData: any) => void;
   triggerData: TriggerDataRequest;
   onTriggerDeleteClicked: () => void;
+  allowDelete?: boolean;
 }
 
 const TriggerInput: React.FC<TriggerInputProps> = ({
@@ -25,6 +26,7 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
   onTriggerFieldValuesChanged,
   triggerData,
   onTriggerDeleteClicked,
+  allowDelete = true,
 }) => {
   const triggersApi = useApi(TriggersApi);
   const [triggerDefinitions, setTriggerDefinitions] = useState<
@@ -102,17 +104,24 @@ const TriggerInput: React.FC<TriggerInputProps> = ({
         border: "1px solid var(--color-neutral-3)",
       }}
     >
-      <Form.Group className="d-flex justify-content-center">
+      <Form.Group className="d-flex justify-content-between">
+        <div style={{ width: "2.5em" }} />
         <TapirDropdown
+          noSelectionText="Trigger auswählen"
           choices={triggerDefinitions}
           onChoiceSelected={onDropdownSelect}
           selectedChoice={selectedTriggerDefinition}
         />
-        <MinusCircleIcon
-          color="red"
-          onClick={onTriggerDeleteClicked}
-          width="3em"
-        />
+        {allowDelete ? (
+          <TrashIcon
+            className="trash-icon"
+            title="Trigger löschen"
+            onClick={onTriggerDeleteClicked}
+            width="2.5em"
+          />
+        ) : (
+          <div style={{ width: "2.5em" }} />
+        )}
       </Form.Group>
       <br />
       {selectedTriggerDefinition &&

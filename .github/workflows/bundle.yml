@@ -1,0 +1,12 @@
+name: Bundle
+
+on: [push]
+
+jobs:
+  python-tests-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Bundle
+        run: docker compose run react bash /app/scripts/bundle.sh

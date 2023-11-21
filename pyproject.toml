@@ -21,7 +21,6 @@ celery = "^5.3.5"
 redis = "^5.0.1"
 django-redis = "^5.4.0"
 django-filter = "^23.3"
-beautifulsoup4 = "^4.12.2"
 flufl-bounce = "^4.0"
 
 [tool.poetry.group.dev.dependencies]

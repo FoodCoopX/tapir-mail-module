@@ -1,7 +1,8 @@
-from bs4 import BeautifulSoup
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template import Context, Template
+
+from tapir_mail.service.tracking import add_tracking_pixel
 
 
 def prepare_email(
@@ -29,7 +30,7 @@ def prepare_email(
     ).render(Context({}))
 
     if tracking_url:
-        email_body = _add_tracking_pixel(email_body, tracking_url)
+        email_body = add_tracking_pixel(email_body, tracking_url)
 
     email = EmailMultiAlternatives(
         subject=subject,
@@ -44,14 +45,6 @@ def prepare_email(
     email.content_subtype = "html"
 
     return email
-
-
-def _add_tracking_pixel(html_content, pixel_url):
-    soup = BeautifulSoup(html_content, "html.parser")
-    body = soup.find("body")
-    img_tag = soup.new_tag("img", src=pixel_url, style="display:none")
-    body.append(img_tag)
-    return str(soup)
 
 
 def _build_from_email(email_host_sender: str, tracking_id: str):
