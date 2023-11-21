@@ -1,7 +1,7 @@
 from email.message import Message
 from unittest.mock import patch, Mock, call
 
-from tapir_mail.models import BounceType, EmailDispatch
+from tapir_mail.models import EmailDispatch
 from tapir_mail.service.email_bounces import EmailBounces
 from tapir_mail.tests.test_utils import TapirUnitTest
 from tapir_mail_server import settings
@@ -89,7 +89,7 @@ class TestEmailBounces(TapirUnitTest):
         result = EmailBounces.determine_bounce_type(message, recipient_address)
 
         mock_all_failures.assert_called_once_with(message)
-        self.assertEqual(BounceType.HARD, result)
+        self.assertEqual(EmailDispatch.BounceTypes.HARD, result)
 
     @patch("tapir_mail.service.email_bounces.all_failures")
     def test_determineBounceType_recipientAddressIsOnlyInHard_returnsHard(
@@ -102,7 +102,7 @@ class TestEmailBounces(TapirUnitTest):
         result = EmailBounces.determine_bounce_type(message, recipient_address)
 
         mock_all_failures.assert_called_once_with(message)
-        self.assertEqual(BounceType.HARD, result)
+        self.assertEqual(EmailDispatch.BounceTypes.HARD, result)
 
     @patch("tapir_mail.service.email_bounces.all_failures")
     def test_determineBounceType_recipientAddressIsOnlyInSoft_returnsHard(
@@ -115,7 +115,7 @@ class TestEmailBounces(TapirUnitTest):
         result = EmailBounces.determine_bounce_type(message, recipient_address)
 
         mock_all_failures.assert_called_once_with(message)
-        self.assertEqual(BounceType.SOFT, result)
+        self.assertEqual(EmailDispatch.BounceTypes.SOFT, result)
 
     @patch("tapir_mail.service.email_bounces.all_failures")
     def test_determineBounceType_recipientAddressIsNotReturned_returnsUnknown(
@@ -128,7 +128,7 @@ class TestEmailBounces(TapirUnitTest):
         result = EmailBounces.determine_bounce_type(message, recipient_address)
 
         mock_all_failures.assert_called_once_with(message)
-        self.assertEqual(BounceType.UNKNOWN, result)
+        self.assertEqual(EmailDispatch.BounceTypes.UNKNOWN, result)
 
     def test_processMessage_fetchFails_raisesException(self):
         mail_client = Mock()

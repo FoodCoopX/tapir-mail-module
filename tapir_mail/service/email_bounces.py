@@ -5,7 +5,7 @@ from imaplib import IMAP4_SSL, IMAP4
 
 from flufl.bounce import all_failures
 
-from tapir_mail.models import EmailDispatch, BounceType
+from tapir_mail.models import EmailDispatch
 from tapir_mail.service.email import _get_dispatch_id_from_email_return_path
 from tapir_mail_server import settings
 
@@ -77,7 +77,7 @@ class EmailBounces:
     def determine_bounce_type(message: Message, recipient_address: str):
         soft, hard = all_failures(message)
         if recipient_address in hard:
-            return BounceType.HARD
+            return EmailDispatch.BounceTypes.HARD
         if recipient_address in soft:
-            return BounceType.SOFT
-        return BounceType.UNKNOWN
+            return EmailDispatch.BounceTypes.SOFT
+        return EmailDispatch.BounceTypes.UNKNOWN

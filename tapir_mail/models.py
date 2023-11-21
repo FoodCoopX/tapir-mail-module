@@ -145,26 +145,17 @@ models.signals.post_save.connect(
 )
 
 
-class BounceType:
-    SOFT = "soft"
-    HARD = "hard"
-    UNKNOWN = "unknown"
-    NOT_ANALYZED = "not_analyzed"
-
-
-BOUNCE_TYPE_CHOICES = [
-    (BounceType.SOFT, "Soft"),
-    (BounceType.HARD, "Hard"),
-    (BounceType.UNKNOWN, "Unknown"),
-    (BounceType.NOT_ANALYZED, "Not analyzed"),
-]
-
-
 class EmailDispatch(BaseModel):
     """
     This represents an email that has been sent to a single recipient.
     Here we can track bounces, errors, opening, etc.
     """
+
+    class BounceTypes(models.TextChoices):
+        SOFT = "soft", "Soft"
+        HARD = "hard", "Hard"
+        UNKNOWN = "unknown", "Unknown"
+        NOT_ANALYZED = "not_analyzed", "Not analyzed"
 
     email_configuration_dispatch = models.ForeignKey(
         EmailConfigurationDispatch, on_delete=models.CASCADE
@@ -177,8 +168,8 @@ class EmailDispatch(BaseModel):
     bounce_message = models.TextField(null=True, blank=True)
     bounce_type = models.CharField(
         max_length=16,
-        choices=BOUNCE_TYPE_CHOICES,
-        default=BounceType.NOT_ANALYZED,
+        choices=BounceTypes.choices,
+        default=BounceTypes.NOT_ANALYZED,
     )
 
     class Meta:
