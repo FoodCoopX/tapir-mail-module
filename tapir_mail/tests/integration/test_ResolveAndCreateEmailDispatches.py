@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 
 from dateutil.relativedelta import relativedelta
-
+from django.core.cache import cache
 from tapir_mail.models import (
     EmailConfigurationDispatch,
     EmailDispatch,
@@ -27,6 +27,7 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
         self.email_config_version = EmailConfigurationVersionFactory.create(
             status=ReleaseStatus.RELEASED,
         )
+
         self.segment = StaticSegmentFactory.create(name="Test Segment")
         for i in range(self.RECIPIENT_COUNT):
             StaticSegmentRecipientFactory.create(
@@ -123,3 +124,75 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
         ResolveAndCreateEmailDispatches.resolve_and_create()
         self.assertEqual(EmailDispatch.objects.count(), 0)
         mock_log_error.assert_not_called()
+
+    @patch("tapir_mail.tasks.ResolveAndCreateEmailDispatches._create_email_dispatches")
+    def test_resolveAndCreate_failCreateDispatches_retryIncrementedOnFailure(
+        self, mock_create_dispatches
+    ):
+        mock_create_dispatches.side_effect = Exception("Test failure")
+        config_dispatch = self.create_email_config_dispatch(scheduled_time=self.NOW)
+
+        ResolveAndCreateEmailDispatches.resolve_and_create()
+
+        cache_key = f"dispatch_retry_count_{config_dispatch.id}"
+        retry_count = cache.get(cache_key, 0)
+
+        self.assertEqual(retry_count, 1)
+        self.assertEqual(EmailDispatch.objects.count(), 0)
+
+    @patch("tapir_mail.models.EmailConfigurationDispatch.get_recipient_list")
+    def test_resolveAndCreate_failResolveSegments_retryIncrementedOnFailure(
+        self, mock_resolve_recipients
+    ):
+        mock_resolve_recipients.side_effect = Exception("Test failure")
+        config_dispatch = self.create_email_config_dispatch(scheduled_time=self.NOW)
+
+        ResolveAndCreateEmailDispatches.resolve_and_create()
+
+        cache_key = f"dispatch_retry_count_{config_dispatch.id}"
+        retry_count = cache.get(cache_key, 0)
+
+        self.assertEqual(retry_count, 1)
+        self.assertEqual(EmailDispatch.objects.count(), 0)
+
+    @patch("tapir_mail.tasks.ResolveAndCreateEmailDispatches._create_email_dispatches")
+    def test_resolveAndCreate_failMultipleTimes_givesUpAfterMaxRetries(
+        self, mock_create_dispatches
+    ):
+        config_dispatch = self.create_email_config_dispatch(scheduled_time=self.NOW)
+
+        mock_create_dispatches.side_effect = Exception("Test failure")
+
+        for _ in range(ResolveAndCreateEmailDispatches.MAX_RETRIES + 1):
+            ResolveAndCreateEmailDispatches.resolve_and_create()
+
+        config_dispatch.email_configuration_version.refresh_from_db()
+        self.assertEqual(
+            config_dispatch.email_configuration_version.status, ReleaseStatus.ERROR
+        )
+        self.assertEqual(EmailDispatch.objects.count(), 0)
+
+    def test_resolveAndCreate_failAndThenSucceed_resetOnSuccess(self):
+        config_dispatch = self.create_email_config_dispatch(scheduled_time=self.NOW)
+        cache_key = f"dispatch_retry_count_{config_dispatch.id}"
+        self.email_config_version.segment_data = self.TEST_SEGMENT_DATA
+        self.email_config_version.save()
+
+        # First, simulate a failure
+        with patch(
+            "tapir_mail.tasks.ResolveAndCreateEmailDispatches._create_email_dispatches"
+        ) as mock_create_dispatches:
+            mock_create_dispatches.side_effect = Exception("Test failure")
+            ResolveAndCreateEmailDispatches.resolve_and_create()
+
+            retry_count = cache.get(cache_key, 0)
+
+            self.assertEqual(retry_count, 1)
+            self.assertEqual(EmailDispatch.objects.count(), 0)
+
+        # Now, simulate a success
+        ResolveAndCreateEmailDispatches.resolve_and_create()
+
+        retry_count = cache.get(cache_key, None)
+        self.assertIsNone(retry_count)
+        self.assertEqual(EmailDispatch.objects.count(), self.RECIPIENT_COUNT)

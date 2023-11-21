@@ -338,11 +338,13 @@ paths:
           enum:
           - archived
           - draft
+          - error
           - released
         description: |-
           * `draft` - Draft
           * `released` - Released
           * `archived` - Archived
+          * `error` - Error
       tags:
       - email_configuration
       security:
@@ -514,11 +516,13 @@ paths:
           enum:
           - archived
           - draft
+          - error
           - released
         description: |-
           * `draft` - Draft
           * `released` - Released
           * `archived` - Archived
+          * `error` - Error
       tags:
       - email_configuration
       security:
@@ -2618,11 +2622,13 @@ components:
       - draft
       - released
       - archived
+      - error
       type: string
       description: |-
         * `draft` - Draft
         * `released` - Released
         * `archived` - Archived
+        * `error` - Error
     StoredUpload:
       type: object
       properties:
