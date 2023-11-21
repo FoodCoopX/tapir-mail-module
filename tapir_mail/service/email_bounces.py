@@ -4,6 +4,7 @@ from email.message import Message
 from imaplib import IMAP4_SSL, IMAP4
 
 from flufl.bounce import all_failures
+from icecream import ic
 
 from tapir_mail.models import EmailDispatch
 from tapir_mail.service.email import _get_dispatch_id_from_email_return_path
@@ -30,6 +31,13 @@ class EmailBounces:
                 raise Exception(
                     f"Imap server search failed, return code : {return_code}"
                 )
+            if not messages_id_blocks:
+                LOG.warning(
+                    "Nothing bounce to check for in  EmailBounces.check_for_bounces"
+                )
+                return
+
+            LOG.warning(f"Got message IDs : {ic.format(messages_id_blocks)}")
 
             for block in messages_id_blocks:
                 for message_id in block.split():
@@ -39,6 +47,7 @@ class EmailBounces:
 
     @classmethod
     def process_message(cls, mail_client: IMAP4, message_id: str):
+        LOG.warning(f"Analyzing message : {ic.format(message_id)}")
         return_code, message_bytes = mail_client.fetch(message_id, "(RFC822)")
         if return_code != "OK":
             raise Exception(
@@ -51,6 +60,7 @@ class EmailBounces:
         dispatch_id = _get_dispatch_id_from_email_return_path(return_path)
         if not dispatch_id:
             # this email is not a bounce
+            LOG.warning(f"Email is not a bounce : {ic.format(message)}")
             return
 
         email_dispatch: EmailDispatch = EmailDispatch.objects.filter(
