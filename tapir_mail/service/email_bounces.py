@@ -47,7 +47,7 @@ class EmailBounces:
 
         message = email.message_from_bytes(message_bytes[0][1])
 
-        return_path = message.get("Return-Path", None)
+        return_path = message.get("Return-Path", None) or message.get("To", None)
         dispatch_id = _get_dispatch_id_from_email_return_path(return_path)
         if not dispatch_id:
             # this email is not a bounce

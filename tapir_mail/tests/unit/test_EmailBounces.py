@@ -229,3 +229,32 @@ class TestEmailBounces(TapirUnitTest):
         mock_determine_bounce_type.assert_called_once_with(
             message, "recipient.@test.de"
         )
+
+    @patch("tapir_mail.service.email_bounces.EmailBounces.determine_bounce_type")
+    @patch.object(EmailDispatch.objects, "filter")
+    @patch("tapir_mail.service.email_bounces.email.message_from_bytes")
+    def test_processMessage_messageHasNoReturnPath_headerToGetsUsed(
+        self,
+        mock_message_from_bytes: Mock,
+        mock_filter: Mock,
+        mock_determine_bounce_type: Mock,
+    ):
+        mail_client = Mock()
+        message_content = Mock()
+        message_bytes = [[None, message_content]]
+        mail_client.fetch.return_value = ("OK", message_bytes)
+        message_id = "message_id"
+        message_uid = "message_uid"
+        message = Message()
+        message["Message-Id"] = message_uid
+        message["To"] = "test+dispatch_id@test.de"
+        mock_message_from_bytes.return_value = message
+        mock_filter.return_value = Mock()
+        mock_dispatch = Mock()
+        mock_dispatch.recipient = "recipient.@test.de"
+        mock_filter.return_value.first.return_value = mock_dispatch
+        mock_determine_bounce_type.return_value = "test_bounce_type"
+
+        EmailBounces.process_message(mail_client, message_id)
+
+        mock_filter.assert_called_once_with(id="dispatch_id")
