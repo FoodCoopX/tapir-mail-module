@@ -60,7 +60,7 @@ class EmailBounces:
         dispatch_id = _get_dispatch_id_from_email_return_path(return_path)
         if not dispatch_id:
             # this email is not a bounce
-            LOG.warning(f"Email is not a bounce : {ic.format(message)}")
+            LOG.warning(f"Email is not a bounce : {ic.format(message.as_string())}")
             return
 
         email_dispatch: EmailDispatch = EmailDispatch.objects.filter(
