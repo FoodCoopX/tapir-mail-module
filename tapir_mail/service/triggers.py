@@ -92,12 +92,13 @@ class Trigger(Generic[TriggerData], ABC):
 
         if email_configuration_version.status != ReleaseStatus.RELEASED:
             EmailConfigurationDispatch.objects.filter(
-                email_configuration_version=email_configuration_version
+                email_configuration_version=email_configuration_version, is_sent=False
             ).delete()
             return
 
         EmailConfigurationDispatch.objects.filter(
-            email_configuration_version__email_configuration=email_configuration_version.email_configuration
+            email_configuration_version__email_configuration=email_configuration_version.email_configuration,
+            is_sent=False,
         ).delete()
 
         if not email_configuration_version.triggers:
