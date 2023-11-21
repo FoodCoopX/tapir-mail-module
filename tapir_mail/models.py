@@ -149,12 +149,14 @@ class BounceType:
     SOFT = "soft"
     HARD = "hard"
     UNKNOWN = "unknown"
+    NOT_ANALYZED = "not_analyzed"
 
 
 BOUNCE_TYPE_CHOICES = [
     (BounceType.SOFT, "Soft"),
     (BounceType.HARD, "Hard"),
     (BounceType.UNKNOWN, "Unknown"),
+    (BounceType.NOT_ANALYZED, "Not analyzed"),
 ]
 
 
@@ -176,9 +178,7 @@ class EmailDispatch(BaseModel):
     bounce_type = models.CharField(
         max_length=16,
         choices=BOUNCE_TYPE_CHOICES,
-        default=None,
-        null=True,
-        blank=True,
+        default=BounceType.NOT_ANALYZED,
     )
 
     class Meta:
