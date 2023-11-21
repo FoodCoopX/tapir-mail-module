@@ -23,7 +23,7 @@ const TapirPagination: React.FC<TapirPaginationProps> = ({
             onClick={() => goToPage(pageIndex)}
             active={currentPage === pageIndex}
           >
-            {pageIndex}
+            {pageIndex + 1}
           </Pagination.Item>
         ),
       )}
