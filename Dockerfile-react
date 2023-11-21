@@ -1,7 +1,6 @@
 FROM node:20
 
 COPY ./tapir_mail_ui /app/tapir_mail_ui
-COPY ./tapir_mail_ui/.env.dist /app/tapir_mail_ui/.env
 
 WORKDIR /app
 
