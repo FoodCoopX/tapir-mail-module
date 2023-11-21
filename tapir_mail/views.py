@@ -3,7 +3,7 @@ import logging
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -297,44 +297,37 @@ class EmailConfigurationDispatchViewSet(viewsets.ModelViewSet):
         "email_configuration_version"
     ).all()
     serializer_class = EmailConfigurationDispatchSerializer
+    pagination_class = LimitOffsetPagination
     DEFAULT_LIMIT = 10
-    API_PARAMETER_LIMIT = OpenApiParameter(
-        name="limit",
-        description="Number of email dispatches to retrieve",
-        required=False,
-        type=OpenApiTypes.INT,
-        location=OpenApiParameter.QUERY,
-        default=DEFAULT_LIMIT,
-    )
 
     @extend_schema(
-        parameters=[API_PARAMETER_LIMIT],
         responses={200: EmailConfigurationDispatchSerializer(many=True)},
     )
     @action(detail=False)
     def last_sent(self, request: Request):
-        limit = int(request.query_params.get("limit", self.DEFAULT_LIMIT))
-        last_n_objects = EmailConfigurationDispatch.objects.filter(
-            is_sent=True
-        ).order_by("-scheduled_time")[:limit]
-        serializer = EmailConfigurationDispatchSerializer(last_n_objects, many=True)
-        return Response(serializer.data)
+        pagination = self.pagination_class()
+        queryset = EmailConfigurationDispatch.objects.filter(is_sent=True).order_by(
+            "-scheduled_time"
+        )
+        objects = pagination.paginate_queryset(queryset, request)
+        serializer = EmailConfigurationDispatchSerializer(objects, many=True)
+        return pagination.get_paginated_response(serializer.data)
 
     @extend_schema(
-        parameters=[API_PARAMETER_LIMIT],
         responses={200: EmailConfigurationDispatchSerializer(many=True)},
         description="Returns the list of email config dispatch that will be sent next.",
     )
     @action(detail=False)
     def next_sends(self, request):
-        limit = int(request.query_params.get("limit", self.DEFAULT_LIMIT))
-        first_n_objects = (
+        pagination = self.pagination_class()
+        queryset = (
             EmailConfigurationDispatch.objects.filter(is_sent=False)
             .exclude(email_configuration_version__status=ReleaseStatus.ARCHIVED)
-            .order_by("scheduled_time")[:limit]
+            .order_by("scheduled_time")
         )
-        serializer = EmailConfigurationDispatchSerializer(first_n_objects, many=True)
-        return Response(serializer.data)
+        objects = pagination.paginate_queryset(queryset, request)
+        serializer = EmailConfigurationDispatchSerializer(objects, many=True)
+        return pagination.get_paginated_response(serializer.data)
 
 
 class TriggerListView(viewsets.ViewSet):

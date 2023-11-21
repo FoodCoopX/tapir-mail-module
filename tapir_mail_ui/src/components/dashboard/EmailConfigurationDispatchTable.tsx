@@ -13,6 +13,8 @@ import Loading from "../loading";
 import SegmentsDisplay from "../segmentsDisplay";
 import FilterDisplay from "../segments/filterDisplay";
 import { guessElementType } from "../segments/common";
+import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
+import TapirPagination from "../TapirPagination";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -29,6 +31,8 @@ const EmailConfigurationDispatchTable: React.FC<
   const [emailConfigurationDispatches, setEmailConfigurationDispatches] =
     useState<EmailConfigurationDispatch[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [dispatchCount, setDispatchCount] = useState(0);
 
   useEffect(() => {
     const fetchData = () => {
@@ -42,8 +46,14 @@ const EmailConfigurationDispatchTable: React.FC<
           break;
       }
 
-      call({ limit: 10 })
-        .then(setEmailConfigurationDispatches)
+      call({
+        limit: DEFAULT_PAGE_SIZE,
+        offset: currentPage * DEFAULT_PAGE_SIZE,
+      })
+        .then((paginatedData) => {
+          setEmailConfigurationDispatches(paginatedData.results ?? []);
+          setDispatchCount(paginatedData.count ?? 0);
+        })
         .catch((err) => {
           console.error(err);
           showAlert(
@@ -63,7 +73,7 @@ const EmailConfigurationDispatchTable: React.FC<
     }, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [currentPage]);
 
   return (
     <Card>
@@ -172,6 +182,16 @@ const EmailConfigurationDispatchTable: React.FC<
           </Table>
         )}
       </Card.Body>
+      {dispatchCount > DEFAULT_PAGE_SIZE && (
+        <Card.Footer className="d-flex justify-content-center align-items-center">
+          <TapirPagination
+            pageSize={DEFAULT_PAGE_SIZE}
+            itemCount={dispatchCount}
+            currentPage={currentPage}
+            goToPage={setCurrentPage}
+          />
+        </Card.Footer>
+      )}
     </Card>
   );
 };

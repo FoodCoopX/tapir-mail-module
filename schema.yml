@@ -534,6 +534,19 @@ paths:
   /api/email_configuration_dispatch/:
     get:
       operationId: email_configuration_dispatch_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
       tags:
       - email_configuration_dispatch
       security:
@@ -544,9 +557,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmailConfigurationDispatch'
+                $ref: '#/components/schemas/PaginatedEmailConfigurationDispatchList'
           description: ''
     post:
       operationId: email_configuration_dispatch_create
@@ -682,12 +693,18 @@ paths:
     get:
       operationId: email_configuration_dispatch_last_sent_list
       parameters:
-      - in: query
-        name: limit
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
-          default: 10
-        description: Number of email dispatches to retrieve
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
       tags:
       - email_configuration_dispatch
       security:
@@ -698,21 +715,25 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmailConfigurationDispatch'
+                $ref: '#/components/schemas/PaginatedEmailConfigurationDispatchList'
           description: ''
   /api/email_configuration_dispatch/next_sends/:
     get:
       operationId: email_configuration_dispatch_next_sends_list
       description: Returns the list of email config dispatch that will be sent next.
       parameters:
-      - in: query
-        name: limit
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
-          default: 10
-        description: Number of email dispatches to retrieve
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
       tags:
       - email_configuration_dispatch
       security:
@@ -723,9 +744,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmailConfigurationDispatch'
+                $ref: '#/components/schemas/PaginatedEmailConfigurationDispatchList'
           description: ''
   /api/email_configuration_version/:
     get:
@@ -2307,6 +2326,26 @@ components:
         * `Friday` - Friday
         * `Saturday` - Saturday
         * `Sunday` - Sunday
+    PaginatedEmailConfigurationDispatchList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailConfigurationDispatch'
     PaginatedEmailConfigurationList:
       type: object
       properties:
