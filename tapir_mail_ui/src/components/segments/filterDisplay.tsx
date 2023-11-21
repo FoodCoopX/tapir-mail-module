@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 import { Badge } from "react-bootstrap";
-import { FILTER_ELEMENT_COLORS, FilterElement } from "./common";
 import "../chainedBadges.css";
+import { FILTER_ELEMENT_COLORS, FilterElement } from "./common";
 
 const FilterDisplay: FC<{ filter: FilterElement[] }> = ({ filter = [] }) => {
   return (
@@ -11,6 +11,7 @@ const FilterDisplay: FC<{ filter: FilterElement[] }> = ({ filter = [] }) => {
     >
       {filter.map(({ elementType, value }, idx) => (
         <Badge
+          key={elementType + "-" + value}
           style={{
             marginBottom: "0.25em",
             padding: "0.5em",

@@ -20,6 +20,7 @@ const TapirPagination: React.FC<TapirPaginationProps> = ({
         { length: Math.ceil(itemCount / pageSize) },
         (_, pageIndex) => (
           <Pagination.Item
+            key={pageIndex}
             onClick={() => goToPage(pageIndex)}
             active={currentPage === pageIndex}
           >
