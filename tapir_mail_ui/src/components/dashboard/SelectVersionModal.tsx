@@ -32,11 +32,13 @@ const SelectVersionModal = ({
   open,
   onClose,
   onDataChanged,
+  selectedVersionOnOpen,
 }: {
   emailConfiguration: EmailConfiguration;
   open: boolean;
   onClose: () => void;
   onDataChanged: () => void;
+  selectedVersionOnOpen?: string;
 }) => {
   const configApi = useApi(EmailConfigurationApi);
   const versionApi = useApi(EmailConfigurationVersionApi);
@@ -84,7 +86,7 @@ const SelectVersionModal = ({
         const versions = data.results ?? [];
         setVersions(versions);
         versions.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-        setSelectedVersionId(versions[0].id!!);
+        setSelectedVersionId(selectedVersionOnOpen ?? versions[0].id!);
       })
       .catch((err) => {
         console.error(err);
