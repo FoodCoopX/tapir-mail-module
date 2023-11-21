@@ -53,12 +53,14 @@ class ReleaseStatus:
     DRAFT = "draft"
     RELEASED = "released"
     ARCHIVED = "archived"
+    ERROR = "error"
 
 
 RELEASE_STATUS_CHOICES = [
     (ReleaseStatus.DRAFT, "Draft"),
     (ReleaseStatus.RELEASED, "Released"),
     (ReleaseStatus.ARCHIVED, "Archived"),
+    (ReleaseStatus.ERROR, "Error"),
 ]
 
 
@@ -160,12 +162,6 @@ class EmailDispatch(BaseModel):
     opened_time = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(null=True, blank=True)
     bounce_message = models.TextField(null=True, blank=True)
-
-    class Meta:
-        unique_together = (
-            "email_configuration_dispatch",
-            "recipient",
-        )
 
     def __str__(self):
         return (
