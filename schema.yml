@@ -319,6 +319,18 @@ paths:
     get:
       operationId: email_configuration_list
       parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
       - in: query
         name: versions__status
         schema:
@@ -341,9 +353,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmailConfiguration'
+                $ref: '#/components/schemas/PaginatedEmailConfigurationList'
           description: ''
     post:
       operationId: email_configuration_create
@@ -485,6 +495,18 @@ paths:
           type: string
         description: A unique value identifying this email configuration.
         required: true
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
       - in: query
         name: versions__status
         schema:
@@ -507,9 +529,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmailConfigurationVersion'
+                $ref: '#/components/schemas/PaginatedEmailConfigurationVersionList'
           description: ''
   /api/email_configuration_dispatch/:
     get:
@@ -2287,6 +2307,46 @@ components:
         * `Friday` - Friday
         * `Saturday` - Saturday
         * `Sunday` - Sunday
+    PaginatedEmailConfigurationList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailConfiguration'
+    PaginatedEmailConfigurationVersionList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailConfigurationVersion'
     PaginatedEmailTemplateList:
       type: object
       properties:

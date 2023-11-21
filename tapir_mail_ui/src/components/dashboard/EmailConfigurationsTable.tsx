@@ -11,6 +11,8 @@ import { formatDate } from "../../utils/formatDate";
 import TapirButton from "../TapirButton";
 import Loading from "../loading";
 import SelectVersionModal from "./SelectVersionModal";
+import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
+import TapirPagination from "../TapirPagination";
 
 const EmailConfigurationTable = () => {
   const showAlert = useAlert();
@@ -21,14 +23,21 @@ const EmailConfigurationTable = () => {
   const [selectedEmailConfiguration, setSelectedEmailConfiguration] =
     useState<EmailConfiguration | null>(null);
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [configurationCount, setConfigurationCount] = useState(0);
+
   const [editModalOpen, setEditModalOpen] = useState(false);
   const api = useApi(EmailConfigurationApi);
 
   const fetchEmailConfigurations = () =>
     api
-      .emailConfigurationList()
-      .then((data) => {
-        setEmailConfigurations(data);
+      .emailConfigurationList({
+        limit: DEFAULT_PAGE_SIZE,
+        offset: currentPage * DEFAULT_PAGE_SIZE,
+      })
+      .then((paginatedData) => {
+        setEmailConfigurations(paginatedData.results ?? []);
+        setConfigurationCount(paginatedData.count ?? 0);
       })
       .catch((err) => {
         console.error(err);
@@ -42,7 +51,7 @@ const EmailConfigurationTable = () => {
     if (!api || !showAlert) return;
 
     fetchEmailConfigurations();
-  }, []);
+  }, [currentPage]);
 
   const handleSelectEmailConfiguration = (ec: EmailConfiguration) => {
     setSelectedEmailConfiguration(ec);
@@ -130,6 +139,16 @@ const EmailConfigurationTable = () => {
             </Table>
           )}
         </Card.Body>
+        {configurationCount > DEFAULT_PAGE_SIZE && (
+          <Card.Footer className="d-flex justify-content-center align-items-center">
+            <TapirPagination
+              pageSize={DEFAULT_PAGE_SIZE}
+              itemCount={configurationCount}
+              currentPage={currentPage}
+              goToPage={setCurrentPage}
+            />
+          </Card.Footer>
+        )}
       </Card>
       <SelectVersionModal
         open={editModalOpen}

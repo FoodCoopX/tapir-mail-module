@@ -60,6 +60,7 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
     queryset = EmailConfiguration.objects.all().distinct()
     filterset_fields = ["versions__status"]
     serializer_class = EmailConfigurationSerializer
+    pagination_class = LimitOffsetPagination
 
     @extend_schema(
         responses={200: EmailConfigurationVersionSerializer(many=True)},
