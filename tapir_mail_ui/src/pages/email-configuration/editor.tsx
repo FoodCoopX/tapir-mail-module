@@ -222,6 +222,8 @@ const EmailConfigurationEditor = () => {
     setSegmentData(segmentData);
   };
 
+  const missingTrigger =
+    !triggers || triggers.filter((t) => t.triggerId).length === 0;
   const saveButtonDisabled = !mailingName;
   const segmentChoosen =
     (segmentData &&
@@ -229,11 +231,7 @@ const EmailConfigurationEditor = () => {
         (segmentData.staticSegments?.length || 0) > 0)) ||
     (id !== undefined && content !== loadedContent);
   const releaseButtonDisabled =
-    saveButtonDisabled ||
-    !subject ||
-    !segmentChoosen ||
-    !triggers ||
-    triggers.filter((t) => t.triggerId).length === 0;
+    saveButtonDisabled || !subject || !segmentChoosen || missingTrigger;
   return loading ? (
     <Loading />
   ) : (
@@ -342,6 +340,7 @@ const EmailConfigurationEditor = () => {
             <MultipleTriggerInput
               initialTriggers={triggers}
               onChange={setTriggers}
+              showError={missingTrigger}
             />
 
             <hr />

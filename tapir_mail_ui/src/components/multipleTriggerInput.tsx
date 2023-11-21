@@ -1,21 +1,23 @@
 import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
 import "@fortawesome/fontawesome-free/css/fontawesome.css";
 import "@fortawesome/fontawesome-free/css/solid.css";
-import React from "react";
-import { TriggerDataRequest } from "../api_client";
-import TriggerInput from "./triggerInput";
-import { Form } from "react-bootstrap";
-import TapirButton from "./TapirButton";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import React from "react";
+import { Form } from "react-bootstrap";
+import { TriggerDataRequest } from "../api_client";
+import TapirButton from "./TapirButton";
+import TriggerInput from "./triggerInput";
 
 interface MultipleTriggerInputProps {
   initialTriggers: TriggerDataRequest[];
   onChange: (triggers: TriggerDataRequest[]) => void;
+  showError?: boolean;
 }
 
 const MultipleTriggerInput: React.FC<MultipleTriggerInputProps> = ({
   initialTriggers,
   onChange,
+  showError = false,
 }) => {
   const addNewTrigger = () => {
     onChange(
@@ -51,7 +53,11 @@ const MultipleTriggerInput: React.FC<MultipleTriggerInputProps> = ({
         marginLeft: "-0.5em",
         marginRight: "-0.5em",
         borderRadius: "6px",
-        border: "1px solid var(--color-neutral-3)",
+        border:
+          "1px solid " +
+          (showError
+            ? "var(--bs-form-invalid-border-color)"
+            : "var(--color-neutral-3)"),
       }}
       className="d-flex flex-column gap-2"
     >
@@ -72,12 +78,14 @@ const MultipleTriggerInput: React.FC<MultipleTriggerInputProps> = ({
           allowDelete={initialTriggers.length > 1}
         />
       ))}
-      <TapirButton
-        variant={"outline-success"}
-        text={"Trigger hinzufügen"}
-        icon={PlusCircleIcon}
-        onClick={addNewTrigger}
-      />
+      {initialTriggers.some((t) => !t.triggerId) || (
+        <TapirButton
+          variant={"outline-success"}
+          text={"Trigger hinzufügen"}
+          icon={PlusCircleIcon}
+          onClick={addNewTrigger}
+        />
+      )}
     </div>
   );
 };

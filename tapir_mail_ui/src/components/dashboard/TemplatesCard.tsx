@@ -127,8 +127,8 @@ const TemplatesCard = () => {
                     <td>{formatDate(template.updatedAt)}</td>
                     <td className="d-flex justify-content-center">
                       <TapirButton
-                        variant={"danger"}
-                        text={""}
+                        variant={"outline-danger"}
+                        size={"sm"}
                         icon={TrashIcon}
                         onClick={(event) => {
                           event.stopPropagation();
@@ -155,9 +155,10 @@ const TemplatesCard = () => {
       </Card>
       <ConfirmDeleteModal
         message={
-          "Möchten Sie wirklich das template '" +
-          templateToDelete?.name +
-          "' löschen?"
+          <>
+            Möchtest du das Template <strong>{templateToDelete?.name}</strong>{" "}
+            wirklich löschen?
+          </>
         }
         open={!!templateToDelete}
         onConfirm={onDeleteTemplateConfirmed}
