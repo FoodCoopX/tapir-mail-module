@@ -1,6 +1,6 @@
 import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
-import { Card, PageItem, Pagination, Table } from "react-bootstrap";
+import { Card, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { EmailTemplate, EmailTemplateApi } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
@@ -11,6 +11,7 @@ import { formatDate } from "../../utils/formatDate";
 import TapirButton from "../TapirButton";
 import ConfirmDeleteModal from "../ConfirmDeleteModal";
 import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
+import TapirPagination from "../TapirPagination";
 
 const TemplatesCard = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -44,7 +45,7 @@ const TemplatesCard = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [currentPage]);
 
   function onDeleteTemplateConfirmed() {
     if (!templateToDelete) return;
@@ -141,16 +142,16 @@ const TemplatesCard = () => {
             </Table>
           )}
         </Card.Body>
-        <Card.Footer>
-          <Pagination>
-            <Pagination.First />
-            <Pagination.Prev
-              onClick={() => setCurrentPage(currentPage - 1)}
-            ></Pagination.Prev>
-            <Pagination.Item>1</Pagination.Item>
-            <PageItem onClick={() => setCurrentPage(2)}>1</PageItem>
-          </Pagination>
-        </Card.Footer>
+        {templateCount > DEFAULT_PAGE_SIZE && (
+          <Card.Footer className="d-flex justify-content-center align-items-center">
+            <TapirPagination
+              pageSize={DEFAULT_PAGE_SIZE}
+              itemCount={templateCount}
+              currentPage={currentPage}
+              goToPage={setCurrentPage}
+            />
+          </Card.Footer>
+        )}
       </Card>
       <ConfirmDeleteModal
         message={
