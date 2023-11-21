@@ -83,9 +83,10 @@ const SelectVersionModal = ({
         id: emailConfiguration!!.id!!,
       })
       .then((data) => {
-        setVersions(data);
-        data.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-        setSelectedVersionId(selectedVersionOnOpen ?? data[0].id!);
+        const versions = data.results ?? [];
+        setVersions(versions);
+        versions.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        setSelectedVersionId(selectedVersionOnOpen ?? versions[0].id!);
       })
       .catch((err) => {
         console.error(err);
