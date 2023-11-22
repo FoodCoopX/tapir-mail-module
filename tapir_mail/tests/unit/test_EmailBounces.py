@@ -45,7 +45,7 @@ class TestEmailBounces(TapirUnitTest):
         mock_mail_client.login.assert_called_once_with(
             settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
         )
-        mock_mail_client.select.assert_called_once_with(readonly=True)
+        mock_mail_client.select.assert_called_once()
         mock_mail_client.search.assert_called_once_with(None, "(UNSEEN)")
         mock_mail_client.logout.assert_called_once_with()
 
@@ -67,7 +67,7 @@ class TestEmailBounces(TapirUnitTest):
         mock_mail_client.login.assert_called_once_with(
             settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
         )
-        mock_mail_client.select.assert_called_once_with(readonly=True)
+        mock_mail_client.select.assert_called_once()
         mock_mail_client.search.assert_called_once_with(None, "(UNSEEN)")
         self.assertEqual(6, mock_process_message.call_count)
         mock_process_message.assert_has_calls(

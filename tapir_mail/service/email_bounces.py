@@ -3,11 +3,11 @@ import logging
 from email.message import Message
 from imaplib import IMAP4_SSL, IMAP4
 
+from django.conf import settings
 from flufl.bounce import all_failures
 
 from tapir_mail.models import EmailDispatch
 from tapir_mail.service.email import _get_dispatch_id_from_email_return_path
-from tapir_mail_server import settings
 
 LOG = logging.getLogger(__name__)
 
