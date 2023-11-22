@@ -31,12 +31,8 @@ class EmailBounces:
                     f"Imap server search failed, return code : {return_code}"
                 )
             if not messages_id_blocks:
-                LOG.warning(
-                    "Nothing bounce to check for in  EmailBounces.check_for_bounces"
-                )
+                LOG.info("Nothing to check for in EmailBounces.check_for_bounces")
                 return
-
-            LOG.warning(f"Got message IDs : {messages_id_blocks}")
 
             for block in messages_id_blocks:
                 for message_id in block.split():
@@ -46,7 +42,6 @@ class EmailBounces:
 
     @classmethod
     def process_message(cls, mail_client: IMAP4, message_id: str):
-        LOG.warning(f"Analyzing message : {message_id}")
         return_code, message_bytes = mail_client.fetch(message_id, "(RFC822)")
         if return_code != "OK":
             raise Exception(
@@ -59,7 +54,7 @@ class EmailBounces:
         dispatch_id = _get_dispatch_id_from_email_return_path(return_path)
         if not dispatch_id:
             # this email is not a bounce
-            LOG.warning(f"Email is not a bounce : {message.as_string()}")
+            LOG.info(f"Email is not a bounce : {message.as_string()}")
             return
 
         email_dispatch: EmailDispatch = EmailDispatch.objects.filter(
