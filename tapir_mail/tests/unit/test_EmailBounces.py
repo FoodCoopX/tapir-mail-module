@@ -233,7 +233,7 @@ class TestEmailBounces(TapirUnitTest):
     @patch("tapir_mail.service.email_bounces.EmailBounces.determine_bounce_type")
     @patch.object(EmailDispatch.objects, "filter")
     @patch("tapir_mail.service.email_bounces.email.message_from_bytes")
-    def test_processMessage_messageHasNoReturnPath_headerToGetsUsed(
+    def test_processMessage_messageHasNoReturnPath_otherHeaderGetsUsed(
         self,
         mock_message_from_bytes: Mock,
         mock_filter: Mock,
@@ -247,6 +247,7 @@ class TestEmailBounces(TapirUnitTest):
         message_uid = "message_uid"
         message = Message()
         message["Message-Id"] = message_uid
+        message["Return-Path"] = "<>"
         message["To"] = "test+dispatch_id@test.de"
         mock_message_from_bytes.return_value = message
         mock_filter.return_value = Mock()

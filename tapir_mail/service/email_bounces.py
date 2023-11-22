@@ -50,8 +50,15 @@ class EmailBounces:
 
         message = email.message_from_bytes(message_bytes[0][1])
 
-        return_path = message.get("Return-Path", None) or message.get("To", None)
-        dispatch_id = _get_dispatch_id_from_email_return_path(return_path)
+        dispatch_id = cls.get_return_path_from_headers(
+            message,
+            [
+                "Return-Path",
+                "X-Original-To",
+                "Delivered-To",
+                "To",
+            ],
+        )
         if not dispatch_id:
             # this email is not a bounce
             LOG.info(f"Email is not a bounce : {message.as_string()}")
@@ -76,6 +83,17 @@ class EmailBounces:
             )
 
         mail_client.store(message_id, "+FLAGS", "(SEEN)")
+
+    @staticmethod
+    def get_return_path_from_headers(message: Message, headers: [str]):
+        for header in headers:
+            dispatch_id = _get_dispatch_id_from_email_return_path(
+                message.get(header, None)
+            )
+            if dispatch_id:
+                return dispatch_id
+
+        return None
 
     @staticmethod
     def determine_bounce_type(message: Message, recipient_address: str):
