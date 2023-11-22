@@ -153,6 +153,12 @@ class EmailDispatch(BaseModel):
     Here we can track bounces, errors, opening, etc.
     """
 
+    class BounceTypes(models.TextChoices):
+        SOFT = "soft", "Soft"
+        HARD = "hard", "Hard"
+        UNKNOWN = "unknown", "Unknown"
+        NOT_ANALYZED = "not_analyzed", "Not analyzed"
+
     email_configuration_dispatch = models.ForeignKey(
         EmailConfigurationDispatch, on_delete=models.CASCADE
     )
@@ -162,6 +168,11 @@ class EmailDispatch(BaseModel):
     opened_time = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(null=True, blank=True)
     bounce_message = models.TextField(null=True, blank=True)
+    bounce_type = models.CharField(
+        max_length=16,
+        choices=BounceTypes.choices,
+        default=BounceTypes.NOT_ANALYZED,
+    )
 
     def __str__(self):
         return (

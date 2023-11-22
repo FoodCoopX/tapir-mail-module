@@ -37,7 +37,7 @@ def prepare_email(
         body=email_body,
         to=recipients if isinstance(recipients, list) else [recipients],
         bcc=[getattr(settings, "EMAIL_AUTO_BCC", None)],
-        from_email=_build_from_email(settings.EMAIL_HOST_SENDER, tracking_id),
+        from_email=_build_from_email(settings.EMAIL_BOUNCE_ADDRESS, tracking_id),
         headers={
             "From": f"{settings.EMAIL_HOST_SENDER_NAME} <{settings.EMAIL_HOST_SENDER}>",
         },
@@ -53,6 +53,8 @@ def _build_from_email(email_host_sender: str, tracking_id: str):
 
 
 def _get_dispatch_id_from_email_return_path(email_from: str):
+    if not email_from or "@" not in email_from:
+        return None
     prefix, _ = email_from.split("@")
     if "+" not in prefix:
         return None

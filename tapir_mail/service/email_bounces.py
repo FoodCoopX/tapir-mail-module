@@ -1,6 +1,9 @@
 import email
-import imaplib
 import logging
+from email.message import Message
+from imaplib import IMAP4_SSL, IMAP4
+
+from flufl.bounce import all_failures
 
 from tapir_mail.models import EmailDispatch
 from tapir_mail.service.email import _get_dispatch_id_from_email_return_path
@@ -12,25 +15,34 @@ LOG = logging.getLogger(__name__)
 class EmailBounces:
     @classmethod
     def check_for_bounces(cls):
-        mail = imaplib.IMAP4_SSL(settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP)
-        mail.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-        mail.select(readonly=settings.DEBUG)
-
-        (return_code, messages_id_blocks) = mail.search(None, "(UNSEEN)")
+        mail_client = IMAP4_SSL(settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP)
+        (return_code, _) = mail_client.login(
+            settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
+        )
         if return_code != "OK":
-            raise Exception(
-                f"Connection to imap server failed, return code : {return_code}"
-            )
+            raise Exception(f"Imap server login failed, return code : {return_code}")
 
-        for block in messages_id_blocks:
-            for message_id in block.split():
-                cls.process_message(mail, message_id)
+        try:
+            mail_client.select(readonly=settings.DEBUG)
 
-        mail.logout()
+            (return_code, messages_id_blocks) = mail_client.search(None, "(UNSEEN)")
+            if return_code != "OK":
+                raise Exception(
+                    f"Imap server search failed, return code : {return_code}"
+                )
+            if not messages_id_blocks:
+                LOG.info("Nothing to check for in EmailBounces.check_for_bounces")
+                return
 
-    @staticmethod
-    def process_message(mail: imaplib.IMAP4, message_id: str):
-        return_code, message_bytes = mail.fetch(message_id, "(RFC822)")
+            for block in messages_id_blocks:
+                for message_id in block.split():
+                    cls.process_message(mail_client, message_id)
+        finally:
+            mail_client.logout()
+
+    @classmethod
+    def process_message(cls, mail_client: IMAP4, message_id: str):
+        return_code, message_bytes = mail_client.fetch(message_id, "(RFC822)")
         if return_code != "OK":
             raise Exception(
                 f"Failed to get message with id : {message_id}, return code : {return_code}"
@@ -38,20 +50,23 @@ class EmailBounces:
 
         message = email.message_from_bytes(message_bytes[0][1])
 
-        return_path = message.get("Return-Path", None)
+        return_path = message.get("Return-Path", None) or message.get("To", None)
         dispatch_id = _get_dispatch_id_from_email_return_path(return_path)
         if not dispatch_id:
             # this email is not a bounce
+            LOG.info(f"Email is not a bounce : {message.as_string()}")
             return
 
         email_dispatch: EmailDispatch = EmailDispatch.objects.filter(
             id=dispatch_id
         ).first()
-
         message_uid = message.get("Message-Id", None)
         if email_dispatch:
             email_dispatch.bounce_message = (
                 f"Email could not be delivered, bounce message id : {message_uid}"
+            )
+            email_dispatch.bounce_type = cls.determine_bounce_type(
+                message, email_dispatch.recipient
             )
             email_dispatch.save()
         else:
@@ -60,4 +75,13 @@ class EmailBounces:
                 f"Dispatch id: {dispatch_id}, message id: {message_uid}"
             )
 
-        mail.store(message_id, "+FLAGS", "(SEEN)")
+        mail_client.store(message_id, "+FLAGS", "(SEEN)")
+
+    @staticmethod
+    def determine_bounce_type(message: Message, recipient_address: str):
+        soft, hard = all_failures(message)
+        if recipient_address in hard:
+            return EmailDispatch.BounceTypes.HARD
+        if recipient_address in soft:
+            return EmailDispatch.BounceTypes.SOFT
+        return EmailDispatch.BounceTypes.UNKNOWN

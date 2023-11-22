@@ -1884,6 +1884,18 @@ paths:
           description: ''
 components:
   schemas:
+    BounceTypeEnum:
+      enum:
+      - soft
+      - hard
+      - unknown
+      - not_analyzed
+      type: string
+      description: |-
+        * `soft` - Soft
+        * `hard` - Hard
+        * `unknown` - Unknown
+        * `not_analyzed` - Not analyzed
     BundledEmailConfiguration:
       type: object
       properties:
@@ -2249,6 +2261,8 @@ components:
         bounce_message:
           type: string
           nullable: true
+        bounce_type:
+          $ref: '#/components/schemas/BounceTypeEnum'
       required:
       - created_at
       - email_configuration_dispatch
