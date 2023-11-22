@@ -25,6 +25,7 @@ const TapirDropdown = <T extends Choice>({
   return (
     <DropdownButton
       title={selectedChoice ? selectedChoice.name : noSelectionText}
+      variant={selectedChoice ? "primary" : "outline-primary"}
       onSelect={(selected_index) => {
         onChoiceSelected(
           selected_index ? choices[parseInt(selected_index)] : null,

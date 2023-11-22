@@ -1,10 +1,12 @@
 from tapir_mail.models import (
     EmailConfigurationVersion,
     ReleaseStatus,
+    EmailConfigurationDispatch,
 )
 from tapir_mail.service.segment import register_segment
 from tapir_mail.tests.factories import (
     EmailConfigurationVersionFactory,
+    EmailConfigurationDispatchFactory,
 )
 from tapir_mail.tests.test_utils import TapirIntegrationTest, build_time_trigger_dict
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
@@ -90,6 +92,30 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         self.assertStatusCode(response, 200)
         older_release.refresh_from_db()
         self.assertEqual(ReleaseStatus.ARCHIVED, older_release.status)
+
+    def test_archiving_emailDispatchesGetDeleted(self):
+        version: EmailConfigurationVersion = EmailConfigurationVersionFactory.create(
+            status=ReleaseStatus.RELEASED
+        )
+        sent_dispatch = EmailConfigurationDispatchFactory.create(
+            email_configuration_version=version, is_sent=True
+        )
+        EmailConfigurationDispatchFactory.create(
+            email_configuration_version=version, is_sent=False
+        )
+        put_data = {
+            "name": version.email_configuration.name,
+            "content": version.content,
+            "release_status": ReleaseStatus.ARCHIVED,
+        }
+        response = self._send_request(version.id, put_data)
+        self.assertStatusCode(response, 200)
+        version.refresh_from_db()
+        self.assertEqual(ReleaseStatus.ARCHIVED, version.status)
+        self.assertEqual(1, EmailConfigurationDispatch.objects.count())
+        self.assertEqual(
+            sent_dispatch.id, EmailConfigurationDispatch.objects.first().id
+        )
 
     def _send_request(self, email_configuration_version_id: str, put_data: dict | None):
         return self.apiClient.put(

@@ -81,11 +81,13 @@ const SelectVersionModal = ({
     configApi
       .emailConfigurationVersionsList({
         id: emailConfiguration!!.id!!,
+        limit: 100,
       })
       .then((data) => {
-        setVersions(data);
-        data.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-        setSelectedVersionId(selectedVersionOnOpen ?? data[0].id!);
+        const versions = data.results ?? [];
+        versions.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        setVersions(versions);
+        setSelectedVersionId(selectedVersionOnOpen ?? versions[0].id!);
       })
       .catch((err) => {
         console.error(err);
@@ -150,9 +152,11 @@ const SelectVersionModal = ({
       });
   };
 
-  const archiveButtonDisabled = selectedVersion?.status !== "released";
+  const archiveButtonDisabled =
+    !selectedVersion || selectedVersion?.status !== "released";
   const deleteDropdownDisabled =
-    !selectedVersion?.canBeDeleted && !emailConfiguration?.canBeDeleted;
+    !selectedVersion ||
+    (!selectedVersion?.canBeDeleted && !emailConfiguration?.canBeDeleted);
   return (
     <>
       <Modal
@@ -188,14 +192,16 @@ const SelectVersionModal = ({
                 <TapirTooltip
                   id={"archive-button"}
                   text={
-                    archiveButtonDisabled
+                    archiveButtonDisabled && selectedVersion
                       ? "Nur veröffentlichte Versionen können archiviert werden."
                       : "Archivieren"
                   }
                 >
                   <TapirButton
                     variant={
-                      archiveButtonDisabled ? "outline-secondary" : "danger"
+                      archiveButtonDisabled
+                        ? "outline-secondary"
+                        : "outline-danger"
                     }
                     icon={ArchiveBoxArrowDownIcon}
                     disabled={archiveButtonDisabled}
@@ -206,7 +212,7 @@ const SelectVersionModal = ({
                 <TapirTooltip
                   id={"delete-button"}
                   text={
-                    !selectedVersion?.canBeDeleted
+                    selectedVersion && !selectedVersion?.canBeDeleted
                       ? "Diese Version kann nicht gelöscht werden, da sie bereits verschickt wurde."
                       : "Löschen"
                   }
@@ -256,7 +262,9 @@ const SelectVersionModal = ({
                   ) : (
                     <TapirButton
                       variant={
-                        deleteDropdownDisabled ? "outline-secondary" : "danger"
+                        deleteDropdownDisabled
+                          ? "outline-secondary"
+                          : "outline-danger"
                       }
                       icon={TrashIcon}
                       disabled={deleteDropdownDisabled}
@@ -290,12 +298,14 @@ const SelectVersionModal = ({
               text="Testmail senden"
               icon={PaperAirplaneIcon}
               onClick={() => setSendModalOpen(true)}
+              disabled={!selectedVersion || false}
             />
             <TapirButton
               variant="primary"
               text="Editieren"
               icon={PencilIcon}
               onClick={handleEdit}
+              disabled={!selectedVersion || false}
             />
           </div>
         </Modal.Footer>

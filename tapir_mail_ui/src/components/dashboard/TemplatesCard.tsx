@@ -10,6 +10,8 @@ import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import TapirButton from "../TapirButton";
 import ConfirmDeleteModal from "../ConfirmDeleteModal";
+import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
+import TapirPagination from "../TapirPagination";
 
 const TemplatesCard = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -17,6 +19,8 @@ const TemplatesCard = () => {
   const [templateToDelete, setTemplateToDelete] = useState<
     EmailTemplate | undefined
   >();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [templateCount, setTemplateCount] = useState(0);
 
   const showAlert = useAlert();
   const navigate = useNavigate();
@@ -26,8 +30,14 @@ const TemplatesCard = () => {
     if (!api || !showAlert) return;
 
     api
-      .emailtemplatesList()
-      .then(setTemplates)
+      .emailtemplatesList({
+        limit: DEFAULT_PAGE_SIZE,
+        offset: currentPage * DEFAULT_PAGE_SIZE,
+      })
+      .then((paginatedData) => {
+        setTemplates(paginatedData.results ?? []);
+        setTemplateCount(paginatedData.count ?? 0);
+      })
       .catch((err) => {
         console.error(err);
         showAlert("Fehler beim Laden der Vorlagen", "danger");
@@ -35,7 +45,7 @@ const TemplatesCard = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [currentPage]);
 
   function onDeleteTemplateConfirmed() {
     if (!templateToDelete) return;
@@ -117,8 +127,8 @@ const TemplatesCard = () => {
                     <td>{formatDate(template.updatedAt)}</td>
                     <td className="d-flex justify-content-center">
                       <TapirButton
-                        variant={"danger"}
-                        text={""}
+                        variant={"outline-danger"}
+                        size={"sm"}
                         icon={TrashIcon}
                         onClick={(event) => {
                           event.stopPropagation();
@@ -132,12 +142,23 @@ const TemplatesCard = () => {
             </Table>
           )}
         </Card.Body>
+        {templateCount > DEFAULT_PAGE_SIZE && (
+          <Card.Footer className="d-flex justify-content-center align-items-center">
+            <TapirPagination
+              pageSize={DEFAULT_PAGE_SIZE}
+              itemCount={templateCount}
+              currentPage={currentPage}
+              goToPage={setCurrentPage}
+            />
+          </Card.Footer>
+        )}
       </Card>
       <ConfirmDeleteModal
         message={
-          "Möchten Sie wirklich das template '" +
-          templateToDelete?.name +
-          "' löschen?"
+          <>
+            Möchtest du das Template <strong>{templateToDelete?.name}</strong>{" "}
+            wirklich löschen?
+          </>
         }
         open={!!templateToDelete}
         onConfirm={onDeleteTemplateConfirmed}

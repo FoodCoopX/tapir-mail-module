@@ -24,9 +24,13 @@ class ResolveAndCreateEmailDispatches:
     This class is responsible for resolving the Segment data and creating EmailDispatches for EmailConfigurationDispatches that are due to be sent.
     """
 
+    MAX_RETRIES = 10
+
     @classmethod
     def resolve_and_create(cls):
-        lock = cache.lock("resolve_and_create_email_dispatches", timeout=180)
+        lock = cache.lock(
+            "resolve_and_create_email_dispatches", timeout=60 * 3
+        )  # 3 minutes
         if not lock.acquire(blocking=False):
             LOG.error(
                 "Could not acquire lock for resolve_and_create_email_dispatches lock"
@@ -45,12 +49,27 @@ class ResolveAndCreateEmailDispatches:
                 return
 
             for config_dispatch in config_dispatches:
+                cache_key = f"dispatch_retry_count_{config_dispatch.id}"
                 try:
                     cls._create_email_dispatches(config_dispatch)
+                    cache.delete(cache_key)
                 except Exception as e:
-                    LOG.error(
-                        f"Error while creating email dispatches for EmailConfigurationDispatch#{config_dispatch.id}: {e}"
-                    )
+                    retry_count = cache.get(cache_key, 0) + 1
+                    cache.set(cache_key, retry_count, timeout=60 * 30)  # 30 minutes
+
+                    if retry_count > cls.MAX_RETRIES:
+                        LOG.error(
+                            f"Retried {cls.MAX_RETRIES} times. Giving up and setting EmailConfigurationVersion#{config_dispatch.email_configuration_version.id} to ERROR."
+                        )
+                        config_dispatch.email_configuration_version.status = (
+                            ReleaseStatus.ERROR
+                        )
+                        config_dispatch.email_configuration_version.save()
+                        cache.delete(cache_key)
+                    else:
+                        LOG.error(
+                            f"Error while creating email dispatches for EmailConfigurationDispatch#{config_dispatch.id}. Retrying... Error: {e}"
+                        )
 
         finally:
             lock.release()

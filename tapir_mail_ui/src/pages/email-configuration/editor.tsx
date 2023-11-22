@@ -57,7 +57,7 @@ const EmailConfigurationEditor = () => {
   const showAlert = useAlert();
 
   const templateApi = useApi(EmailTemplateApi);
-  const api = useApi(EmailConfigurationVersionApi);
+  const emailConfigurationVersionApi = useApi(EmailConfigurationVersionApi);
 
   const navigate = useNavigate();
 
@@ -65,7 +65,7 @@ const EmailConfigurationEditor = () => {
     templateApi
       .emailtemplatesList()
       .then((data) => {
-        setTemplates(data);
+        setTemplates(data.results ?? []);
       })
       .catch((err) => {
         console.error(err);
@@ -74,7 +74,7 @@ const EmailConfigurationEditor = () => {
 
   useEffect(() => {
     if (id) {
-      api
+      emailConfigurationVersionApi
         .emailConfigurationVersionGetBundledInfoRetrieve({
           id: id,
         })
@@ -118,7 +118,7 @@ const EmailConfigurationEditor = () => {
         // UPDATE
         if (status === StatusEnum.Released) {
           // create new draft version
-          api
+          emailConfigurationVersionApi
             .emailConfigurationVersionCreate({
               bundledEmailConfigurationRequest: {
                 ...props,
@@ -130,7 +130,7 @@ const EmailConfigurationEditor = () => {
             .catch(reject);
         } else {
           // update current draft version
-          api
+          emailConfigurationVersionApi
             .emailConfigurationVersionUpdate({
               id: id!!,
               bundledEmailConfigurationRequest: props,
@@ -145,7 +145,7 @@ const EmailConfigurationEditor = () => {
         }
       } else {
         // CREATE
-        api
+        emailConfigurationVersionApi
           .emailConfigurationVersionCreate({
             bundledEmailConfigurationRequest: {
               ...props,
@@ -222,6 +222,8 @@ const EmailConfigurationEditor = () => {
     setSegmentData(segmentData);
   };
 
+  const missingTrigger =
+    !triggers || triggers.filter((t) => t.triggerId).length === 0;
   const saveButtonDisabled = !mailingName;
   const segmentChoosen =
     (segmentData &&
@@ -229,11 +231,7 @@ const EmailConfigurationEditor = () => {
         (segmentData.staticSegments?.length || 0) > 0)) ||
     (id !== undefined && content !== loadedContent);
   const releaseButtonDisabled =
-    saveButtonDisabled ||
-    !subject ||
-    !segmentChoosen ||
-    !triggers ||
-    triggers.filter((t) => t.triggerId).length === 0;
+    saveButtonDisabled || !subject || !segmentChoosen || missingTrigger;
   return loading ? (
     <Loading />
   ) : (
@@ -342,6 +340,7 @@ const EmailConfigurationEditor = () => {
             <MultipleTriggerInput
               initialTriggers={triggers}
               onChange={setTriggers}
+              showError={missingTrigger}
             />
 
             <hr />
