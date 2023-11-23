@@ -68,9 +68,12 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["GET"])
     def versions(self, request, pk=None):
         email_configuration = get_object_or_404(EmailConfiguration, id=pk)
-        versions = email_configuration.versions.all()
-        serializer = EmailConfigurationVersionSerializer(versions, many=True)
-        return Response(serializer.data)
+        pagination = self.pagination_class()
+        queryset = email_configuration.versions.all().order_by("-updated_at")
+        pagination.count = pagination.limit = queryset.count()
+        pagination.offset = 0
+        serializer = EmailConfigurationVersionSerializer(queryset, many=True)
+        return pagination.get_paginated_response(serializer.data)
 
 
 @extend_schema_view(
