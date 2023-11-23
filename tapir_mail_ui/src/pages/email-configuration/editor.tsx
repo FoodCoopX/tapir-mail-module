@@ -1,4 +1,9 @@
-import { HomeIcon, ListBulletIcon } from "@heroicons/react/24/outline";
+import {
+  CheckCircleIcon,
+  HomeIcon,
+  ListBulletIcon,
+  PaperAirplaneIcon,
+} from "@heroicons/react/24/outline";
 import { IPage } from "easy-email-core";
 import React, { useEffect, useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
@@ -14,13 +19,14 @@ import {
 import Editor, { EMPTY_PAGE } from "../../components/editor";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
 import Loading from "../../components/loading";
+import MultipleTriggerInput from "../../components/multipleTriggerInput";
 import SegmentInput from "../../components/segments/segmentInput";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
-import MultipleTriggerInput from "../../components/multipleTriggerInput";
+import TapirButton from "../../components/TapirButton";
 
 const ID_NEW_TEMPLATE = "<new>";
 
@@ -32,9 +38,9 @@ const stringToStatus = (status: string): StatusEnum => {
 };
 
 const EmailConfigurationEditor = () => {
-  const { id } = useParams();
-
-  const [loading, setLoading] = useState<Boolean>(Boolean(id));
+  const params = useParams();
+  const [currentId, setId] = useState<string | undefined>(params.id);
+  const [loading, setLoading] = useState<Boolean>(Boolean(params.id));
   const [mailingName, setMailingName] = useState("");
   const [subject, setSubject] = useState("");
   const [selectedTemplate, setSelectedTemplate] =
@@ -55,10 +61,8 @@ const EmailConfigurationEditor = () => {
   const [lastSavedTime, setLastSavedTime] = useState(Date.now());
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
   const showAlert = useAlert();
-
   const templateApi = useApi(EmailTemplateApi);
   const emailConfigurationVersionApi = useApi(EmailConfigurationVersionApi);
-
   const navigate = useNavigate();
 
   const fetchTemplates = () =>
@@ -73,10 +77,10 @@ const EmailConfigurationEditor = () => {
       });
 
   useEffect(() => {
-    if (id) {
+    if (currentId) {
       emailConfigurationVersionApi
         .emailConfigurationVersionGetBundledInfoRetrieve({
-          id: id,
+          id: currentId,
         })
         .then((data) => {
           const content = data.content ? mjmlToJson(data.content) : EMPTY_PAGE;
@@ -99,7 +103,16 @@ const EmailConfigurationEditor = () => {
     } else {
       fetchTemplates();
     }
-  }, [id]);
+  }, [currentId]);
+
+  const changeId = (id: string) => {
+    setId(id);
+    window.history.replaceState(
+      null,
+      "",
+      Paths.emailConfigurationEdit.replace(":id", id),
+    );
+  };
 
   const saveVersion = (content: IPage, newStatus: StatusEnum = status) => {
     return new Promise<void>((resolve, reject) => {
@@ -114,7 +127,7 @@ const EmailConfigurationEditor = () => {
         segmentData: segmentData,
       };
 
-      if (id) {
+      if (currentId) {
         // UPDATE
         if (status === StatusEnum.Released) {
           // create new draft version
@@ -124,7 +137,8 @@ const EmailConfigurationEditor = () => {
                 ...props,
               },
             })
-            .then(() => {
+            .then(({ id }) => {
+              changeId(id);
               resolve();
             })
             .catch(reject);
@@ -132,7 +146,7 @@ const EmailConfigurationEditor = () => {
           // update current draft version
           emailConfigurationVersionApi
             .emailConfigurationVersionUpdate({
-              id: id!!,
+              id: currentId!!,
               bundledEmailConfigurationRequest: props,
             })
             .then((data) => {
@@ -152,7 +166,7 @@ const EmailConfigurationEditor = () => {
             },
           })
           .then(({ id }) => {
-            navigate(Paths.emailConfigurationEdit.replace(":id", id));
+            changeId(id);
             resolve();
           })
           .catch(reject);
@@ -164,7 +178,7 @@ const EmailConfigurationEditor = () => {
     setContent(content);
     const currentTime = Date.now();
     if (
-      id &&
+      currentId &&
       currentTime - lastSavedTime >= 1000 &&
       content !== loadedContent
     ) {
@@ -229,7 +243,7 @@ const EmailConfigurationEditor = () => {
     (segmentData &&
       ((segmentData.addSegments?.length || 0) > 0 ||
         (segmentData.staticSegments?.length || 0) > 0)) ||
-    (id !== undefined && content !== loadedContent);
+    (currentId !== undefined && content !== loadedContent);
   const releaseButtonDisabled =
     saveButtonDisabled || !subject || !segmentChoosen || missingTrigger;
   return loading ? (
@@ -238,34 +252,16 @@ const EmailConfigurationEditor = () => {
     <>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 5fr" }}>
         <div style={{ margin: "1em", height: "100%" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gridGap: "1em",
-            }}
-          >
-            <Link to={Paths.dashboard}>
-              <Button
-                size="sm"
-                style={{ width: "100%" }}
-                variant="outline-primary"
-              >
-                <HomeIcon width={18} />
-                &nbsp;&nbsp;Dashboard
-              </Button>
-            </Link>
-            <Link to={Paths.dashboard}>
-              <Button
-                size="sm"
-                style={{ width: "100%" }}
-                variant="outline-primary"
-              >
-                <ListBulletIcon width="18" />
-                &nbsp;&nbsp;&nbsp;Übersicht
-              </Button>
-            </Link>
-          </div>
+          <Link to={Paths.dashboard}>
+            <Button
+              size="sm"
+              style={{ width: "100%" }}
+              variant="outline-primary"
+            >
+              <HomeIcon width={18} />
+              &nbsp;&nbsp;Zurück zum Dashboard
+            </Button>
+          </Link>
           <hr />
           <Form style={{ maxHeight: "100vh" }}>
             <Form.Group>
@@ -292,7 +288,7 @@ const EmailConfigurationEditor = () => {
             </Form.Group>
             <br />
 
-            {!id && (
+            {!currentId && (
               <>
                 <Form.Group>
                   <Form.Label>Template auswählen</Form.Label>
@@ -344,22 +340,27 @@ const EmailConfigurationEditor = () => {
             />
 
             <hr />
-            <Button
-              disabled={releaseButtonDisabled}
-              variant={releaseButtonDisabled ? "disabled" : "primary"}
-              style={{ width: "100%", marginBottom: "1em" }}
-              onClick={() => setReleaseModalOpen(true)}
-            >
-              Veröffentlichen & senden
-            </Button>
-            <Button
+            <TapirButton
               disabled={saveButtonDisabled}
-              variant={saveButtonDisabled ? "disabled" : "success"}
-              style={{ width: "100%" }}
+              variant={saveButtonDisabled ? "disabled" : "primary"}
+              style={{
+                width: "100%",
+                marginBottom: "1em",
+              }}
               onClick={handleSaveDraft}
-            >
-              Als Entwurf speichern & schließen
-            </Button>
+              icon={CheckCircleIcon}
+              text="Entwurf speichern & schließen"
+            />
+            <TapirButton
+              disabled={releaseButtonDisabled}
+              variant={releaseButtonDisabled ? "disabled" : "success"}
+              style={{
+                width: "100%",
+              }}
+              icon={PaperAirplaneIcon}
+              onClick={() => setReleaseModalOpen(true)}
+              text="Veröffentlichen & senden"
+            />
 
             <hr />
             <div>

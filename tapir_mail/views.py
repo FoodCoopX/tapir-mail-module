@@ -62,6 +62,9 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
     serializer_class = EmailConfigurationSerializer
     pagination_class = LimitOffsetPagination
 
+    def get_queryset(self):
+        return super().get_queryset().order_by("-updated_at")
+
     @extend_schema(
         responses={200: EmailConfigurationVersionSerializer(many=True)},
     )

@@ -9,6 +9,7 @@ interface TapirButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
   size?: "sm" | "lg" | undefined;
+  style?: React.CSSProperties;
 }
 
 const TapirButton: React.FC<TapirButtonProps> = (props) => {
@@ -21,6 +22,7 @@ const TapirButton: React.FC<TapirButtonProps> = (props) => {
         alignItems: "center",
         gap: "2px",
         height: "100%",
+        ...props.style,
       }}
       size={props.size}
       onClick={props.onClick}
