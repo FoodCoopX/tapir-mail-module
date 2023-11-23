@@ -24,7 +24,7 @@ class TimeTrigger(Trigger[TimeTriggerData]):
 
     @classmethod
     def get_display_name(cls) -> str:
-        return "An Datum/Zeitpunkt senden"
+        return "Festgelegter Zeitpunkt"
 
     @classmethod
     def get_field_definitions(cls) -> [Trigger.FieldDefinition]:

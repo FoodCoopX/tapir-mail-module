@@ -20,6 +20,7 @@ const TapirButton: React.FC<TapirButtonProps> = (props) => {
         justifyContent: "space-between",
         alignItems: "center",
         gap: "2px",
+        height: "100%",
       }}
       size={props.size}
       onClick={props.onClick}

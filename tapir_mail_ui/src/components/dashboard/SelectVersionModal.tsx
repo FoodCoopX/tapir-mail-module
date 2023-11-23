@@ -217,13 +217,18 @@ const SelectVersionModal = ({
                       : "Löschen"
                   }
                 >
-                  {versions.length > 1 ? (
+                  {versions.length > 1 &&
+                  selectedVersion?.canBeDeleted &&
+                  emailConfiguration?.canBeDeleted ? (
                     <DropdownButton
                       disabled={deleteDropdownDisabled}
                       as={ButtonGroup}
                       variant={
-                        deleteDropdownDisabled ? "outline-secondary" : "danger"
+                        deleteDropdownDisabled
+                          ? "outline-secondary"
+                          : "outline-danger"
                       }
+                      style={{ height: "100%" }}
                       title={<TrashIcon width="1.5em" />}
                       id="bg-nested-dropdown"
                     >
