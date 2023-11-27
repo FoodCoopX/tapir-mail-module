@@ -3,6 +3,7 @@ import { Badge, Modal, Table } from "react-bootstrap";
 import {
   DispatchStatusEnum,
   EmailConfigurationDispatch,
+  EmailConfigurationDispatchApi,
   EmailDispatch,
   EmailDispatchApi,
 } from "../api_client";
@@ -30,6 +31,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
 }) => {
   const [dispatches, setDispatches] = useState<EmailDispatch[]>([]);
   const emailDispatchApi = useApi(EmailDispatchApi);
+  const emailConfigDispatchApi = useApi(EmailConfigurationDispatchApi);
   const showAlert = useAlert();
   const [currentPage, setCurrentPage] = useState(0);
   const [dispatchCount, setDispatchCount] = useState(0);
@@ -84,7 +86,23 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
     }
   }
 
-  function retryDispatch(dispatch: EmailDispatch) {
+  function retryConfigDispatch() {
+    emailConfigDispatchApi
+      .emailConfigurationDispatchRetryallCreate({
+        id: configDispatch.id!,
+        emailConfigurationDispatchRequest: configDispatch,
+      })
+      .then(() => {
+        loadData();
+        showAlert("Email wird erneut versendet.", "success");
+      })
+      .catch((error) => {
+        console.error(error);
+        showAlert("Fehler beim erneutem Versand!", "danger");
+      });
+  }
+
+  function retrySingleDispatch(dispatch: EmailDispatch) {
     emailDispatchApi
       .emailDispatchRetryCreate({
         id: dispatch.id!,
@@ -123,6 +141,17 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
             selectedChoice={statusFilter}
             noSelectionText="Per Status filtern"
           ></TapirDropdown>
+          <TapirButton
+            variant={
+              configDispatch.errorCount === 0
+                ? "outline-secondary"
+                : "outline-primary"
+            }
+            icon={ArrowPathIcon}
+            text={"Alle Fehler erneut versuchen"}
+            disabled={configDispatch.errorCount === 0}
+            onClick={retryConfigDispatch}
+          />
           <EmailConfigurationDispatchStats
             emailConfigurationDispatch={configDispatch}
           />
@@ -162,7 +191,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
                         variant={"outline-primary"}
                         text="Erneut versenden"
                         icon={ArrowPathIcon}
-                        onClick={() => retryDispatch(dispatch)}
+                        onClick={() => retrySingleDispatch(dispatch)}
                       />
                     ) : (
                       <span>Dies ist schon erneut versendet worden.</span>
