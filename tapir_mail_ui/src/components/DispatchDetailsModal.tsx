@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Badge, Modal, Table } from "react-bootstrap";
 import {
+  DispatchStatusEnum,
   EmailConfigurationDispatch,
   EmailDispatch,
   EmailDispatchApi,
@@ -13,6 +14,8 @@ import { EMAIL_DISPATCH_STATUS_PROPS } from "../utils/emailDispatchStatusProps";
 import { formatDate } from "../utils/formatDate";
 import TapirDropdown, { Choice } from "./tapirDropdown";
 import EmailConfigurationDispatchStats from "./dashboard/EmailConfigurationDispatchStats";
+import TapirButton from "./TapirButton";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 interface DispatchDetailsModalProps {
   configDispatch: EmailConfigurationDispatch;
@@ -26,7 +29,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
   onClose,
 }) => {
   const [dispatches, setDispatches] = useState<EmailDispatch[]>([]);
-  const api = useApi(EmailDispatchApi);
+  const emailDispatchApi = useApi(EmailDispatchApi);
   const showAlert = useAlert();
   const [currentPage, setCurrentPage] = useState(0);
   const [dispatchCount, setDispatchCount] = useState(0);
@@ -42,7 +45,11 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
   }
 
   useEffect(() => {
-    api
+    loadData();
+  }, [configDispatch, currentPage, statusFilter]);
+
+  function loadData() {
+    emailDispatchApi
       .emailDispatchList({
         limit: DEFAULT_PAGE_SIZE,
         offset: currentPage * DEFAULT_PAGE_SIZE,
@@ -57,7 +64,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
         console.error(error);
         showAlert("Fehler beim Laden der Dispatches", "danger");
       });
-  }, [configDispatch, currentPage, statusFilter]);
+  }
 
   function renderDetails(dispatch: EmailDispatch) {
     switch (dispatch.dispatchStatus) {
@@ -75,6 +82,22 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
       case "unknown":
         return <span></span>;
     }
+  }
+
+  function retryDispatch(dispatch: EmailDispatch) {
+    emailDispatchApi
+      .emailDispatchRetryCreate({
+        id: dispatch.id!,
+        emailDispatchRequest: dispatch,
+      })
+      .then(() => {
+        loadData();
+        showAlert("Email wird erneut versendet.", "success");
+      })
+      .catch((error) => {
+        console.error(error);
+        showAlert("Fehler beim erneutem Versand!", "danger");
+      });
   }
 
   return (
@@ -114,6 +137,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
               <th>Adresse</th>
               <th>Status</th>
               <th>Details</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -130,6 +154,20 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
                   </Badge>
                 </td>
                 <td>{renderDetails(dispatch)}</td>
+                <td>
+                  {dispatch.dispatchStatus != DispatchStatusEnum.Opened &&
+                    dispatch.dispatchStatus != DispatchStatusEnum.Unknown &&
+                    (!dispatch.nextRetry ? (
+                      <TapirButton
+                        variant={"outline-primary"}
+                        text="Erneut versenden"
+                        icon={ArrowPathIcon}
+                        onClick={() => retryDispatch(dispatch)}
+                      />
+                    ) : (
+                      <span>Dies ist schon erneut versendet worden.</span>
+                    ))}
+                </td>
               </tr>
             ))}
           </tbody>

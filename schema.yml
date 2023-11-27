@@ -2478,6 +2478,8 @@ components:
           maxLength: 10
         email_configuration_dispatch:
           $ref: '#/components/schemas/EmailConfigurationDispatch'
+        dispatch_status:
+          $ref: '#/components/schemas/DispatchStatusEnum'
         previous_retries:
           type: string
           readOnly: true
@@ -2532,6 +2534,8 @@ components:
           maxLength: 10
         email_configuration_dispatch:
           $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
+        dispatch_status:
+          $ref: '#/components/schemas/DispatchStatusEnum'
         recipient:
           type: string
           format: email
@@ -2562,6 +2566,7 @@ components:
           minLength: 1
           nullable: true
       required:
+      - dispatch_status
       - email_configuration_dispatch
       - recipient
     EmailTemplate:

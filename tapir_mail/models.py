@@ -189,10 +189,10 @@ class EmailDispatch(BaseModel):
 
     def get_previous_retries(self):
         retries = []
-        current_dispatch = self.previous_retry.all().first()
+        current_dispatch = getattr(self, "previous_retry", None)
         while current_dispatch is not None:
             retries.append(current_dispatch)
-            current_dispatch = current_dispatch.previous_retry.all().first()
+            current_dispatch = getattr(current_dispatch, "previous_retry", None)
         return list(reversed(retries))
 
     def __str__(self):
