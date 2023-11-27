@@ -7,6 +7,7 @@ class TestUtils:
     def create_email_dispatches(
         count,
         config_dispatch,
+        error_message=None,
         sent_time=None,
         created_at=None,
         recipient_prefix="test",
@@ -14,6 +15,7 @@ class TestUtils:
         dispatches = EmailDispatch.objects.bulk_create(
             EmailDispatchFactory.build(
                 email_configuration_dispatch=config_dispatch,
+                error_message=error_message,
                 recipient=f"{recipient_prefix}{i}@example.com",
                 sent_time=sent_time,
             )

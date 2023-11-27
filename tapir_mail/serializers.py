@@ -9,11 +9,11 @@ from tapir_mail.models import (
     EmailConfigurationVersion,
     EmailDispatch,
     EmailTemplate,
-    StaticSegment,
     ReleaseStatus,
+    StaticSegment,
 )
 from tapir_mail.service.segment import filter_registry, segment_registry
-from tapir_mail.service.triggers import trigger_registry, Trigger
+from tapir_mail.service.triggers import Trigger, trigger_registry
 
 
 class TriggerDataSerializer(serializers.Serializer):
@@ -199,16 +199,19 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     error_count = serializers.SerializerMethodField()
 
     def get_sent_count(self, obj) -> int:
-        return obj.emaildispatch_set.filter(sent_time__isnull=False).count()
+        return obj.emaildispatch_set.filter(
+            sent_time__isnull=False, next_retry__isnull=True
+        ).count()
 
     def get_opened_count(self, obj) -> int:
-        return obj.emaildispatch_set.filter(opened_time__isnull=False).count()
+        return obj.emaildispatch_set.filter(
+            opened_time__isnull=False, next_retry__isnull=True
+        ).count()
 
     def get_error_count(self, obj) -> int:
         return (
-            obj.emaildispatch_set.filter(
-                Q(error_message__isnull=False) | Q(bounce_message__isnull=False)
-            )
+            obj.emaildispatch_set.filter(next_retry__isnull=True)
+            .filter(Q(error_message__isnull=False) | Q(bounce_message__isnull=False))
             .distinct()
             .count()
         )
@@ -229,7 +232,12 @@ class TriggerDefinitionSerializer(serializers.Serializer):
 
 class EmailDispatchSerializer(serializers.ModelSerializer):
     email_configuration_dispatch = EmailConfigurationDispatchSerializer()
+    previous_retries = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailDispatch
         fields = "__all__"
+
+    def get_previous_retries(self, obj):
+        previous_retries = obj.get_previous_retries()
+        return EmailDispatchSerializer(previous_retries, many=True).data

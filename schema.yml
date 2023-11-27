@@ -693,6 +693,41 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/email_configuration_dispatch/{id}/retryall/:
+    post:
+      operationId: email_configuration_dispatch_retryall_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration dispatch.
+        required: true
+      tags:
+      - email_configuration_dispatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/email_configuration_dispatch/last_sent/:
     get:
       operationId: email_configuration_dispatch_last_sent_list
@@ -1053,6 +1088,40 @@ paths:
         required: true
       tags:
       - email_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailDispatch'
+          description: ''
+  /api/email_dispatch/{id}/retry/:
+    post:
+      operationId: email_dispatch_retry_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email dispatch.
+        required: true
+      tags:
+      - email_dispatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailDispatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailDispatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailDispatchRequest'
+        required: true
       security:
       - tokenAuth: []
       - {}
@@ -2231,6 +2300,9 @@ components:
           maxLength: 10
         email_configuration_dispatch:
           $ref: '#/components/schemas/EmailConfigurationDispatch'
+        previous_retries:
+          type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -2263,11 +2335,56 @@ components:
           nullable: true
         bounce_type:
           $ref: '#/components/schemas/BounceTypeEnum'
+        next_retry:
+          type: string
+          nullable: true
       required:
       - created_at
       - email_configuration_dispatch
+      - previous_retries
       - recipient
       - updated_at
+    EmailDispatchRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        email_configuration_dispatch:
+          $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
+        recipient:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        recipient_tokens:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        sent_time:
+          type: string
+          format: date-time
+          nullable: true
+        opened_time:
+          type: string
+          format: date-time
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        bounce_message:
+          type: string
+          nullable: true
+        bounce_type:
+          $ref: '#/components/schemas/BounceTypeEnum'
+        next_retry:
+          type: string
+          minLength: 1
+          nullable: true
+      required:
+      - email_configuration_dispatch
+      - recipient
     EmailTemplate:
       type: object
       properties:

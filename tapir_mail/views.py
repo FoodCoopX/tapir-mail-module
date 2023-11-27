@@ -31,6 +31,7 @@ from tapir_mail.serializers import (
     TriggerDefinitionSerializer,
 )
 from tapir_mail.service.email import prepare_email
+from tapir_mail.service.email_dispatch import RetryEmailDispatch
 from tapir_mail.service.segment import (
     filter_registry,
     resolve_segments,
@@ -339,6 +340,16 @@ class EmailConfigurationDispatchViewSet(viewsets.ModelViewSet):
         serializer = EmailConfigurationDispatchSerializer(objects, many=True)
         return pagination.get_paginated_response(serializer.data)
 
+    @extend_schema(responses={200: OpenApiTypes.OBJECT})
+    @action(detail=True, methods=["post"], url_path="retryall")
+    def retry_all_failed(self, request, pk=None):
+        email_configuration_dispatch = self.get_object()
+        try:
+            count = RetryEmailDispatch.retry_all_failed(email_configuration_dispatch)
+            return Response({"count": count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class TriggerListView(viewsets.ViewSet):
     @extend_schema(
@@ -363,8 +374,23 @@ class TriggerListView(viewsets.ViewSet):
 
 
 class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = EmailDispatch.objects.all().order_by("-sent_time")
+    queryset = EmailDispatch.objects.filter(next_retry__isnull=True).order_by(
+        "-sent_time"
+    )
     serializer_class = EmailDispatchSerializer
+
+    @extend_schema(responses={200: EmailDispatchSerializer(many=False)})
+    @action(detail=True, methods=["post"])
+    def retry(self, request, pk=None):
+        email_dispatch = get_object_or_404(EmailDispatch, pk=pk)
+        try:
+            retry_dispatch = RetryEmailDispatch.retry(email_dispatch)
+            serialized_retry_dispatch = EmailDispatchSerializer(retry_dispatch)
+            return Response(
+                data=serialized_retry_dispatch.data, status=status.HTTP_201_CREATED
+            )
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SegmentAndFilterViewSet(viewsets.ViewSet):

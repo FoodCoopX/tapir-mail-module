@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.mail import get_connection
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
@@ -231,3 +232,55 @@ class SendEmailBatch:
                 with transaction.atomic():
                     email_dispatch.error_message = str(e)
                     email_dispatch.save()
+
+
+class RetryEmailDispatch:
+    @classmethod
+    def _copy_email_dispatch(cls, email_dispatch: EmailDispatch):
+        return EmailDispatch(
+            email_configuration_dispatch=email_dispatch.email_configuration_dispatch,
+            recipient=email_dispatch.recipient,
+            recipient_tokens=email_dispatch.recipient_tokens,
+        )
+
+    @classmethod
+    @transaction.atomic
+    def retry(cls, email_dispatch: EmailDispatch):
+        most_recent_dispatch = email_dispatch
+        while most_recent_dispatch.next_retry is not None:
+            most_recent_dispatch = most_recent_dispatch.next_retry
+
+        if (
+            most_recent_dispatch.error_message is None
+            and most_recent_dispatch.bounce_message is None
+        ):
+            raise ValueError(
+                f"EmailDispatch#{email_dispatch.id} is not in an error state. Cannot retry."
+                if most_recent_dispatch.id == email_dispatch.id
+                else f"EmailDispatch#{email_dispatch.id} already has a pending retry: EmailDispatch#{most_recent_dispatch.id}"
+            )
+
+        LOG.info(f"Retrying EmailDispatch#{most_recent_dispatch.id}")
+
+        retry_dispatch = cls._copy_email_dispatch(most_recent_dispatch)
+        retry_dispatch.save()
+
+        most_recent_dispatch.next_retry = retry_dispatch
+        most_recent_dispatch.save()
+
+        return retry_dispatch
+
+    @classmethod
+    @transaction.atomic
+    def retry_all_failed(cls, email_configuration_dispatch: EmailConfigurationDispatch):
+        failed_dispatches = email_configuration_dispatch.emaildispatch_set.filter(
+            next_retry__isnull=True,  # Select only the most recent dispatches in each chain
+        ).filter(Q(error_message__isnull=False) | Q(bounce_message__isnull=False))
+        for email_dispatch in failed_dispatches:
+            cls.retry(email_dispatch)
+
+        LOG.info(
+            f"Retried failed EmailDispatches for EmailConfigurationDispatch#{email_configuration_dispatch.id}"
+        )
+
+        return failed_dispatches.count()

@@ -6,7 +6,7 @@ from django.core import mail
 
 from tapir_mail.models import EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import _get_dispatch_id_from_email_return_path
-from tapir_mail.service.email_dispatch import SendEmailBatch
+from tapir_mail.service.email_dispatch import RetryEmailDispatch, SendEmailBatch
 from tapir_mail.tests.factories import (
     EmailConfigurationDispatchFactory,
     EmailConfigurationVersionFactory,
@@ -118,4 +118,116 @@ class SendEmailBatchTest(TapirIntegrationTest):
         self.assertEqual(
             set(EmailDispatch.objects.filter(sent_time__isnull=True)),
             set(newer_dispatches),
+        )
+
+    def test_retrySingleEmailDispatch_normalCase_createsRetryDispatch(self):
+        dispatch = TestUtils.create_email_dispatches(
+            1,
+            config_dispatch=self.config_dispatch,
+            error_message="Test error",
+            sent_time=self.NOW,
+        )[0]
+
+        original_dispatch_count = EmailDispatch.objects.count()
+
+        RetryEmailDispatch.retry(dispatch)
+
+        # Check total dispatch count
+        self.assertEqual(EmailDispatch.objects.count(), original_dispatch_count + 1)
+
+        # Check the new dispatch
+        dispatch.refresh_from_db()
+        retry_dispatch = dispatch.next_retry
+        self.assertEqual(retry_dispatch.recipient, dispatch.recipient)
+        self.assertIsNone(retry_dispatch.sent_time)
+
+        # Original dispatch should have a reference to the retry
+        self.assertIsNotNone(dispatch.next_retry)
+
+        # Simulate sending emails
+        SendEmailBatch.send_email_dispatches()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [dispatch.recipient])
+
+    def test_retrySingleEmailDispatch_originalNotInErrorState_raisesError(self):
+        dispatch = TestUtils.create_email_dispatches(
+            1,
+            config_dispatch=self.config_dispatch,
+            sent_time=self.NOW,
+        )[0]
+
+        with self.assertRaises(ValueError):
+            RetryEmailDispatch.retry(dispatch)
+
+    def test_retrySingleEmailDispatch_retryOfRetry_refersBackToOriginalDispatch(self):
+        original_dispatch = TestUtils.create_email_dispatches(
+            1,
+            config_dispatch=self.config_dispatch,
+            error_message="Initial error",
+            sent_time=self.NOW,
+        )[0]
+
+        # Retry the original dispatch
+        RetryEmailDispatch.retry(original_dispatch)
+        original_dispatch.refresh_from_db()
+
+        # Get the created retry dispatch
+        first_retry_dispatch = original_dispatch.next_retry
+        first_retry_dispatch.error_message = "First retry error"
+        first_retry_dispatch.sent_time = self.NOW
+        first_retry_dispatch.save()
+
+        # Retry the first retry dispatch
+        RetryEmailDispatch.retry(first_retry_dispatch)
+        first_retry_dispatch.refresh_from_db()
+
+        # Get the second retry dispatch
+        second_retry_dispatch = first_retry_dispatch.next_retry
+
+        # Check the chain of retries
+        self.assertIsNotNone(first_retry_dispatch)
+        self.assertIsNotNone(second_retry_dispatch)
+        self.assertEqual(original_dispatch.next_retry, first_retry_dispatch)
+        self.assertEqual(first_retry_dispatch.next_retry, second_retry_dispatch)
+
+        SendEmailBatch.send_email_dispatches()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [original_dispatch.recipient])
+
+    def test_retryAllFailed_mixOfFailedAndSucceeded_onlyEligibleDispatchesAreRetried(
+        self,
+    ):
+        error_dispatches = TestUtils.create_email_dispatches(
+            2,
+            config_dispatch=self.config_dispatch,
+            error_message="Error",
+            sent_time=self.NOW,
+        )
+        non_error_dispatch = TestUtils.create_email_dispatches(
+            1,
+            config_dispatch=self.config_dispatch,
+            sent_time=self.NOW,
+        )[0]
+
+        # Retry one of the error dispatches to create a retry dispatch
+        RetryEmailDispatch.retry(error_dispatches[0])
+
+        original_retries_count = EmailDispatch.objects.filter(
+            next_retry__isnull=False
+        ).count()
+
+        RetryEmailDispatch.retry_all_failed(self.config_dispatch)
+
+        new_retries_count = EmailDispatch.objects.filter(
+            next_retry__isnull=False
+        ).count()
+
+        self.assertEqual(new_retries_count, original_retries_count + 1)
+
+    def test_retryAllFailed_noEligibleDispatches_noRetriesCreated(self):
+        RetryEmailDispatch.retry_all_failed(self.config_dispatch)
+
+        # Verify that no new retries were created
+        self.assertEqual(
+            EmailDispatch.objects.filter(next_retry__isnull=False).count(), 0
         )
