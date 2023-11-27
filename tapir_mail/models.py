@@ -159,6 +159,12 @@ class EmailDispatch(BaseModel):
         UNKNOWN = "unknown", "Unknown"
         NOT_ANALYZED = "not_analyzed", "Not analyzed"
 
+    class DispatchStatus(models.TextChoices):
+        ERROR = "error", "Fehler beim Versand"
+        BOUNCED = "bounced", "Bounce"
+        OPENED = "opened", "Geöffnet"
+        UNKNOWN = "unknown", "Nicht geöffnet"
+
     email_configuration_dispatch = models.ForeignKey(
         EmailConfigurationDispatch, on_delete=models.CASCADE
     )
@@ -193,6 +199,15 @@ class EmailDispatch(BaseModel):
         return (
             f"{self.email_configuration_dispatch} - {self.recipient} - {self.sent_time}"
         )
+
+    def get_dispatch_status(self):
+        if self.error_message:
+            return self.DispatchStatus.ERROR
+        if self.bounce_message:
+            return self.DispatchStatus.BOUNCED
+        if self.opened_time:
+            return self.DispatchStatus.OPENED
+        return self.DispatchStatus.UNKNOWN
 
 
 class StaticSegment(BaseModel):

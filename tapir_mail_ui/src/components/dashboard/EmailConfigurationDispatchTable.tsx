@@ -15,6 +15,7 @@ import { guessElementType } from "../segments/common";
 import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
 import TapirPagination from "../TapirPagination";
 import SelectVersionModal from "./SelectVersionModal";
+import DispatchDetailsModal from "../DispatchDetailsModal";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -36,6 +37,10 @@ const EmailConfigurationDispatchTable: React.FC<
     selectedEmailConfigurationVersion,
     setSelectedEmailConfigurationVersion,
   ] = useState<EmailConfigurationVersion>();
+  const [
+    emailConfigurationDispatchForStats,
+    setEmailConfigurationDispatchForStats,
+  ] = useState<EmailConfigurationDispatch>();
 
   const fetchEmailConfigurationDispatch = () => {
     let call;
@@ -169,6 +174,9 @@ const EmailConfigurationDispatchTable: React.FC<
                             emailConfigurationDispatch={
                               emailConfigurationDispatch
                             }
+                            setEmailConfigurationDispatchForStats={
+                              setEmailConfigurationDispatchForStats
+                            }
                           />
                         </td>
                       )}
@@ -199,15 +207,33 @@ const EmailConfigurationDispatchTable: React.FC<
         onDataChanged={fetchEmailConfigurationDispatch}
         selectedVersionOnOpen={selectedEmailConfigurationVersion?.id}
       />
+      {emailConfigurationDispatchForStats && (
+        <DispatchDetailsModal
+          configDispatch={emailConfigurationDispatchForStats}
+          open={!!emailConfigurationDispatchForStats}
+          onClose={() => setEmailConfigurationDispatchForStats(undefined)}
+        />
+      )}
     </>
   );
 };
 
 const EmailConfigurationDispatchStatsColumn: React.FC<{
   emailConfigurationDispatch: EmailConfigurationDispatch;
-}> = ({ emailConfigurationDispatch }) => {
+  setEmailConfigurationDispatchForStats: (
+    configDispatch: EmailConfigurationDispatch,
+  ) => void;
+}> = ({
+  emailConfigurationDispatch,
+  setEmailConfigurationDispatchForStats,
+}) => {
   return (
-    <>
+    <span
+      onClick={(event) => {
+        event.stopPropagation();
+        setEmailConfigurationDispatchForStats(emailConfigurationDispatch);
+      }}
+    >
       <small>
         <strong>
           {emailConfigurationDispatch.sentCount
@@ -256,7 +282,7 @@ const EmailConfigurationDispatchStatsColumn: React.FC<{
           key={2}
         />
       </ProgressBar>
-    </>
+    </span>
   );
 };
 

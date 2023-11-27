@@ -3,7 +3,7 @@ import logging
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -377,6 +377,42 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
         "-sent_time"
     )
     serializer_class = EmailDispatchSerializer
+    pagination_class = LimitOffsetPagination
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name="dispatch_status", required=False),
+            OpenApiParameter(name="config_dispatch_id", required=False),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        queryset = EmailDispatch.objects.all().order_by(
+            "-error_message", "-bounce_message", "-opened_time", "recipient"
+        )
+        config_dispatch_id = request.query_params.get("config_dispatch_id")
+        if config_dispatch_id:
+            queryset = queryset.filter(
+                email_configuration_dispatch__id=config_dispatch_id
+            )
+
+        dispatch_status = request.query_params.get("dispatch_status")
+        if dispatch_status == EmailDispatch.DispatchStatus.OPENED:
+            queryset = queryset.filter(opened_time__isnull=False)
+        elif dispatch_status == EmailDispatch.DispatchStatus.ERROR:
+            queryset = queryset.filter(error_message__isnull=False)
+        elif dispatch_status == EmailDispatch.DispatchStatus.BOUNCED:
+            queryset = queryset.filter(bounce_message__isnull=False)
+        elif dispatch_status == EmailDispatch.DispatchStatus.UNKNOWN:
+            queryset = queryset.filter(
+                opened_time__isnull=True,
+                error_message__isnull=True,
+                bounce_message__isnull=True,
+            )
+
+        pagination = self.pagination_class()
+        objects = pagination.paginate_queryset(queryset, request)
+        serializer = EmailDispatchSerializer(objects, many=True)
+        return pagination.get_paginated_response(serializer.data)
 
     @extend_schema(responses={200: EmailDispatchSerializer(many=False)})
     @action(detail=True, methods=["post"])
