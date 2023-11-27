@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Card, ProgressBar, Table } from "react-bootstrap";
+import { Card, Table } from "react-bootstrap";
 import {
   EmailConfigurationDispatch,
   EmailConfigurationDispatchApi,
@@ -16,6 +16,7 @@ import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
 import TapirPagination from "../TapirPagination";
 import SelectVersionModal from "./SelectVersionModal";
 import DispatchDetailsModal from "../DispatchDetailsModal";
+import { EmailConfigurationDispatchStats } from "./EmailConfigurationDispatchStats";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -170,7 +171,7 @@ const EmailConfigurationDispatchTable: React.FC<
                       </td>
                       {content === "last-sent" && (
                         <td style={{ padding: "0.1em", margin: "0" }}>
-                          <EmailConfigurationDispatchStatsColumn
+                          <EmailConfigurationDispatchStats
                             emailConfigurationDispatch={
                               emailConfigurationDispatch
                             }
@@ -215,74 +216,6 @@ const EmailConfigurationDispatchTable: React.FC<
         />
       )}
     </>
-  );
-};
-
-const EmailConfigurationDispatchStatsColumn: React.FC<{
-  emailConfigurationDispatch: EmailConfigurationDispatch;
-  setEmailConfigurationDispatchForStats: (
-    configDispatch: EmailConfigurationDispatch,
-  ) => void;
-}> = ({
-  emailConfigurationDispatch,
-  setEmailConfigurationDispatchForStats,
-}) => {
-  return (
-    <span
-      onClick={(event) => {
-        event.stopPropagation();
-        setEmailConfigurationDispatchForStats(emailConfigurationDispatch);
-      }}
-    >
-      <small>
-        <strong>
-          {emailConfigurationDispatch.sentCount
-            ? Math.round(
-                (emailConfigurationDispatch.openedCount /
-                  emailConfigurationDispatch.sentCount) *
-                  100,
-              )
-            : 0}
-          &nbsp;%
-        </strong>
-        &nbsp;&nbsp;&nbsp;(
-        <strong>{emailConfigurationDispatch.openedCount}</strong>/
-        <span style={{ color: "darkred" }}>
-          {emailConfigurationDispatch.errorCount}
-        </span>
-        /{emailConfigurationDispatch.sentCount})
-      </small>
-      <ProgressBar style={{ height: "0.75em" }}>
-        <ProgressBar
-          title={"Geöffnet: " + emailConfigurationDispatch.openedCount}
-          variant="success"
-          now={emailConfigurationDispatch.openedCount * 100}
-          key={1}
-        />
-        <ProgressBar
-          title={"Fehler: " + emailConfigurationDispatch.errorCount}
-          variant="danger"
-          now={emailConfigurationDispatch.errorCount * 100}
-          key={3}
-        />
-        <ProgressBar
-          title={
-            "Nicht geöffnet: " +
-            (emailConfigurationDispatch.sentCount -
-              emailConfigurationDispatch.openedCount -
-              emailConfigurationDispatch.errorCount)
-          }
-          variant="warning"
-          now={
-            (emailConfigurationDispatch.sentCount -
-              emailConfigurationDispatch.openedCount -
-              emailConfigurationDispatch.errorCount) *
-            100
-          }
-          key={2}
-        />
-      </ProgressBar>
-    </span>
   );
 };
 

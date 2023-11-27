@@ -11,6 +11,8 @@ import { DEFAULT_PAGE_SIZE } from "../utils/pagination";
 import TapirPagination from "./TapirPagination";
 import { EMAIL_DISPATCH_STATUS_PROPS } from "../utils/emailDispatchStatusProps";
 import { formatDate } from "../utils/formatDate";
+import TapirDropdown, { Choice } from "./tapirDropdown";
+import EmailConfigurationDispatchStats from "./dashboard/EmailConfigurationDispatchStats";
 
 interface DispatchDetailsModalProps {
   configDispatch: EmailConfigurationDispatch;
@@ -28,6 +30,16 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
   const showAlert = useAlert();
   const [currentPage, setCurrentPage] = useState(0);
   const [dispatchCount, setDispatchCount] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<Choice>();
+
+  const filterChoices = [];
+  let key: keyof typeof EMAIL_DISPATCH_STATUS_PROPS;
+  for (key in EMAIL_DISPATCH_STATUS_PROPS) {
+    filterChoices.push({
+      id: key,
+      name: EMAIL_DISPATCH_STATUS_PROPS[key].text,
+    });
+  }
 
   useEffect(() => {
     api
@@ -35,6 +47,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
         limit: DEFAULT_PAGE_SIZE,
         offset: currentPage * DEFAULT_PAGE_SIZE,
         configDispatchId: configDispatch.id,
+        dispatchStatus: statusFilter?.id.toString(),
       })
       .then((paginatedData) => {
         setDispatches(paginatedData.results ?? []);
@@ -44,7 +57,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
         console.error(error);
         showAlert("Fehler beim Laden der Dispatches", "danger");
       });
-  }, [configDispatch, currentPage]);
+  }, [configDispatch, currentPage, statusFilter]);
 
   function renderDetails(dispatch: EmailDispatch) {
     switch (dispatch.dispatchStatus) {
@@ -71,9 +84,26 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
       size="lg"
     >
       <Modal.Header closeButton>
-        <Modal.Title>Versand Details</Modal.Title>
+        <Modal.Title>
+          Versand Details : "
+          {configDispatch.emailConfigurationVersion.emailConfiguration.name}"
+          gesendet am {formatDate(configDispatch.scheduledTime)}
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        <div className="d-flex justify-content-between align-items-center">
+          <TapirDropdown
+            choices={filterChoices}
+            onChoiceSelected={(choice) => {
+              setStatusFilter(choice ?? undefined);
+            }}
+            selectedChoice={statusFilter}
+            noSelectionText="Per Status filtern"
+          ></TapirDropdown>
+          <EmailConfigurationDispatchStats
+            emailConfigurationDispatch={configDispatch}
+          />
+        </div>
         <Table
           striped
           hover
@@ -105,14 +135,16 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
           </tbody>
         </Table>
       </Modal.Body>
-      <Modal.Footer>
-        <TapirPagination
-          pageSize={DEFAULT_PAGE_SIZE}
-          currentPage={currentPage}
-          goToPage={setCurrentPage}
-          itemCount={dispatchCount}
-        />
-      </Modal.Footer>
+      {dispatchCount > DEFAULT_PAGE_SIZE && (
+        <Modal.Footer className="d-flex justify-content-center align-items-center">
+          <TapirPagination
+            pageSize={DEFAULT_PAGE_SIZE}
+            currentPage={currentPage}
+            goToPage={setCurrentPage}
+            itemCount={dispatchCount}
+          />
+        </Modal.Footer>
+      )}
     </Modal>
   );
 };

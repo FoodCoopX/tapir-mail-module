@@ -4,7 +4,7 @@ import "@fortawesome/fontawesome-free/css/solid.css";
 import "@fortawesome/fontawesome-free/css/fontawesome.css";
 import { Dropdown, DropdownButton } from "react-bootstrap";
 
-interface Choice {
+export interface Choice {
   id: number | string;
   name: string;
 }
