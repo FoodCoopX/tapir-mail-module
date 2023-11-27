@@ -173,7 +173,7 @@ class EmailDispatch(BaseModel):
         choices=BounceTypes.choices,
         default=BounceTypes.NOT_ANALYZED,
     )
-    next_retry = models.ForeignKey(
+    next_retry = models.OneToOneField(
         "self",
         on_delete=models.SET_NULL,
         null=True,
