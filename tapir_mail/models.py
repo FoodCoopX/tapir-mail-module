@@ -173,6 +173,21 @@ class EmailDispatch(BaseModel):
         choices=BounceTypes.choices,
         default=BounceTypes.NOT_ANALYZED,
     )
+    next_retry = models.OneToOneField(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="previous_retry",
+    )
+
+    def get_previous_retries(self):
+        retries = []
+        current_dispatch = self.previous_retry.all().first()
+        while current_dispatch is not None:
+            retries.append(current_dispatch)
+            current_dispatch = current_dispatch.previous_retry.all().first()
+        return list(reversed(retries))
 
     def __str__(self):
         return (

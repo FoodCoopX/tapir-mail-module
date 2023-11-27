@@ -125,7 +125,11 @@ const TemplatesCard = () => {
                     <td>{template.name}</td>
                     <td>{formatDate(template.createdAt)}</td>
                     <td>{formatDate(template.updatedAt)}</td>
-                    <td className="d-flex justify-content-center">
+                    <td
+                      style={{
+                        alignContent: "right",
+                      }}
+                    >
                       <TapirButton
                         variant={"outline-danger"}
                         size={"sm"}

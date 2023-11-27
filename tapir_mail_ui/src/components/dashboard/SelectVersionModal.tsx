@@ -95,7 +95,7 @@ const SelectVersionModal = ({
       });
 
   useEffect(() => {
-    if (!emailConfiguration || !configApi || !emailConfiguration) return;
+    if (!emailConfiguration || !configApi) return;
 
     fetchVersions();
   }, [emailConfiguration]);
