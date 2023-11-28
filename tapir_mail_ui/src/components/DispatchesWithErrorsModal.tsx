@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Table } from "react-bootstrap";
+import { Form, Modal, Table } from "react-bootstrap";
 import { EmailDispatchApi, GroupedEmailDispatch } from "../api_client";
 import { useApi } from "../hooks/useApi";
 import { useAlert } from "../contexts/alerts";
 import { DEFAULT_PAGE_SIZE } from "../utils/pagination";
 import TapirPagination from "./TapirPagination";
+import DateTimePicker from "./dateTimePicker";
 
 interface DispatchesWithErrorsModalProps {
   open: boolean;
@@ -20,18 +21,22 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
   >([]);
   const [groupCount, setGroupCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
   const emailDispatchApi = useApi(EmailDispatchApi);
   const showAlert = useAlert();
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [startDate, endDate]);
 
   function loadData() {
     emailDispatchApi
       .emailDispatchFailedDispatchesList({
         limit: DEFAULT_PAGE_SIZE,
         offset: currentPage * DEFAULT_PAGE_SIZE,
+        startDate: startDate,
+        endDate: endDate,
       })
       .then((paginatedData) => {
         let sortedGroups = paginatedData.results ?? [];
@@ -47,6 +52,18 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
       });
   }
 
+  function getInitialStartDate() {
+    let d = new Date();
+    d.setFullYear(d.getFullYear() - 1, d.getMonth(), d.getDate());
+    return d;
+  }
+
+  function getMinDate() {
+    let d = new Date();
+    d.setFullYear(d.getFullYear() - 5, d.getMonth(), d.getDate());
+    return d;
+  }
+
   return (
     <Modal
       show={open}
@@ -56,6 +73,22 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
         <Modal.Title>E-Mail-Adressen mit Fehler</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        <Form.Group>
+          <Form.Label>Start date</Form.Label>
+          <DateTimePicker
+            onChange={setStartDate}
+            initialValue={getInitialStartDate()}
+            minDate={getMinDate()}
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>End date</Form.Label>
+          <DateTimePicker
+            onChange={setEndDate}
+            initialValue={new Date()}
+            minDate={getMinDate()}
+          />
+        </Form.Group>
         <Table
           striped
           hover
