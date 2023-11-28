@@ -6,6 +6,7 @@ import { useAlert } from "../contexts/alerts";
 import { DEFAULT_PAGE_SIZE } from "../utils/pagination";
 import TapirPagination from "./TapirPagination";
 import DateTimePicker from "./dateTimePicker";
+import DispatchErrorDetailsModal from "./DispatchErrorDetailsModal";
 
 interface DispatchesWithErrorsModalProps {
   open: boolean;
@@ -21,10 +22,11 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
   >([]);
   const [groupCount, setGroupCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
+  const [startDate, setStartDate] = useState<Date>(getInitialStartDate());
+  const [endDate, setEndDate] = useState<Date>(new Date());
   const emailDispatchApi = useApi(EmailDispatchApi);
   const showAlert = useAlert();
+  const [selectedGroup, setSelectedGroup] = useState<GroupedEmailDispatch>();
 
   useEffect(() => {
     loadData();
@@ -65,64 +67,80 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
   }
 
   return (
-    <Modal
-      show={open}
-      onHide={onClose}
-    >
-      <Modal.Header closeButton>
-        <Modal.Title>E-Mail-Adressen mit Fehler</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className={"d-flex gap-2"}>
-          <Form.Group>
-            <Form.Label>Start date</Form.Label>
-            <DateTimePicker
-              onChange={setStartDate}
-              initialValue={getInitialStartDate()}
-              minDate={getMinDate()}
-            />
-          </Form.Group>
-          <Form.Group>
-            <Form.Label>End date</Form.Label>
-            <DateTimePicker
-              onChange={setEndDate}
-              initialValue={new Date()}
-              minDate={getMinDate()}
-            />
-          </Form.Group>
-        </div>
-        <Table
-          striped
-          hover
-          style={{ margin: "0" }}
-        >
-          <thead>
-            <tr>
-              <th>Adresse</th>
-              <th>Anzahl an Fehler</th>
-            </tr>
-          </thead>
-          <tbody>
-            {groupedDispatches.map((group) => (
+    <>
+      <Modal
+        show={open && !selectedGroup}
+        onHide={onClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>E-Mail-Adressen mit Fehler</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className={"d-flex gap-2"}>
+            <Form.Group>
+              <Form.Label>Start date</Form.Label>
+              <DateTimePicker
+                onChange={setStartDate}
+                initialValue={getInitialStartDate()}
+                minDate={getMinDate()}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>End date</Form.Label>
+              <DateTimePicker
+                onChange={setEndDate}
+                initialValue={new Date()}
+                minDate={getMinDate()}
+              />
+            </Form.Group>
+          </div>
+          <Table
+            striped
+            hover
+            style={{ margin: "0" }}
+          >
+            <thead>
               <tr>
-                <td>{group.dispatches[0].recipient}</td>
-                <td>{group.dispatches.length}</td>
+                <th>Adresse</th>
+                <th>Anzahl an Fehler</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      </Modal.Body>
-      {groupCount > DEFAULT_PAGE_SIZE && (
-        <Modal.Footer className="d-flex justify-content-center align-items-center">
-          <TapirPagination
-            pageSize={DEFAULT_PAGE_SIZE}
-            currentPage={currentPage}
-            goToPage={setCurrentPage}
-            itemCount={groupCount}
-          />
-        </Modal.Footer>
+            </thead>
+            <tbody>
+              {groupedDispatches.map((group) => (
+                <tr
+                  onClick={() => {
+                    setSelectedGroup(group);
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
+                  <td>{group.dispatches[0].recipient}</td>
+                  <td>{group.dispatches.length}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Modal.Body>
+        {groupCount > DEFAULT_PAGE_SIZE && (
+          <Modal.Footer className="d-flex justify-content-center align-items-center">
+            <TapirPagination
+              pageSize={DEFAULT_PAGE_SIZE}
+              currentPage={currentPage}
+              goToPage={setCurrentPage}
+              itemCount={groupCount}
+            />
+          </Modal.Footer>
+        )}
+      </Modal>
+      {selectedGroup && (
+        <DispatchErrorDetailsModal
+          open={!!selectedGroup}
+          onClose={() => setSelectedGroup(undefined)}
+          dispatches={selectedGroup.dispatches}
+          startDate={startDate}
+          endDate={endDate}
+        />
       )}
-    </Modal>
+    </>
   );
 };
 
