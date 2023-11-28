@@ -1,13 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import EmailConfigurationDispatchTable from "../components/dashboard/EmailConfigurationDispatchTable";
 import Paths from "../routing";
 import TemplatesCard from "../components/dashboard/TemplatesCard";
 import EmailConfigurationTable from "../components/dashboard/EmailConfigurationsTable";
 import TapirButton from "../components/TapirButton";
-import { PhotoIcon, UserIcon } from "@heroicons/react/24/outline";
+import {
+  ExclamationTriangleIcon,
+  PhotoIcon,
+} from "@heroicons/react/24/outline";
+import DispatchesWithErrorsModal from "../components/DispatchesWithErrorsModal";
 
 function Dashboard() {
+  const [dispatchesWithErrorModalOpen, setDispatchesWithErrorModalOpen] =
+    useState(false);
+
   return (
     <>
       <div
@@ -25,6 +32,12 @@ function Dashboard() {
             icon={PhotoIcon}
           />
         </Link>
+        <TapirButton
+          variant="primary"
+          text="Email-Adressen mit Fehler"
+          icon={ExclamationTriangleIcon}
+          onClick={() => setDispatchesWithErrorModalOpen(true)}
+        />
       </div>
 
       <div
@@ -46,6 +59,10 @@ function Dashboard() {
           content="next-sends"
         />
       </div>
+      <DispatchesWithErrorsModal
+        open={dispatchesWithErrorModalOpen}
+        onClose={() => setDispatchesWithErrorModalOpen(false)}
+      />
     </>
   );
 }

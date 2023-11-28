@@ -1151,6 +1151,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmailDispatch'
           description: ''
+  /api/email_dispatch/failed_dispatches/:
+    get:
+      operationId: email_dispatch_failed_dispatches_list
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date-time
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date-time
+      tags:
+      - email_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGroupedEmailDispatchList'
+          description: ''
   /api/email_template/:
     get:
       operationId: email_template_list
@@ -2478,11 +2516,11 @@ components:
           maxLength: 10
         email_configuration_dispatch:
           $ref: '#/components/schemas/EmailConfigurationDispatch'
-        dispatch_status:
-          $ref: '#/components/schemas/DispatchStatusEnum'
         previous_retries:
           type: string
           readOnly: true
+        dispatch_status:
+          $ref: '#/components/schemas/DispatchStatusEnum'
         created_at:
           type: string
           format: date-time
@@ -2610,6 +2648,15 @@ components:
       required:
       - content
       - name
+    GroupedEmailDispatch:
+      type: object
+      properties:
+        dispatches:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailDispatch'
+      required:
+      - dispatches
     IdEnum:
       enum:
       - 0
@@ -2745,6 +2792,26 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmailTemplate'
+    PaginatedGroupedEmailDispatchList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupedEmailDispatch'
     PatchedBundledEmailConfigurationRequest:
       type: object
       properties:

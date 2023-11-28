@@ -1,6 +1,5 @@
 import datetime
 
-from django.db.models import Q
 from rest_framework import serializers
 
 from tapir_mail.models import (
@@ -211,7 +210,7 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     def get_error_count(self, obj) -> int:
         return (
             obj.emaildispatch_set.filter(next_retry__isnull=True)
-            .filter(Q(error_message__isnull=False) | Q(bounce_message__isnull=False))
+            .with_error(True)
             .distinct()
             .count()
         )
@@ -231,13 +230,22 @@ class TriggerDefinitionSerializer(serializers.Serializer):
 
 
 class EmailDispatchSerializer(serializers.ModelSerializer):
-    email_configuration_dispatch = EmailConfigurationDispatchSerializer()
-    previous_retries = serializers.SerializerMethodField()
-
     class Meta:
         model = EmailDispatch
         fields = "__all__"
 
+    email_configuration_dispatch = EmailConfigurationDispatchSerializer()
+    previous_retries = serializers.SerializerMethodField()
+    dispatch_status = serializers.ChoiceField(
+        choices=EmailDispatch.DispatchStatus.choices, source="get_dispatch_status"
+    )
+
     def get_previous_retries(self, obj):
         previous_retries = obj.get_previous_retries()
         return EmailDispatchSerializer(previous_retries, many=True).data
+
+
+class GroupedEmailDispatchSerializer(serializers.Serializer):
+    dispatches = serializers.ListSerializer(
+        child=EmailDispatchSerializer(), required=True
+    )

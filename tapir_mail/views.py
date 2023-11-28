@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from django.db import transaction
@@ -29,6 +30,7 @@ from tapir_mail.serializers import (
     RecipientSerializer,
     SegmentDataSerializer,
     TriggerDefinitionSerializer,
+    GroupedEmailDispatchSerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
@@ -426,6 +428,40 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        responses={200: GroupedEmailDispatchSerializer(many=True)},
+        parameters=[
+            OpenApiParameter(name="start_date", required=False, type=datetime.datetime),
+            OpenApiParameter(name="end_date", required=False, type=datetime.datetime),
+        ],
+    )
+    @action(detail=False)
+    def failed_dispatches(self, request):
+        dispatches = EmailDispatch.objects.with_error(True)
+        start_date = request.query_params.get("start_date", None)
+        if start_date:
+            dispatches = dispatches.filter(sent_time__gte=start_date)
+        end_date = request.query_params.get("end_date", None)
+        if end_date:
+            dispatches = dispatches.filter(sent_time__lte=end_date)
+        dispatches_per_recipient = {}
+        for dispatch in dispatches:
+            if dispatch.recipient not in dispatches_per_recipient.keys():
+                dispatches_per_recipient[dispatch.recipient] = []
+            dispatches_per_recipient[dispatch.recipient].append(dispatch)
+        serializer = GroupedEmailDispatchSerializer(
+            [
+                {"dispatches": dispatches}
+                for dispatches in dispatches_per_recipient.values()
+            ],
+            many=True,
+        )
+        pagination = self.pagination_class()
+        pagination.count = len(dispatches_per_recipient)
+        pagination.limit = pagination.get_limit(request) or 10
+        pagination.offset = pagination.get_offset(request)
+        return pagination.get_paginated_response(serializer.data)
 
 
 class SegmentAndFilterViewSet(viewsets.ViewSet):
