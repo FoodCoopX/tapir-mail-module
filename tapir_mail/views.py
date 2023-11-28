@@ -386,7 +386,7 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
         ]
     )
     def list(self, request, *args, **kwargs):
-        queryset = EmailDispatch.objects.all().order_by(
+        queryset = EmailDispatch.objects.filter(next_retry__isnull=True).order_by(
             "-error_message", "-bounce_message", "-opened_time", "recipient"
         )
         config_dispatch_id = request.query_params.get("config_dispatch_id")

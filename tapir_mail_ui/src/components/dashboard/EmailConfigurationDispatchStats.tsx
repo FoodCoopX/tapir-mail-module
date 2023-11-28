@@ -1,24 +1,12 @@
 import React from "react";
-import { EmailConfigurationDispatch } from "../../api_client";
 import { ProgressBar } from "react-bootstrap";
+import { EmailConfigurationDispatch } from "../../api_client";
 
 export const EmailConfigurationDispatchStats: React.FC<{
   emailConfigurationDispatch: EmailConfigurationDispatch;
-  setEmailConfigurationDispatchForStats?: (
-    configDispatch: EmailConfigurationDispatch,
-  ) => void;
-}> = ({
-  emailConfigurationDispatch,
-  setEmailConfigurationDispatchForStats,
-}) => {
+}> = ({ emailConfigurationDispatch }) => {
   return (
-    <span
-      onClick={(event) => {
-        if (!setEmailConfigurationDispatchForStats) return;
-        event.stopPropagation();
-        setEmailConfigurationDispatchForStats(emailConfigurationDispatch);
-      }}
-    >
+    <span>
       <small>
         <strong>
           {emailConfigurationDispatch.sentCount

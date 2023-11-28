@@ -170,13 +170,18 @@ const EmailConfigurationDispatchTable: React.FC<
                         )}
                       </td>
                       {content === "last-sent" && (
-                        <td style={{ padding: "0.1em", margin: "0" }}>
+                        <td
+                          style={{ padding: "0.1em", margin: "0" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEmailConfigurationDispatchForStats(
+                              emailConfigurationDispatch,
+                            );
+                          }}
+                        >
                           <EmailConfigurationDispatchStats
                             emailConfigurationDispatch={
                               emailConfigurationDispatch
-                            }
-                            setEmailConfigurationDispatchForStats={
-                              setEmailConfigurationDispatchForStats
                             }
                           />
                         </td>
