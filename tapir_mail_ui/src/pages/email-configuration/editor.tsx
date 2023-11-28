@@ -1,7 +1,6 @@
 import {
   CheckCircleIcon,
   HomeIcon,
-  ListBulletIcon,
   PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
 import { IPage } from "easy-email-core";
@@ -16,6 +15,7 @@ import {
   StatusEnum,
   TriggerDataRequest,
 } from "../../api_client";
+import TapirButton from "../../components/TapirButton";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
 import Loading from "../../components/loading";
@@ -26,7 +26,6 @@ import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
-import TapirButton from "../../components/TapirButton";
 
 const ID_NEW_TEMPLATE = "<new>";
 
@@ -67,10 +66,8 @@ const EmailConfigurationEditor = () => {
 
   const fetchTemplates = () =>
     templateApi
-      .emailtemplatesList()
-      .then((data) => {
-        setTemplates(data.results ?? []);
-      })
+      .emailTemplateList()
+      .then(setTemplates)
       .catch((err) => {
         console.error(err);
         showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
@@ -190,7 +187,7 @@ const EmailConfigurationEditor = () => {
     const id = e.target.value;
     if (id !== ID_NEW_TEMPLATE) {
       templateApi
-        .emailtemplatesRetrieve({ id: id!! })
+        .emailTemplateRetrieve({ id: id!! })
         .then((data) => {
           setLoadedContent(mjmlToJson(data.content));
           setSelectedTemplate(id);

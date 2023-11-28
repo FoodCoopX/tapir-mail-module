@@ -44,17 +44,16 @@ from tapir_mail.service.triggers import Trigger, trigger_registry
 LOG = logging.getLogger(__name__)
 
 
-@extend_schema_view(
-    create=extend_schema(operation_id="emailtemplates_create"),
-    list=extend_schema(operation_id="emailtemplates_list"),
-    retrieve=extend_schema(operation_id="emailtemplates_retrieve"),
-    update=extend_schema(operation_id="emailtemplates_update"),
-    destroy=extend_schema(operation_id="emailtemplates_destroy"),
-)
 class EmailTemplateViewSet(viewsets.ModelViewSet):
     queryset = EmailTemplate.objects.all()
     serializer_class = EmailTemplateSerializer
+
+
+class PaginatedEmailTemplateViewSet(EmailTemplateViewSet):
     pagination_class = LimitOffsetPagination
+
+    def get_view_name(self):
+        return "PaginatedEmailTemplate"
 
 
 class EmailConfigurationViewSet(viewsets.ModelViewSet):
