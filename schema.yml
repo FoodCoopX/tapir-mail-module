@@ -1062,6 +1062,27 @@ paths:
   /api/email_dispatch/:
     get:
       operationId: email_dispatch_list
+      parameters:
+      - in: query
+        name: config_dispatch_id
+        schema:
+          type: string
+      - in: query
+        name: dispatch_status
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
       tags:
       - email_dispatch
       security:
@@ -1072,9 +1093,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmailDispatch'
+                $ref: '#/components/schemas/PaginatedEmailDispatchList'
           description: ''
   /api/email_dispatch/{id}/:
     get:
@@ -2195,6 +2214,18 @@ components:
         * `4` - Friday
         * `5` - Saturday
         * `6` - Sunday
+    DispatchStatusEnum:
+      enum:
+      - error
+      - bounced
+      - opened
+      - unknown
+      type: string
+      description: |-
+        * `error` - Fehler beim Versand
+        * `bounced` - Bounce
+        * `opened` - Geöffnet
+        * `unknown` - Nicht geöffnet
     DummyPickupLocation:
       type: object
       properties:
@@ -2447,6 +2478,8 @@ components:
           maxLength: 10
         email_configuration_dispatch:
           $ref: '#/components/schemas/EmailConfigurationDispatch'
+        dispatch_status:
+          $ref: '#/components/schemas/DispatchStatusEnum'
         previous_retries:
           type: string
           readOnly: true
@@ -2487,6 +2520,7 @@ components:
           nullable: true
       required:
       - created_at
+      - dispatch_status
       - email_configuration_dispatch
       - previous_retries
       - recipient
@@ -2500,6 +2534,8 @@ components:
           maxLength: 10
         email_configuration_dispatch:
           $ref: '#/components/schemas/EmailConfigurationDispatchRequest'
+        dispatch_status:
+          $ref: '#/components/schemas/DispatchStatusEnum'
         recipient:
           type: string
           format: email
@@ -2530,6 +2566,7 @@ components:
           minLength: 1
           nullable: true
       required:
+      - dispatch_status
       - email_configuration_dispatch
       - recipient
     EmailTemplate:
@@ -2668,6 +2705,26 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmailConfigurationVersion'
+    PaginatedEmailDispatchList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailDispatch'
     PaginatedEmailTemplateList:
       type: object
       properties:

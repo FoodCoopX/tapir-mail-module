@@ -159,6 +159,12 @@ class EmailDispatch(BaseModel):
         UNKNOWN = "unknown", "Unknown"
         NOT_ANALYZED = "not_analyzed", "Not analyzed"
 
+    class DispatchStatus(models.TextChoices):
+        ERROR = "error", "Fehler beim Versand"
+        BOUNCED = "bounced", "Bounce"
+        OPENED = "opened", "Geöffnet"
+        UNKNOWN = "unknown", "Nicht geöffnet"
+
     email_configuration_dispatch = models.ForeignKey(
         EmailConfigurationDispatch, on_delete=models.CASCADE
     )
@@ -183,16 +189,25 @@ class EmailDispatch(BaseModel):
 
     def get_previous_retries(self):
         retries = []
-        current_dispatch = self.previous_retry.all().first()
+        current_dispatch = getattr(self, "previous_retry", None)
         while current_dispatch is not None:
             retries.append(current_dispatch)
-            current_dispatch = current_dispatch.previous_retry.all().first()
+            current_dispatch = getattr(current_dispatch, "previous_retry", None)
         return list(reversed(retries))
 
     def __str__(self):
         return (
             f"{self.email_configuration_dispatch} - {self.recipient} - {self.sent_time}"
         )
+
+    def get_dispatch_status(self):
+        if self.error_message:
+            return self.DispatchStatus.ERROR
+        if self.bounce_message:
+            return self.DispatchStatus.BOUNCED
+        if self.opened_time:
+            return self.DispatchStatus.OPENED
+        return self.DispatchStatus.UNKNOWN
 
 
 class StaticSegment(BaseModel):
