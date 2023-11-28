@@ -73,22 +73,24 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
         <Modal.Title>E-Mail-Adressen mit Fehler</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form.Group>
-          <Form.Label>Start date</Form.Label>
-          <DateTimePicker
-            onChange={setStartDate}
-            initialValue={getInitialStartDate()}
-            minDate={getMinDate()}
-          />
-        </Form.Group>
-        <Form.Group>
-          <Form.Label>End date</Form.Label>
-          <DateTimePicker
-            onChange={setEndDate}
-            initialValue={new Date()}
-            minDate={getMinDate()}
-          />
-        </Form.Group>
+        <div className={"d-flex gap-2"}>
+          <Form.Group>
+            <Form.Label>Start date</Form.Label>
+            <DateTimePicker
+              onChange={setStartDate}
+              initialValue={getInitialStartDate()}
+              minDate={getMinDate()}
+            />
+          </Form.Group>
+          <Form.Group>
+            <Form.Label>End date</Form.Label>
+            <DateTimePicker
+              onChange={setEndDate}
+              initialValue={new Date()}
+              minDate={getMinDate()}
+            />
+          </Form.Group>
+        </div>
         <Table
           striped
           hover
