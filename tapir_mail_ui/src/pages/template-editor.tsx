@@ -27,7 +27,7 @@ const TemplateEditor = () => {
 
     setLoading(true);
     api
-      .emailtemplatesRetrieve({ id: id })
+      .emailTemplateRetrieve({ id: id })
       .then((data) => {
         setId(data.id);
         setName(data.name);
@@ -58,7 +58,7 @@ const TemplateEditor = () => {
     };
     if (!templateId) {
       api
-        .emailtemplatesCreate(props)
+        .emailTemplateCreate(props)
         .then((data) => {
           showAlert("Dein Vorlage wurde gespeichert!", "success");
           if (data.id) {
@@ -70,7 +70,7 @@ const TemplateEditor = () => {
         });
     } else {
       api
-        .emailtemplatesUpdate({
+        .emailTemplateUpdate({
           id: templateId,
           ...props,
         })

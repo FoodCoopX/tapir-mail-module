@@ -1134,20 +1134,7 @@ paths:
           description: ''
   /api/email_template/:
     get:
-      operationId: emailtemplates_list
-      parameters:
-      - name: limit
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: offset
-        required: false
-        in: query
-        description: The initial index from which to return the results.
-        schema:
-          type: integer
+      operationId: email_template_list
       tags:
       - email_template
       security:
@@ -1158,10 +1145,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedEmailTemplateList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmailTemplate'
           description: ''
     post:
-      operationId: emailtemplates_create
+      operationId: email_template_create
       tags:
       - email_template
       requestBody:
@@ -1188,7 +1177,7 @@ paths:
           description: ''
   /api/email_template/{id}/:
     get:
-      operationId: emailtemplates_retrieve
+      operationId: email_template_retrieve
       parameters:
       - in: path
         name: id
@@ -1209,7 +1198,7 @@ paths:
                 $ref: '#/components/schemas/EmailTemplate'
           description: ''
     put:
-      operationId: emailtemplates_update
+      operationId: email_template_update
       parameters:
       - in: path
         name: id
@@ -1274,7 +1263,7 @@ paths:
                 $ref: '#/components/schemas/EmailTemplate'
           description: ''
     delete:
-      operationId: emailtemplates_destroy
+      operationId: email_template_destroy
       parameters:
       - in: path
         name: id
@@ -1284,6 +1273,164 @@ paths:
         required: true
       tags:
       - email_template
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/email_template_paginated/:
+    get:
+      operationId: email_template_paginated_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - email_template_paginated
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEmailTemplateList'
+          description: ''
+    post:
+      operationId: email_template_paginated_create
+      tags:
+      - email_template_paginated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailTemplateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailTemplateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailTemplateRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailTemplate'
+          description: ''
+  /api/email_template_paginated/{id}/:
+    get:
+      operationId: email_template_paginated_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email template.
+        required: true
+      tags:
+      - email_template_paginated
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailTemplate'
+          description: ''
+    put:
+      operationId: email_template_paginated_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email template.
+        required: true
+      tags:
+      - email_template_paginated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailTemplateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailTemplateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailTemplateRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailTemplate'
+          description: ''
+    patch:
+      operationId: email_template_paginated_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email template.
+        required: true
+      tags:
+      - email_template_paginated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEmailTemplateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEmailTemplateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEmailTemplateRequest'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailTemplate'
+          description: ''
+    delete:
+      operationId: email_template_paginated_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email template.
+        required: true
+      tags:
+      - email_template_paginated
       security:
       - tokenAuth: []
       - {}

@@ -2,7 +2,11 @@ import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
 import { Card, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { EmailTemplate, EmailTemplateApi } from "../../api_client";
+import {
+  EmailTemplate,
+  EmailTemplateApi,
+  EmailTemplatePaginatedApi,
+} from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Loading from "../loading";
@@ -24,13 +28,13 @@ const TemplatesCard = () => {
 
   const showAlert = useAlert();
   const navigate = useNavigate();
-  const api = useApi(EmailTemplateApi);
+  const api = useApi(EmailTemplatePaginatedApi);
 
   useEffect(() => {
     if (!api || !showAlert) return;
 
     api
-      .emailtemplatesList({
+      .emailTemplatePaginatedList({
         limit: DEFAULT_PAGE_SIZE,
         offset: currentPage * DEFAULT_PAGE_SIZE,
       })
@@ -51,7 +55,7 @@ const TemplatesCard = () => {
     if (!templateToDelete) return;
 
     api
-      .emailtemplatesDestroy({ id: templateToDelete.id! })
+      .emailTemplatePaginatedDestroy({ id: templateToDelete.id! })
       .then(() => {
         showAlert("Template gelöscht : " + templateToDelete.name, "success");
         setTemplates(
