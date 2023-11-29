@@ -3,7 +3,7 @@ import logging
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -25,6 +25,7 @@ from tapir_mail.serializers import (
     EmailConfigurationSerializer,
     EmailConfigurationVersionSerializer,
     EmailDispatchSerializer,
+    EmailDispatchWithRetriesSerializer,
     EmailTemplateSerializer,
     RecipientSerializer,
     SegmentDataSerializer,
@@ -380,14 +381,18 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = LimitOffsetPagination
 
     @extend_schema(
+        responses={200: EmailDispatchWithRetriesSerializer(many=True)},
         parameters=[
             OpenApiParameter(name="dispatch_status", required=False),
             OpenApiParameter(name="config_dispatch_id", required=False),
-        ]
+        ],
     )
     def list(self, request, *args, **kwargs):
         queryset = EmailDispatch.objects.filter(next_retry__isnull=True).order_by(
-            "-error_message", "-bounce_message", "-opened_time", "recipient"
+            "-created_at",
+            "-sent_time",
+            "-opened_time",
+            "recipient",
         )
         config_dispatch_id = request.query_params.get("config_dispatch_id")
         if config_dispatch_id:
@@ -402,6 +407,10 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(error_message__isnull=False)
         elif dispatch_status == EmailDispatch.DispatchStatus.BOUNCED:
             queryset = queryset.filter(bounce_message__isnull=False)
+        elif dispatch_status == EmailDispatch.DispatchStatus.SENDING:
+            queryset = queryset.filter(
+                error_message__isnull=True, sent_time__isnull=True
+            )
         elif dispatch_status == EmailDispatch.DispatchStatus.UNKNOWN:
             queryset = queryset.filter(
                 opened_time__isnull=True,
@@ -411,7 +420,7 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
 
         pagination = self.pagination_class()
         objects = pagination.paginate_queryset(queryset, request)
-        serializer = EmailDispatchSerializer(objects, many=True)
+        serializer = EmailDispatchWithRetriesSerializer(objects, many=True)
         return pagination.get_paginated_response(serializer.data)
 
     @extend_schema(responses={200: EmailDispatchSerializer(many=False)})
