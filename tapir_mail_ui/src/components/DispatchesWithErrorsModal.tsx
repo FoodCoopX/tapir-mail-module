@@ -22,8 +22,10 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
   >([]);
   const [groupCount, setGroupCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
-  const [startDate, setStartDate] = useState<Date>(getInitialStartDate());
-  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    getInitialStartDate(),
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const emailDispatchApi = useApi(EmailDispatchApi);
   const showAlert = useAlert();
   const [selectedGroup, setSelectedGroup] = useState<GroupedEmailDispatch>();
@@ -33,6 +35,7 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
   }, [startDate, endDate]);
 
   function loadData() {
+    console.log(startDate);
     emailDispatchApi
       .emailDispatchFailedDispatchesList({
         limit: DEFAULT_PAGE_SIZE,

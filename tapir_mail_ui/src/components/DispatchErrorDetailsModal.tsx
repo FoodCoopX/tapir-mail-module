@@ -7,8 +7,8 @@ interface DispatchErrorDetailsModalProps {
   open: boolean;
   onClose: () => void;
   dispatches: EmailDispatch[];
-  startDate: Date;
-  endDate: Date;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 const DispatchErrorDetailsModal: React.FC<DispatchErrorDetailsModalProps> = ({
@@ -45,8 +45,9 @@ const DispatchErrorDetailsModal: React.FC<DispatchErrorDetailsModalProps> = ({
         <Modal.Title>Versand Fehler Details</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        Details für {dispatches[0].recipient} zwischen {formatDate(startDate)}{" "}
-        und {formatDate(endDate)}
+        Details für {dispatches[0].recipient}{" "}
+        {startDate && <>von {formatDate(startDate)} </>}
+        {endDate && <>bis {formatDate(endDate)}</>}
         <hr />
         <Table
           striped
