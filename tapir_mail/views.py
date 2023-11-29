@@ -461,6 +461,7 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
         pagination.count = len(dispatches_per_recipient)
         pagination.limit = pagination.get_limit(request) or 10
         pagination.offset = pagination.get_offset(request)
+        pagination.request = request
         return pagination.get_paginated_response(serializer.data)
 
 

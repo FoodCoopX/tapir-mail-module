@@ -78,7 +78,7 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
         <Modal.Body>
           <div className={"d-flex gap-2"}>
             <Form.Group>
-              <Form.Label>Start date</Form.Label>
+              <Form.Label>Von</Form.Label>
               <DateTimePicker
                 onChange={setStartDate}
                 initialValue={getInitialStartDate()}
@@ -86,7 +86,7 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
               />
             </Form.Group>
             <Form.Group>
-              <Form.Label>End date</Form.Label>
+              <Form.Label>Bis</Form.Label>
               <DateTimePicker
                 onChange={setEndDate}
                 initialValue={new Date()}

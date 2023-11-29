@@ -42,12 +42,12 @@ const DispatchErrorDetailsModal: React.FC<DispatchErrorDetailsModalProps> = ({
       onHide={onClose}
     >
       <Modal.Header closeButton>
-        <Modal.Title>
-          Versand Fehler Details für {dispatches[0].recipient} zwischen{" "}
-          {formatDate(startDate)} und {formatDate(endDate)}
-        </Modal.Title>
+        <Modal.Title>Versand Fehler Details</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        Details für {dispatches[0].recipient} zwischen {formatDate(startDate)}{" "}
+        und {formatDate(endDate)}
+        <hr />
         <Table
           striped
           hover
