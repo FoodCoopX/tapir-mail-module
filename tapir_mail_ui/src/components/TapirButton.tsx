@@ -3,7 +3,7 @@ import { Button } from "react-bootstrap";
 import { ButtonVariant } from "react-bootstrap/types";
 
 interface TapirButtonProps {
-  variant: ButtonVariant;
+  variant?: ButtonVariant;
   text?: string;
   icon?: React.ComponentType<{ style: any }>;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -15,7 +15,7 @@ interface TapirButtonProps {
 const TapirButton: React.FC<TapirButtonProps> = (props) => {
   return (
     <Button
-      variant={props.variant}
+      variant={props.variant ?? "undefined"}
       style={{
         display: "flex",
         justifyContent: "space-between",

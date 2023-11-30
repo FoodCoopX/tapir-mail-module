@@ -2,6 +2,7 @@ import datetime
 
 from django.db.models import Q
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 
 from tapir_mail.models import (
     EmailConfiguration,
@@ -232,12 +233,19 @@ class TriggerDefinitionSerializer(serializers.Serializer):
 
 class EmailDispatchSerializer(serializers.ModelSerializer):
     email_configuration_dispatch = EmailConfigurationDispatchSerializer()
-    previous_retries = serializers.SerializerMethodField()
+    dispatch_status = serializers.ChoiceField(
+        choices=EmailDispatch.DispatchStatus.choices, source="get_dispatch_status"
+    )
 
     class Meta:
         model = EmailDispatch
         fields = "__all__"
 
-    def get_previous_retries(self, obj):
+
+class EmailDispatchWithRetriesSerializer(EmailDispatchSerializer):
+    previous_retries = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.ListSerializer(child=EmailDispatchSerializer()))
+    def get_previous_retries(self, obj) -> list[EmailDispatchSerializer]:
         previous_retries = obj.get_previous_retries()
         return EmailDispatchSerializer(previous_retries, many=True).data
