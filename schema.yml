@@ -1151,6 +1151,87 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmailDispatch'
           description: ''
+  /api/email_dispatch/get_failed_dispatches/:
+    get:
+      operationId: email_dispatch_get_failed_dispatches_list
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date-time
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - in: query
+        name: recipient
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date-time
+      tags:
+      - email_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEmailDispatchList'
+          description: ''
+  /api/email_dispatch/recipients_with_errors/:
+    get:
+      operationId: email_dispatch_recipients_with_errors_list
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date-time
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date-time
+      tags:
+      - email_dispatch
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGroupedEmailDispatchList'
+          description: ''
   /api/email_template/:
     get:
       operationId: email_template_list
@@ -2220,12 +2301,14 @@ components:
       - bounced
       - opened
       - unknown
+      - sending
       type: string
       description: |-
         * `error` - Fehler beim Versand
         * `bounced` - Bounce
         * `opened` - Geöffnet
         * `unknown` - Nicht geöffnet
+        * `sending` - Wird versendet
     DummyPickupLocation:
       type: object
       properties:
@@ -2663,6 +2746,16 @@ components:
       required:
       - content
       - name
+    GroupedEmailDispatch:
+      type: object
+      properties:
+        recipient:
+          type: string
+        count:
+          type: integer
+      required:
+      - count
+      - recipient
     IdEnum:
       enum:
       - 0
@@ -2758,6 +2851,26 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmailConfigurationVersion'
+    PaginatedEmailDispatchList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailDispatch'
     PaginatedEmailDispatchWithRetriesList:
       type: object
       properties:
@@ -2798,6 +2911,26 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmailTemplate'
+    PaginatedGroupedEmailDispatchList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupedEmailDispatch'
     PatchedBundledEmailConfigurationRequest:
       type: object
       properties:

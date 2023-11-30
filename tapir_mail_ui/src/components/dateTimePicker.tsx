@@ -12,7 +12,7 @@ import { localization, name } from "@eonasdan/tempus-dominus/dist/locales/de";
 import { ChangeEvent } from "@eonasdan/tempus-dominus/types/utilities/event-types";
 
 interface DateTimePickerProps {
-  onChange: (value: Date) => void;
+  onChange: (value?: Date) => void;
   initialValue: Date;
   minDate?: Date;
   maxDate?: Date;
@@ -40,7 +40,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
       },
     });
     dateTimePicker.subscribe("change.td", (e: ChangeEvent) => {
-      onChange(e.date ?? new Date());
+      onChange(e.date);
     });
   }, [pickerRef]);
 

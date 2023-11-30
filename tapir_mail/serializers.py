@@ -1,6 +1,5 @@
 import datetime
 
-from django.db.models import Q
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 
@@ -212,7 +211,7 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     def get_error_count(self, obj) -> int:
         return (
             obj.emaildispatch_set.filter(next_retry__isnull=True)
-            .filter(Q(error_message__isnull=False) | Q(bounce_message__isnull=False))
+            .with_error(True)
             .distinct()
             .count()
         )
@@ -232,14 +231,14 @@ class TriggerDefinitionSerializer(serializers.Serializer):
 
 
 class EmailDispatchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailDispatch
+        fields = "__all__"
+
     email_configuration_dispatch = EmailConfigurationDispatchSerializer()
     dispatch_status = serializers.ChoiceField(
         choices=EmailDispatch.DispatchStatus.choices, source="get_dispatch_status"
     )
-
-    class Meta:
-        model = EmailDispatch
-        fields = "__all__"
 
 
 class EmailDispatchWithRetriesSerializer(EmailDispatchSerializer):
@@ -249,3 +248,8 @@ class EmailDispatchWithRetriesSerializer(EmailDispatchSerializer):
     def get_previous_retries(self, obj) -> list[EmailDispatchSerializer]:
         previous_retries = obj.get_previous_retries()
         return EmailDispatchSerializer(previous_retries, many=True).data
+
+
+class GroupedEmailDispatchSerializer(serializers.Serializer):
+    recipient = serializers.CharField(required=True)
+    count = serializers.IntegerField(required=True)

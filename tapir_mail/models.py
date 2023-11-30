@@ -1,6 +1,7 @@
 from functools import partial
 
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils import timezone
 from nanoid import generate
 
@@ -165,6 +166,17 @@ class EmailDispatch(BaseModel):
         OPENED = "opened", "Geöffnet"
         UNKNOWN = "unknown", "Nicht geöffnet"
         SENDING = "sending", "Wird versendet"
+
+    class EmailDispatchQuerySet(models.QuerySet):
+        def with_error(self, failed: bool):
+            filters = Q(error_message__isnull=False) | Q(bounce_message__isnull=False)
+            if failed:
+                result = self.filter(filters)
+            else:
+                result = self.exclude(filters)
+            return result.distinct()
+
+    objects = EmailDispatchQuerySet.as_manager()
 
     email_configuration_dispatch = models.ForeignKey(
         EmailConfigurationDispatch, on_delete=models.CASCADE

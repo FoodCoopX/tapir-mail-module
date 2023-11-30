@@ -4,7 +4,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.mail import get_connection
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
 
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
@@ -275,7 +274,7 @@ class RetryEmailDispatch:
     def retry_all_failed(cls, email_configuration_dispatch: EmailConfigurationDispatch):
         failed_dispatches = email_configuration_dispatch.emaildispatch_set.filter(
             next_retry__isnull=True,  # Select only the most recent dispatches in each chain
-        ).filter(Q(error_message__isnull=False) | Q(bounce_message__isnull=False))
+        ).with_error(True)
         for email_dispatch in failed_dispatches:
             cls.retry(email_dispatch)
 
