@@ -116,6 +116,7 @@ const SelectVersionModal = ({
           "success",
         );
         fetchVersions();
+        onDataChanged();
       })
       .catch((error) => {
         console.error(error);

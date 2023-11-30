@@ -17,6 +17,7 @@ import TapirPagination from "../TapirPagination";
 import SelectVersionModal from "./SelectVersionModal";
 import DispatchDetailsModal from "../DispatchDetailsModal";
 import { EmailConfigurationDispatchStats } from "./EmailConfigurationDispatchStats";
+import TapirTooltip from "../TapirTooltip";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -179,11 +180,18 @@ const EmailConfigurationDispatchTable: React.FC<
                             );
                           }}
                         >
-                          <EmailConfigurationDispatchStats
-                            emailConfigurationDispatch={
-                              emailConfigurationDispatch
-                            }
-                          />
+                          <TapirTooltip
+                            text="Details anzeigen"
+                            id={content + "-" + emailConfigurationDispatch.id}
+                          >
+                            <div style={{ width: "100%", height: "100%" }}>
+                              <EmailConfigurationDispatchStats
+                                emailConfigurationDispatch={
+                                  emailConfigurationDispatch
+                                }
+                              />
+                            </div>
+                          </TapirTooltip>
                         </td>
                       )}
                     </tr>

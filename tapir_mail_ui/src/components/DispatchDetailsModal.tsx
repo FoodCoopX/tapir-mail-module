@@ -1,3 +1,4 @@
+import { ArrowPathIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
 import { Badge, Modal, Table } from "react-bootstrap";
 import {
@@ -6,17 +7,18 @@ import {
   EmailConfigurationDispatchApi,
   EmailDispatch,
   EmailDispatchApi,
+  EmailDispatchWithRetries,
 } from "../api_client";
-import { useApi } from "../hooks/useApi";
 import { useAlert } from "../contexts/alerts";
-import { DEFAULT_PAGE_SIZE } from "../utils/pagination";
-import TapirPagination from "./TapirPagination";
+import { useApi } from "../hooks/useApi";
 import { EMAIL_DISPATCH_STATUS_PROPS } from "../utils/emailDispatchStatusProps";
 import { formatDate } from "../utils/formatDate";
-import TapirDropdown, { Choice } from "./tapirDropdown";
-import EmailConfigurationDispatchStats from "./dashboard/EmailConfigurationDispatchStats";
+import { DEFAULT_PAGE_SIZE } from "../utils/pagination";
 import TapirButton from "./TapirButton";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import TapirPagination from "./TapirPagination";
+import TapirTooltip from "./TapirTooltip";
+import EmailConfigurationDispatchStats from "./dashboard/EmailConfigurationDispatchStats";
+import TapirDropdown, { Choice } from "./tapirDropdown";
 
 interface DispatchDetailsModalProps {
   configDispatch: EmailConfigurationDispatch;
@@ -29,7 +31,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
   open,
   onClose,
 }) => {
-  const [dispatches, setDispatches] = useState<EmailDispatch[]>([]);
+  const [dispatches, setDispatches] = useState<EmailDispatchWithRetries[]>([]);
   const emailDispatchApi = useApi(EmailDispatchApi);
   const emailConfigDispatchApi = useApi(EmailConfigurationDispatchApi);
   const showAlert = useAlert();
@@ -48,6 +50,9 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
 
   useEffect(() => {
     loadData();
+
+    const interval = setInterval(loadData, 15000);
+    return () => clearInterval(interval);
   }, [configDispatch, currentPage, statusFilter]);
 
   function loadData() {
@@ -118,29 +123,44 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
       });
   }
 
+  const tableStripeColor = "var(--bs-table-striped-bg)";
+
   return (
     <Modal
       show={open}
       onHide={onClose}
-      size="lg"
+      size="xl"
     >
       <Modal.Header closeButton>
         <Modal.Title>
-          Versand Details : "
+          Versand Details: "
           {configDispatch.emailConfigurationVersion.emailConfiguration.name}"
           gesendet am {formatDate(configDispatch.scheduledTime)}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <div className="d-flex justify-content-between align-items-center">
-          <TapirDropdown
-            choices={filterChoices}
-            onChoiceSelected={(choice) => {
-              setStatusFilter(choice ?? undefined);
-            }}
-            selectedChoice={statusFilter}
-            noSelectionText="Per Status filtern"
-          ></TapirDropdown>
+          <span style={{ display: "flex" }}>
+            <TapirDropdown
+              choices={filterChoices}
+              onChoiceSelected={(choice) => {
+                setStatusFilter(choice ?? undefined);
+              }}
+              selectedChoice={statusFilter}
+              noSelectionText="Status filtern"
+            />
+            {statusFilter && (
+              <TapirTooltip
+                id="reset-filters"
+                text="Filter löschen"
+              >
+                <TapirButton
+                  icon={XMarkIcon}
+                  onClick={() => setStatusFilter(undefined)}
+                />
+              </TapirTooltip>
+            )}
+          </span>
           <TapirButton
             variant={
               configDispatch.errorCount === 0
@@ -157,48 +177,130 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
           />
         </div>
         <Table
-          striped
+          style={{ marginTop: "1em" }}
           hover
-          style={{ margin: "0" }}
+          responsive
         >
           <thead>
             <tr>
               <th>Adresse</th>
-              <th>Status</th>
+              <th style={{ textAlign: "center" }}>Zeitpunkt</th>
+              <th style={{ textAlign: "center" }}>Status</th>
               <th>Details</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {dispatches.map((dispatch) => (
-              <tr>
-                <td>{dispatch.recipient}</td>
-                <td>
-                  <Badge
-                    bg={
-                      EMAIL_DISPATCH_STATUS_PROPS[dispatch.dispatchStatus].color
+            {dispatches.map(
+              (dispatch: EmailDispatchWithRetries, index: number) => (
+                <>
+                  <tr
+                    style={
+                      index % 2
+                        ? undefined
+                        : { backgroundColor: tableStripeColor }
                     }
                   >
-                    {EMAIL_DISPATCH_STATUS_PROPS[dispatch.dispatchStatus].text}
-                  </Badge>
-                </td>
-                <td>{renderDetails(dispatch)}</td>
-                <td>
-                  {dispatch.dispatchStatus != DispatchStatusEnum.Opened &&
-                    dispatch.dispatchStatus != DispatchStatusEnum.Unknown &&
-                    (!dispatch.nextRetry ? (
-                      <TapirButton
-                        variant={"outline-primary"}
-                        text="Erneut versenden"
-                        icon={ArrowPathIcon}
-                        onClick={() => retrySingleDispatch(dispatch)}
-                      />
-                    ) : (
-                      <span>Dies ist schon erneut versendet worden.</span>
-                    ))}
-                </td>
-              </tr>
-            ))}
+                    <td style={{ background: "inherit", whiteSpace: "nowrap" }}>
+                      {dispatch.recipient}
+                    </td>
+                    <td
+                      style={{
+                        background: "inherit",
+                        textAlign: "center",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {formatDate(dispatch.sentTime ?? dispatch.createdAt)}
+                    </td>
+                    <td
+                      style={{
+                        background: "inherit",
+                        textAlign: "center",
+                      }}
+                    >
+                      <Badge
+                        bg={
+                          EMAIL_DISPATCH_STATUS_PROPS[dispatch.dispatchStatus]
+                            .color
+                        }
+                      >
+                        {
+                          EMAIL_DISPATCH_STATUS_PROPS[dispatch.dispatchStatus]
+                            .text
+                        }
+                      </Badge>
+                    </td>
+                    <td style={{ background: "inherit" }}>
+                      {renderDetails(dispatch)}
+                    </td>
+                    <td style={{ background: "inherit" }}>
+                      {(dispatch.dispatchStatus === DispatchStatusEnum.Error ||
+                        dispatch.dispatchStatus ===
+                          DispatchStatusEnum.Bounced) &&
+                        (!dispatch.nextRetry ? (
+                          <TapirTooltip
+                            id={"resend-" + dispatch.id}
+                            text="Erneut senden"
+                          >
+                            <TapirButton
+                              variant={"outline-primary"}
+                              size="sm"
+                              icon={ArrowPathIcon}
+                              onClick={() => retrySingleDispatch(dispatch)}
+                            />
+                          </TapirTooltip>
+                        ) : (
+                          <span>Dies ist schon erneut versendet worden.</span>
+                        ))}
+                    </td>
+                  </tr>
+                  {dispatch.previousRetries.map((retry: EmailDispatch) => (
+                    <tr
+                      style={
+                        index % 2
+                          ? undefined
+                          : { backgroundColor: tableStripeColor }
+                      }
+                    >
+                      <td style={{ background: "inherit", paddingLeft: "3em" }}>
+                        →
+                      </td>
+                      <td
+                        style={{
+                          background: "inherit",
+                          textAlign: "center",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {formatDate(retry.sentTime ?? retry.createdAt)}
+                      </td>
+                      <td
+                        style={{ background: "inherit", textAlign: "center" }}
+                      >
+                        <Badge
+                          bg={
+                            EMAIL_DISPATCH_STATUS_PROPS[retry.dispatchStatus]
+                              .color
+                          }
+                        >
+                          {
+                            EMAIL_DISPATCH_STATUS_PROPS[retry.dispatchStatus]
+                              .text
+                          }
+                        </Badge>
+                      </td>
+                      <td
+                        style={{ background: "inherit" }}
+                        colSpan={2}
+                      >
+                        {renderDetails(retry)}
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              ),
+            )}
           </tbody>
         </Table>
       </Modal.Body>

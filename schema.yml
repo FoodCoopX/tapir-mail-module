@@ -1093,7 +1093,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedEmailDispatchList'
+                $ref: '#/components/schemas/PaginatedEmailDispatchWithRetriesList'
           description: ''
   /api/email_dispatch/{id}/:
     get:
@@ -2301,12 +2301,14 @@ components:
       - bounced
       - opened
       - unknown
+      - sending
       type: string
       description: |-
         * `error` - Fehler beim Versand
         * `bounced` - Bounce
         * `opened` - Geöffnet
         * `unknown` - Nicht geöffnet
+        * `sending` - Wird versendet
     DummyPickupLocation:
       type: object
       properties:
@@ -2559,9 +2561,6 @@ components:
           maxLength: 10
         email_configuration_dispatch:
           $ref: '#/components/schemas/EmailConfigurationDispatch'
-        previous_retries:
-          type: string
-          readOnly: true
         dispatch_status:
           $ref: '#/components/schemas/DispatchStatusEnum'
         created_at:
@@ -2603,7 +2602,6 @@ components:
       - created_at
       - dispatch_status
       - email_configuration_dispatch
-      - previous_retries
       - recipient
       - updated_at
     EmailDispatchRequest:
@@ -2650,6 +2648,63 @@ components:
       - dispatch_status
       - email_configuration_dispatch
       - recipient
+    EmailDispatchWithRetries:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 10
+        email_configuration_dispatch:
+          $ref: '#/components/schemas/EmailConfigurationDispatch'
+        dispatch_status:
+          $ref: '#/components/schemas/DispatchStatusEnum'
+        previous_retries:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailDispatch'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        recipient:
+          type: string
+          format: email
+          maxLength: 254
+        recipient_tokens:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        sent_time:
+          type: string
+          format: date-time
+          nullable: true
+        opened_time:
+          type: string
+          format: date-time
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        bounce_message:
+          type: string
+          nullable: true
+        bounce_type:
+          $ref: '#/components/schemas/BounceTypeEnum'
+        next_retry:
+          type: string
+          nullable: true
+      required:
+      - created_at
+      - dispatch_status
+      - email_configuration_dispatch
+      - previous_retries
+      - recipient
+      - updated_at
     EmailTemplate:
       type: object
       properties:
@@ -2816,6 +2871,26 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmailDispatch'
+    PaginatedEmailDispatchWithRetriesList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailDispatchWithRetries'
     PaginatedEmailTemplateList:
       type: object
       properties:

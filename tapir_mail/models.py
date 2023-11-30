@@ -165,6 +165,7 @@ class EmailDispatch(BaseModel):
         BOUNCED = "bounced", "Bounce"
         OPENED = "opened", "Geöffnet"
         UNKNOWN = "unknown", "Nicht geöffnet"
+        SENDING = "sending", "Wird versendet"
 
     class EmailDispatchQuerySet(models.QuerySet):
         def with_error(self, failed: bool):
@@ -205,7 +206,7 @@ class EmailDispatch(BaseModel):
         while current_dispatch is not None:
             retries.append(current_dispatch)
             current_dispatch = getattr(current_dispatch, "previous_retry", None)
-        return list(reversed(retries))
+        return list(retries)
 
     def __str__(self):
         return (
@@ -217,6 +218,8 @@ class EmailDispatch(BaseModel):
             return self.DispatchStatus.ERROR
         if self.bounce_message:
             return self.DispatchStatus.BOUNCED
+        if not self.sent_time:
+            return self.DispatchStatus.SENDING
         if self.opened_time:
             return self.DispatchStatus.OPENED
         return self.DispatchStatus.UNKNOWN
