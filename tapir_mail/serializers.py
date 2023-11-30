@@ -246,6 +246,5 @@ class EmailDispatchSerializer(serializers.ModelSerializer):
 
 
 class GroupedEmailDispatchSerializer(serializers.Serializer):
-    dispatches = serializers.ListSerializer(
-        child=EmailDispatchSerializer(), required=True
-    )
+    recipient = serializers.CharField(required=True)
+    count = serializers.IntegerField(required=True)

@@ -2,6 +2,7 @@ import datetime
 import logging
 
 from django.db import transaction
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
@@ -437,7 +438,23 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
         ],
     )
     @action(detail=False)
-    def failed_dispatches(self, request):
+    def recipients_with_errors(self, request):
+        dispatches = self.get_failed_dispatches_between_dates(request)
+        dispatch_count_per_recipient = (
+            dispatches.values("recipient")
+            .annotate(count=Count("recipient"))
+            .order_by("-count")
+        )
+
+        pagination = self.pagination_class()
+        dispatches = pagination.paginate_queryset(dispatch_count_per_recipient, request)
+        serializer = GroupedEmailDispatchSerializer(
+            dispatches,
+            many=True,
+        )
+        return pagination.get_paginated_response(serializer.data)
+
+    def get_failed_dispatches_between_dates(self, request):
         dispatches = EmailDispatch.objects.with_error(True)
         start_date = request.query_params.get("start_date", None)
         if start_date:
@@ -445,23 +462,24 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
         end_date = request.query_params.get("end_date", None)
         if end_date:
             dispatches = dispatches.filter(sent_time__lte=end_date)
-        dispatches_per_recipient = {}
-        for dispatch in dispatches:
-            if dispatch.recipient not in dispatches_per_recipient.keys():
-                dispatches_per_recipient[dispatch.recipient] = []
-            dispatches_per_recipient[dispatch.recipient].append(dispatch)
-        serializer = GroupedEmailDispatchSerializer(
-            [
-                {"dispatches": dispatches}
-                for dispatches in dispatches_per_recipient.values()
-            ],
-            many=True,
-        )
+        return dispatches
+
+    @extend_schema(
+        responses={200: EmailDispatchSerializer(many=True)},
+        parameters=[
+            OpenApiParameter(name="start_date", required=False, type=datetime.datetime),
+            OpenApiParameter(name="end_date", required=False, type=datetime.datetime),
+            OpenApiParameter(name="recipient", required=True, type=str),
+        ],
+    )
+    @action(detail=False)
+    def get_failed_dispatches(self, request):
+        dispatches = self.get_failed_dispatches_between_dates(request)
+        dispatches = dispatches.filter(recipient=request.query_params.get("recipient"))
+
         pagination = self.pagination_class()
-        pagination.count = len(dispatches_per_recipient)
-        pagination.limit = pagination.get_limit(request) or 10
-        pagination.offset = pagination.get_offset(request)
-        pagination.request = request
+        objects = pagination.paginate_queryset(dispatches, request)
+        serializer = EmailDispatchSerializer(objects, many=True)
         return pagination.get_paginated_response(serializer.data)
 
 

@@ -7,6 +7,7 @@ import { DEFAULT_PAGE_SIZE } from "../utils/pagination";
 import TapirPagination from "./TapirPagination";
 import DateTimePicker from "./dateTimePicker";
 import DispatchErrorDetailsModal from "./DispatchErrorDetailsModal";
+import Loading from "./loading";
 
 interface DispatchesWithErrorsModalProps {
   open: boolean;
@@ -28,33 +29,35 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const emailDispatchApi = useApi(EmailDispatchApi);
   const showAlert = useAlert();
-  const [selectedGroup, setSelectedGroup] = useState<GroupedEmailDispatch>();
+  const [selectedRecipient, setSelectedRecipient] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, [startDate, endDate]);
+    if (open) {
+      loadData();
+    }
+  }, [startDate, endDate, currentPage, open]);
 
   function loadData() {
-    console.log(startDate);
+    if (!open) return;
+
+    setLoading(true);
     emailDispatchApi
-      .emailDispatchFailedDispatchesList({
+      .emailDispatchRecipientsWithErrorsList({
         limit: DEFAULT_PAGE_SIZE,
         offset: currentPage * DEFAULT_PAGE_SIZE,
         startDate: startDate,
         endDate: endDate,
       })
       .then((paginatedData) => {
-        let sortedGroups = paginatedData.results ?? [];
-        sortedGroups.sort((a, b) => {
-          return b.dispatches.length - a.dispatches.length;
-        });
-        setGroupedDispatches(sortedGroups);
+        setGroupedDispatches(paginatedData.results ?? []);
         setGroupCount(paginatedData.count ?? 0);
       })
       .catch((error) => {
         console.error(error);
         showAlert("Fehler beim Laden der Dispatches", "danger");
-      });
+      })
+      .finally(() => setLoading(false));
   }
 
   function getInitialStartDate() {
@@ -72,7 +75,7 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
   return (
     <>
       <Modal
-        show={open && !selectedGroup}
+        show={open && !selectedRecipient}
         onHide={onClose}
       >
         <Modal.Header closeButton>
@@ -97,31 +100,35 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
               />
             </Form.Group>
           </div>
-          <Table
-            striped
-            hover
-            style={{ margin: "0" }}
-          >
-            <thead>
-              <tr>
-                <th>Adresse</th>
-                <th>Anzahl an Fehler</th>
-              </tr>
-            </thead>
-            <tbody>
-              {groupedDispatches.map((group) => (
-                <tr
-                  onClick={() => {
-                    setSelectedGroup(group);
-                  }}
-                  style={{ cursor: "pointer" }}
-                >
-                  <td>{group.dispatches[0].recipient}</td>
-                  <td>{group.dispatches.length}</td>
+          {loading ? (
+            <Loading />
+          ) : (
+            <Table
+              striped
+              hover
+              style={{ margin: "0" }}
+            >
+              <thead>
+                <tr>
+                  <th>Adresse</th>
+                  <th>Anzahl an Fehler</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {groupedDispatches.map((group) => (
+                  <tr
+                    onClick={() => {
+                      setSelectedRecipient(group.recipient);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{group.recipient}</td>
+                    <td style={{ textAlign: "right" }}>{group.count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
         </Modal.Body>
         {groupCount > DEFAULT_PAGE_SIZE && (
           <Modal.Footer className="d-flex justify-content-center align-items-center">
@@ -134,11 +141,11 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
           </Modal.Footer>
         )}
       </Modal>
-      {selectedGroup && (
+      {selectedRecipient && (
         <DispatchErrorDetailsModal
-          open={!!selectedGroup}
-          onClose={() => setSelectedGroup(undefined)}
-          dispatches={selectedGroup.dispatches}
+          open={!!selectedRecipient}
+          onClose={() => setSelectedRecipient("")}
+          recipient={selectedRecipient}
           startDate={startDate}
           endDate={endDate}
         />
