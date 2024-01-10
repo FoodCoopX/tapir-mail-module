@@ -28,6 +28,7 @@ import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
 
 const ID_NEW_TEMPLATE = "<new>";
+const EMPTY_TRIGGER = [{ triggerId: "", triggerFieldValues: {} }];
 
 const stringToStatus = (status: string): StatusEnum => {
   return StatusEnum[
@@ -44,9 +45,7 @@ const EmailConfigurationEditor = () => {
   const [subject, setSubject] = useState("");
   const [selectedTemplate, setSelectedTemplate] =
     useState<string>(ID_NEW_TEMPLATE);
-  const [triggers, setTriggers] = useState<TriggerDataRequest[]>([
-    { triggerId: "", triggerFieldValues: {} },
-  ]);
+  const [triggers, setTriggers] = useState<TriggerDataRequest[]>(EMPTY_TRIGGER);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
@@ -88,7 +87,11 @@ const EmailConfigurationEditor = () => {
           setStatus(stringToStatus(data.releaseStatus) || StatusEnum.Draft);
           setMailingName(data.name || "");
           setUpdatedAt(data.updatedAt || undefined);
-          setTriggers(data.triggers ?? []);
+          setTriggers(
+            data.triggers && data.triggers.length > 0
+              ? data.triggers
+              : EMPTY_TRIGGER,
+          );
         })
         .catch((err) => {
           console.error(err);
@@ -114,13 +117,14 @@ const EmailConfigurationEditor = () => {
   const saveVersion = (content: IPage, newStatus: StatusEnum = status) => {
     return new Promise<void>((resolve, reject) => {
       setLastSavedTime(Date.now());
+      const cleanTriggers = triggers.filter((t) => t.triggerId);
       const props = {
         description: "TODO",
         subject: subject,
         content: jsonToMjml(content),
         name: mailingName,
         releaseStatus: newStatus,
-        triggers: triggers,
+        triggers: cleanTriggers,
         segmentData: segmentData,
       };
 
