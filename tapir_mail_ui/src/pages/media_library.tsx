@@ -3,17 +3,18 @@ import { registerPlugin } from "filepond";
 import React, { useEffect, useState } from "react";
 import { FilePond } from "react-filepond";
 
-import "filepond/dist/filepond.min.css";
-import { Button, Card, Col, Form, Row } from "react-bootstrap";
-import { MediaLibraryApi, StoredUpload, TemporaryUpload } from "../api_client";
-import StoredUploadsCard from "../components/media_library/StoredUploadsCard";
-import TemporaryUploadsCard from "../components/media_library/TemporaryUploadsCard";
-import { useApi } from "../hooks/useApi";
-import { Link } from "react-router-dom";
 import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
+import "filepond/dist/filepond.min.css";
+import { Button, Card, Col, Form, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import { MediaLibraryApi, StoredUpload, TemporaryUpload } from "../api_client";
+import StoredUploadsCard from "../components/media_library/StoredUploadsCard";
+import TemporaryUploadsCard from "../components/media_library/TemporaryUploadsCard";
 import env from "../env";
+import { useApi } from "../hooks/useApi";
+import { addCsrfToken } from "../utils/requests";
 
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
@@ -31,7 +32,11 @@ export default function MediaLibrary() {
     FilePondJs.setOptions({
       server: {
         url: (env.REACT_APP_API_ROOT as string) + "/api/media_library/filepond",
-        process: "/process/",
+        process: {
+          url: "/process/",
+          method: "POST",
+          ondata: addCsrfToken,
+        },
         revert: "/revert/",
         restore: "/restore/",
         load: "/load/?target=",
@@ -60,6 +65,7 @@ export default function MediaLibrary() {
   function onConfirmUpload(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    addCsrfToken(formData);
     fetch(
       (env.REACT_APP_API_ROOT as string) + "/api/media_library/confirm_upload/",
       {

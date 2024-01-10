@@ -21,6 +21,7 @@ import { useApi } from "../hooks/useApi";
 import { getMediaLibraryFileUrl } from "../utils/getMediaLibraryFileUrl";
 import { mjmlToJson } from "../utils/mjml";
 import env from "../env";
+import { addCsrfToken } from "../utils/requests";
 //import './CustomBlocks';
 
 const fontList = [
@@ -168,6 +169,7 @@ const Editor: React.FC<EditorProps> = ({
       function startUpload() {
         const uploadFormData = new FormData();
         uploadFormData.append("filepond", file);
+        addCsrfToken(uploadFormData);
         fetch(
           (env.REACT_APP_API_ROOT as string) +
             "/api/media_library/filepond/process/",
@@ -189,6 +191,7 @@ const Editor: React.FC<EditorProps> = ({
       function confirmUpload(uploadId: string) {
         const confirmFormData = new FormData();
         confirmFormData.append("filepond", uploadId);
+        addCsrfToken(confirmFormData);
         fetch(
           (env.REACT_APP_API_ROOT as string) +
             "/api/media_library/confirm_upload/",
@@ -210,7 +213,8 @@ const Editor: React.FC<EditorProps> = ({
 
       function handleError(response: Response) {
         response.text().then((errorMessage) => {
-          alert(errorMessage);
+          console.error(errorMessage);
+          showAlert("Fehler beim Upload", "danger");
           reject(errorMessage);
         });
       }
