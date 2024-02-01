@@ -15,3 +15,7 @@ code {
 .container {
   margin-top: 2em;
 }
+
+#VisualEditorEditMode {
+  white-space: nowrap !important; /* not all of the toolbar might be visible, but better than linebreaking...*/
+}
