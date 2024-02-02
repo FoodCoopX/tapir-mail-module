@@ -7,6 +7,7 @@ This file provides a single view class that handles post and delete requests
 for demonstrating the handling of file storage and deletion using the
 django-drf-filepond API.
 """
+
 import json
 import logging
 import os
