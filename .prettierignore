@@ -2,3 +2,4 @@
 schema.yml
 poetry.lock
 *.html
+tapir_mail_ui/tsconfig.json

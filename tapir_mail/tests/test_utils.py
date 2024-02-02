@@ -49,8 +49,10 @@ def build_time_trigger_dict(scheduled_time: datetime.datetime | None = None):
     return {
         "trigger_id": TimeTrigger.get_id(),
         "trigger_field_values": {
-            "scheduled_time": scheduled_time.isoformat()
-            if scheduled_time
-            else faker.Faker().date_time_this_decade().isoformat(),
+            "scheduled_time": (
+                scheduled_time.isoformat()
+                if scheduled_time
+                else faker.Faker().date_time_this_decade().isoformat()
+            ),
         },
     }

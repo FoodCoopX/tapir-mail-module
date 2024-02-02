@@ -17,5 +17,6 @@ code {
 }
 
 #VisualEditorEditMode {
-  white-space: nowrap !important; /* not all of the toolbar might be visible, but better than linebreaking...*/
+  /* not all of the toolbar might be visible, but better than linebreaking...*/
+  white-space: nowrap !important;
 }

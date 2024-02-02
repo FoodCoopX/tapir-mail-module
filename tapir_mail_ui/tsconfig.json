@@ -14,12 +14,6 @@
     "isolatedModules": true,
     "jsx": "react"
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/routing.js",
-    "src/App.js",
-    "src/routing.js"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/routing.js", "src/App.js"],
   "exclude": ["node_modules"]
 }
