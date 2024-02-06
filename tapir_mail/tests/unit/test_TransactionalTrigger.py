@@ -4,7 +4,11 @@ from unittest.mock import MagicMock, patch
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 
-from tapir_mail.models import EmailConfigurationVersion, ReleaseStatus
+from tapir_mail.models import (
+    EmailConfigurationDispatch,
+    EmailConfigurationVersion,
+    ReleaseStatus,
+)
 from tapir_mail.tests.test_utils import TapirUnitTest, mock_timezone_now
 from tapir_mail.triggers.transactional_trigger import (
     TransactionalTrigger,
@@ -43,7 +47,9 @@ class TransactionalTriggerTest(TapirUnitTest):
         TransactionalTrigger.register_action("test_action", "test_key")
         TransactionalTrigger.fire_action("test_key", "test@example.com")
         mock_fire_all.assert_called_once_with(
-            TransactionalTriggerData(key="test_key", recipient_email="test@example.com")
+            TransactionalTriggerData(
+                key="test_key", recipient_email="test@example.com", token_data={}
+            )
         )
 
     @patch("tapir_mail.models.EmailConfigurationVersion.objects.filter")
@@ -78,21 +84,21 @@ class TransactionalTriggerTest(TapirUnitTest):
         TransactionalTrigger.register_action("test_action_2", "test_key_2")
         TransactionalTrigger.fire_all_released_configs(
             TransactionalTriggerData(
-                key="test_key_1", recipient_email="test@example.com"
+                key="test_key_1", recipient_email="test@example.com", token_data={}
             )
         )
 
         mock_fire_version.assert_called_once_with(
             version_1,
             TransactionalTriggerData(
-                key="test_key_1", recipient_email="test@example.com"
+                key="test_key_1", recipient_email="test@example.com", token_data={}
             ),
         )
 
     @patch("tapir_mail.models.EmailConfigurationDispatch.objects.create")
     def test_fireVersion_validInput_createDispatchCalled(self, mock_create_dispatch):
         data = TransactionalTriggerData(
-            key="test_key", recipient_email="test@example.com"
+            key="test_key", recipient_email="test@example.com", token_data={}
         )
         version = MagicMock(spec=EmailConfigurationVersion)
         TransactionalTrigger.fire_version(version, data)
@@ -102,6 +108,7 @@ class TransactionalTriggerTest(TapirUnitTest):
             "override_recipients": ["test@example.com"],
             "scheduled_time": self.NOW - relativedelta(minutes=10),
             "is_sent": False,
+            "additional_tokens": {},
         }
 
         mock_create_dispatch.assert_called_once_with(**expected_params)
@@ -131,27 +138,33 @@ class TransactionalTriggerTest(TapirUnitTest):
 
         TransactionalTrigger.register_action("test_action", "test_key")
         TransactionalTrigger.fire_all_released_configs(
-            TransactionalTriggerData(key="test_key", recipient_email="test@example.com")
+            TransactionalTriggerData(
+                key="test_key", recipient_email="test@example.com", token_data={}
+            )
         )
 
         mock_fire_version.assert_called_once_with(
             released_version,
             TransactionalTriggerData(
-                key="test_key", recipient_email="test@example.com"
+                key="test_key", recipient_email="test@example.com", token_data={}
             ),
         )
 
     def test_getRecipientsOverride_validData_correctRecipientReturned(self):
         recipients = TransactionalTrigger.get_recipients_override(
             None,
-            TransactionalTriggerData(key="test", recipient_email="test@example.com"),
+            TransactionalTriggerData(
+                key="test", recipient_email="test@example.com", token_data={}
+            ),
         )
         self.assertEqual(recipients, ["test@example.com"])
 
     def test_getScheduledDate_validData_correctDateCalculated(self):
         scheduled_date = TransactionalTrigger.get_scheduled_date(
             None,
-            TransactionalTriggerData(key="test", recipient_email="test@example.com"),
+            TransactionalTriggerData(
+                key="test", recipient_email="test@example.com", token_data={}
+            ),
         )
         expected_date = timezone.now() - relativedelta(minutes=10)
         self.assertAlmostEqual(
@@ -184,3 +197,48 @@ class TransactionalTriggerTest(TapirUnitTest):
         ):
             self.assertEqual(expected_choice.value, actual_choice.value)
             self.assertEqual(expected_choice.label, actual_choice.label)
+
+    def test_fireAction_wrongTokens_throwsException(self):
+        action_key = "test_action_with_token"
+        TransactionalTrigger.register_action(
+            "Test Trigger",
+            action_key,
+            {"Transactional Token Label": "transactional_token"},
+        )
+        self.assertEqual(
+            TransactionalTrigger.trigger_tokens[action_key],
+            {"Transactional Token Label": "transactional_token"},
+        )
+
+        with self.assertRaises(ValueError):
+            TransactionalTrigger.fire_action(action_key, "test@example.com")
+
+        with self.assertRaises(ValueError):
+            TransactionalTrigger.fire_action(
+                action_key, "test@example.com", {"wrong_token": "something"}
+            )
+
+    @patch(
+        "tapir_mail.triggers.transactional_trigger.TransactionalTrigger.fire_all_released_configs"
+    )
+    def test_fireAction_correctTokens_tokensPersisted(
+        self, mock_fire_all_released_configs
+    ):
+        action_key = "test_action_with_token"
+        TransactionalTrigger.register_action(
+            "Test Trigger",
+            action_key,
+            {"Transactional Token Label": "transactional_token"},
+        )
+
+        data = TransactionalTriggerData(
+            key=action_key,
+            recipient_email="test@example.com",
+            token_data={"transactional_token": "Test Value"},
+        )
+
+        TransactionalTrigger.fire_action(
+            data.key, data.recipient_email, data.token_data
+        )
+
+        mock_fire_all_released_configs.assert_called_once_with(data)

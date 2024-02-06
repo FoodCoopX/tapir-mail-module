@@ -122,8 +122,8 @@ type EditorProps = {
   onSave?: (values: IEmailTemplate) => void;
   onTemplateNameChange?: (name: string) => void;
   templateName?: string;
+  mergeTags?: any;
   content?: any;
-  subject?: string;
   onContentChange?: (values: IEmailTemplate) => void;
 };
 
@@ -133,34 +133,10 @@ const Editor: React.FC<EditorProps> = ({
   onTemplateNameChange,
   onContentChange,
   templateName = "",
-  subject,
+  mergeTags = {},
   content = EMPTY_PAGE,
 }) => {
-  const api = useApi(TokensApi);
   const showAlert = useAlert();
-
-  const [mergeTags, setMergeTags] = useState<any>({});
-
-  useEffect(() => {
-    api
-      .tokensGetTokensRetrieve()
-      .then((tokens: any) => {
-        const remappedObject: { [key: string]: { [key: string]: string } } = {};
-
-        Object.keys(tokens).forEach((key) => {
-          remappedObject[key] = {} as { [key: string]: string };
-          tokens[key].forEach((value: string) => {
-            remappedObject[key][value] = value;
-          });
-        });
-
-        setMergeTags(remappedObject);
-      })
-      .catch((err) => {
-        console.error(err);
-        showAlert("Fehler beim Laden der Tokens", "danger");
-      });
-  }, []);
 
   const handleUploadImage = async (file: Blob) => {
     return new Promise<string>((resolve, reject) => {
@@ -226,7 +202,7 @@ const Editor: React.FC<EditorProps> = ({
       <div>
         <EmailEditorProvider
           dashed={false}
-          data={{ subject: subject, content: content }}
+          data={{ content: content }}
           height={"calc(100vh)"}
           onUploadImage={handleUploadImage}
           autoComplete={false}

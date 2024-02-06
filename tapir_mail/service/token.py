@@ -2,6 +2,8 @@ import logging
 import re
 from typing import Any
 
+from django.conf import settings
+
 from tapir_mail.service.segment import _check_base_queryset
 
 LOG = logging.getLogger(__name__)
@@ -75,14 +77,27 @@ def resolve_recipient_tokens(tokens_to_resolve: list[str], recipient: object) ->
     :return: A dict containing the resolved tokens.
     """
     recipient_tokens = {}
-    for token_value in tokens_to_resolve:
-        recipient_tokens[token_value] = str(getattr(recipient, token_value, "") or "")
+    for token_key in tokens_to_resolve:
+        recipient_tokens[token_key] = str(getattr(recipient, token_key, "") or "")
     return recipient_tokens
 
 
-def replace_tokens(mjml: str, recipient_tokens=None):
+def replace_tokens(
+    mjml: str,
+    recipient_tokens=None,
+    transactional_tokens=None,
+    strict_token_validation=None,
+):
     if recipient_tokens is None:
         recipient_tokens = {}
+    if transactional_tokens is None:
+        transactional_tokens = {}
+    if strict_token_validation is None:
+        strict_token_validation = (
+            settings.EMAIL_TOKENS_STRICT_VALIDATION
+            if hasattr(settings, "EMAIL_TOKENS_STRICT_VALIDATION")
+            else True
+        )
 
     def _do_replace(current_mjml, key, value):
         if value is None:
@@ -105,6 +120,29 @@ def replace_tokens(mjml: str, recipient_tokens=None):
             for key, value in tokens.items():
                 mjml = _do_replace(
                     mjml, f"{token_type}.{key}", value() if callable(value) else value
+                )
+
+    for key, value in transactional_tokens.items():
+        mjml = _do_replace(mjml, key, value)
+
+    pattern = re.compile(r"\{\{\s*(.*?)\s*\}\}")
+    matches = list(set(pattern.findall(mjml)))
+    if matches:
+        if strict_token_validation:
+            raise ValueError(
+                f"Unknown Tokens: {matches}. To ignore unknown tokens, set EMAIL_TOKENS_STRICT_VALIDATION=False."
+            )
+        else:
+            LOG.warning(
+                f"Unknown Tokens: {matches}. To abort sending, set EMAIL_TOKENS_STRICT_VALIDATION=True."
+            )
+
+            # replace unknown tokens with empty string
+            for match in matches:
+                mjml = re.sub(
+                    re.compile(r"\{\{\s*(" + re.escape(match) + r")\s*\}\}"),
+                    "",
+                    mjml,
                 )
 
     return mjml

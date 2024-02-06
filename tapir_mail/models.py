@@ -115,6 +115,7 @@ class EmailConfigurationDispatch(BaseModel):
     scheduled_time = models.DateTimeField(default=timezone.now)
     is_sent = models.BooleanField(default=False)
     override_recipients = models.JSONField(null=True)
+    additional_tokens = models.JSONField(null=True)
 
     def get_recipient_list(self) -> list:
         if self.is_sent:
@@ -183,6 +184,7 @@ class EmailDispatch(BaseModel):
     )
     recipient = models.EmailField()
     recipient_tokens = models.JSONField(null=True)
+    additional_tokens = models.JSONField(null=True)
     sent_time = models.DateTimeField(null=True, blank=True)
     opened_time = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(null=True, blank=True)

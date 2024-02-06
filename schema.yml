@@ -2180,6 +2180,21 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/trigger_tokens/get_tokens/:
+    get:
+      operationId: trigger_tokens_get_tokens_retrieve
+      tags:
+      - trigger_tokens
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: ''
   /api/triggers/:
     get:
       operationId: triggers_list

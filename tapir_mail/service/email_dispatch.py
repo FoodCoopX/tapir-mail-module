@@ -100,6 +100,7 @@ class ResolveAndCreateEmailDispatches:
                     recipient_tokens=resolve_recipient_tokens(
                         recipient_tokens, recipient
                     ),
+                    additional_tokens=config_dispatch.additional_tokens,
                     created_at=config_dispatch.scheduled_time,
                 )
                 for recipient in recipients
@@ -182,12 +183,13 @@ class SendEmailBatch:
         for email_dispatch in email_dispatches:
             config_dispatch = email_dispatch.email_configuration_dispatch
 
-            mjml = replace_tokens(
-                config_dispatch.email_configuration_version.content,
-                email_dispatch.recipient_tokens,
-            )
-
             try:
+                mjml = replace_tokens(
+                    config_dispatch.email_configuration_version.content,
+                    email_dispatch.recipient_tokens,
+                    email_dispatch.additional_tokens,
+                )
+
                 email = prepare_email(
                     mjml=mjml,
                     subject=config_dispatch.email_configuration_version.subject,

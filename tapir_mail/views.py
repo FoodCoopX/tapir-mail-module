@@ -29,10 +29,10 @@ from tapir_mail.serializers import (
     EmailDispatchSerializer,
     EmailDispatchWithRetriesSerializer,
     EmailTemplateSerializer,
+    GroupedEmailDispatchSerializer,
     RecipientSerializer,
     SegmentDataSerializer,
     TriggerDefinitionSerializer,
-    GroupedEmailDispatchSerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
@@ -44,6 +44,7 @@ from tapir_mail.service.segment import (
 from tapir_mail.service.token import replace_tokens, token_registry
 from tapir_mail.service.tracking import track_email_opening
 from tapir_mail.service.triggers import Trigger, trigger_registry
+from tapir_mail.triggers.transactional_trigger import TransactionalTrigger
 
 LOG = logging.getLogger(__name__)
 
@@ -287,9 +288,11 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
                 data={"message": f"Invalid recipients parameter: {str(e)}"},
             )
+
         mjml = replace_tokens(
             email_version_configuration.content,
             {"email": email for email in recipients_list},
+            strict_token_validation=False,
         )
         email = prepare_email(
             mjml=mjml,
@@ -617,3 +620,19 @@ class TrackingView(viewsets.ViewSet):
             LOG.error(f"Error while tracking email opening: {type(e)}: {str(e)}")
 
         return Response(None, status=status.HTTP_200_OK)
+
+
+class TransactionalTriggerTokenView(viewsets.ViewSet):
+    @extend_schema(
+        responses={200: {"type": "object"}},
+    )
+    @action(detail=False, methods=["get"])
+    def get_tokens(self, request, *args, **kwargs):
+        trigger_tokens = {}
+        for trigger_id, tokens in TransactionalTrigger.trigger_tokens.items():
+            trigger_tokens[trigger_id] = {
+                TransactionalTrigger.transactional_trigger_registry[trigger_id]: list(
+                    tokens.keys()
+                )
+            }
+        return Response(trigger_tokens, status=status.HTTP_200_OK)
