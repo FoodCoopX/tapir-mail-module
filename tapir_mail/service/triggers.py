@@ -31,7 +31,7 @@ class Trigger(Generic[TriggerData], ABC):
 
         def __post_init__(self):
             self.additional_data["choices"] = [
-                dict(label=choice.label, value=choice.value) for choice in self.choices
+                choice.__dict__ for choice in self.choices
             ]
 
     @classmethod

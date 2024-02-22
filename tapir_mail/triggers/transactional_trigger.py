@@ -11,24 +11,50 @@ from tapir_mail.service.triggers import Trigger
 class TransactionalTriggerData:
     key: str
     recipient_email: str
+    token_data: dict
+
+
+@dataclass
+class TransactionalTriggerDataDropdownFieldChoice(
+    Trigger.DropdownFieldDefinition.Choice
+):
+    tokens: dict
 
 
 class TransactionalTrigger(Trigger[TransactionalTriggerData]):
     transactional_trigger_registry = {}
+    trigger_tokens = {}
 
     @classmethod
-    def register_action(cls, name, key):
+    def register_action(cls, name, key, tokens: dict = {}):
         cls.transactional_trigger_registry[key] = name
+        if tokens:
+            cls.trigger_tokens[key] = tokens
 
     @classmethod
-    def fire_action(cls, key, recipient_email):
+    def fire_action(cls, key, recipient_email, token_data={}):
         if key not in cls.transactional_trigger_registry:
             raise Exception(
                 f"Action '{key}' not registered. Available: {set(cls.transactional_trigger_registry.keys())}"
             )
 
+        known_tokens = cls.trigger_tokens.get(key, {})
+        for label, token_key in known_tokens.items():
+            if token_key not in token_data:
+                raise ValueError(
+                    f"Token '{token_key}' ({label}) is required for action '{key}'."
+                )
+
+        for token_key in token_data:
+            if token_key not in known_tokens.values():
+                raise ValueError(
+                    f"Token '{token_key}' not known for action '{key}'. Available: {set(known_tokens.values())}"
+                )
+
         cls.fire_all_released_configs(
-            TransactionalTriggerData(key=key, recipient_email=recipient_email)
+            TransactionalTriggerData(
+                key=key, recipient_email=recipient_email, token_data=token_data
+            )
         )
 
     @classmethod
@@ -46,6 +72,29 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
                         version,
                         data,
                     )
+
+    @classmethod
+    def fire_version(cls, email_configuration_version, data: TransactionalTriggerData):
+        from tapir_mail.models import EmailConfigurationDispatch
+
+        translated_token_data = {}
+        trigger_tokens = cls.trigger_tokens.get(data.key, {})
+        for key, value in data.token_data.items():
+            translated_token_data[
+                cls.transactional_trigger_registry[data.key]
+                + "."
+                + [k for k, value in trigger_tokens.items() if value == key][0]
+            ] = value
+
+        EmailConfigurationDispatch.objects.create(
+            email_configuration_version=email_configuration_version,
+            override_recipients=cls.get_recipients_override(
+                email_configuration_version=email_configuration_version, data=data
+            ),
+            scheduled_time=cls.get_scheduled_date(email_configuration_version, data),
+            is_sent=False,
+            additional_tokens=translated_token_data,
+        )
 
     @classmethod
     def get_recipients_override(cls, email_configuration_version, data) -> [str]:
@@ -69,13 +118,12 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
 
     @classmethod
     def get_field_definitions(cls) -> [Trigger.FieldDefinition]:
-        Choice = Trigger.DropdownFieldDefinition.Choice
         return [
             cls.DropdownFieldDefinition(
                 field_name="key",
                 label="Aktion auswählen",
                 choices=[
-                    Choice(value=key, label=label)
+                    Trigger.DropdownFieldDefinition.Choice(value=key, label=label)
                     for key, label in cls.transactional_trigger_registry.items()
                 ],
             )

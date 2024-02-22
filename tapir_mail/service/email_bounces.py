@@ -61,7 +61,7 @@ class EmailBounces:
         )
         if not dispatch_id:
             # this email is not a bounce
-            LOG.info(f"Email is not a bounce : {message.as_string()}")
+            LOG.debug(f"Email is not a bounce : {message.as_string()}")
             return
 
         email_dispatch: EmailDispatch = EmailDispatch.objects.filter(

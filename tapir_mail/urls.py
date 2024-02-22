@@ -15,6 +15,9 @@ router.register("email_configuration_version", views.EmailConfigurationVersionVi
 router.register("email_configuration_dispatch", views.EmailConfigurationDispatchViewSet)
 router.register("email_dispatch", views.EmailDispatchViewSet)
 router.register("triggers", views.TriggerListView, basename="Triggers")
+router.register(
+    "trigger_tokens", views.TransactionalTriggerTokenView, basename="Trigger Tokens"
+)
 router.register("segment", views.SegmentAndFilterViewSet, basename="segment")
 router.register("tokens", views.TokensView, basename="tokens")
 router.register("tracking", views.TrackingView, basename="tracking")

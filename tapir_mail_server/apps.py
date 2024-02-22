@@ -28,7 +28,9 @@ class TapirMailServerAppConfig(AppConfig):
             )
 
             TransactionalTrigger.register_action(
-                "Mitgliedsdatenänderungen", "update_member"
+                "Mitgliedsdatenänderungen",
+                "update_member",
+                {"Geänderte Daten": "changed_fields"},
             )
 
         except Exception as e:

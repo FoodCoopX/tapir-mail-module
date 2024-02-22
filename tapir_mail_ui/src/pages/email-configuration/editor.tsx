@@ -13,7 +13,9 @@ import {
   EmailTemplateApi,
   SegmentData,
   StatusEnum,
+  TokensApi,
   TriggerDataRequest,
+  TriggerTokensApi,
 } from "../../api_client";
 import TapirButton from "../../components/TapirButton";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
@@ -58,8 +60,20 @@ const EmailConfigurationEditor = () => {
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
   const [lastSavedTime, setLastSavedTime] = useState(Date.now());
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
+  const [tokens, setTokens] = useState<{
+    [key: string]: { [key: string]: string };
+  }>({});
+  const [triggerTokens, setTriggerTokens] = useState<{
+    [key: string]: { [key: string]: string };
+  }>({});
+  const [combinedTokens, setCombinedTokens] = useState<{
+    [key: string]: { [key: string]: string };
+  }>({});
+
   const showAlert = useAlert();
   const templateApi = useApi(EmailTemplateApi);
+  const tokensApi = useApi(TokensApi);
+  const triggerTokensApi = useApi(TriggerTokensApi);
   const emailConfigurationVersionApi = useApi(EmailConfigurationVersionApi);
   const navigate = useNavigate();
 
@@ -71,6 +85,17 @@ const EmailConfigurationEditor = () => {
         console.error(err);
         showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
       });
+
+  const remapTokens = (tokens: any) => {
+    const remappedObject: { [key: string]: { [key: string]: string } } = {};
+    Object.entries(tokens).forEach(([key, v]) => {
+      remappedObject[key] = {} as { [key: string]: string };
+      tokens[key].forEach((value: string) => {
+        remappedObject[key][value] = value;
+      });
+    });
+    return remappedObject;
+  };
 
   useEffect(() => {
     if (currentId) {
@@ -100,9 +125,23 @@ const EmailConfigurationEditor = () => {
         .finally(() => {
           setLoading(false);
         });
+
+      triggerTokensApi.triggerTokensGetTokensRetrieve().then((tokens: any) => {
+        setTriggerTokens(tokens);
+      });
     } else {
       fetchTemplates();
     }
+
+    tokensApi
+      .tokensGetTokensRetrieve()
+      .then((tokens: any) => {
+        setTokens(remapTokens(tokens));
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim Laden der Tokens", "danger");
+      });
   }, [currentId]);
 
   const changeId = (id: string) => {
@@ -177,6 +216,7 @@ const EmailConfigurationEditor = () => {
 
   const handleEditorChange = (content: IPage) => {
     setContent(content);
+
     const currentTime = Date.now();
     if (
       currentId &&
@@ -193,7 +233,9 @@ const EmailConfigurationEditor = () => {
       templateApi
         .emailTemplateRetrieve({ id: id!! })
         .then((data) => {
-          setLoadedContent(mjmlToJson(data.content));
+          const content = mjmlToJson(data.content);
+          setContent(content);
+          setLoadedContent(content);
           setSelectedTemplate(id);
         })
         .catch(() => {
@@ -236,6 +278,29 @@ const EmailConfigurationEditor = () => {
   const handleSegmentChange = (segmentData: SegmentData) => {
     setSegmentData(segmentData);
   };
+
+  useEffect(() => {
+    let combinedTokens: any = {};
+    triggers.forEach((trigger) => {
+      if (
+        trigger.triggerId ===
+          "tapir_mail.triggers.transactional_trigger.transactional_trigger" &&
+        trigger.triggerFieldValues["key"] &&
+        triggerTokens.hasOwnProperty(trigger.triggerFieldValues["key"])
+      ) {
+        const newTokens = remapTokens(
+          triggerTokens[trigger.triggerFieldValues["key"]],
+        );
+        Object.keys(newTokens).forEach((key) => {
+          combinedTokens[key] = newTokens[key];
+        });
+      }
+    });
+    setCombinedTokens({
+      ...tokens,
+      ...combinedTokens,
+    });
+  }, [triggers, triggerTokens, tokens]);
 
   const missingTrigger =
     !triggers || triggers.filter((t) => t.triggerId).length === 0;
@@ -376,7 +441,7 @@ const EmailConfigurationEditor = () => {
         <div>
           <Editor
             content={loadedContent}
-            subject={subject}
+            mergeTags={combinedTokens}
             onContentChange={(values) => handleEditorChange(values.content)}
           />
         </div>
