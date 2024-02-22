@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from django.template import Context, Template
+from tapir_mail.service.mjml import mjml2html
 
 from tapir_mail.service.tracking import add_tracking_pixel
 
@@ -25,9 +25,7 @@ def prepare_email(
     if not recipients:
         raise ValueError("recipients is required")
 
-    email_body = Template(
-        "{% load mjml %}\n{% mjml %}" + mjml + "{% endmjml %}"
-    ).render(Context({}))
+    email_body = mjml2html(mjml)
 
     if tracking_url:
         email_body = add_tracking_pixel(email_body, tracking_url)

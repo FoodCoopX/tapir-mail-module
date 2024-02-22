@@ -19,7 +19,7 @@
     "filepond-plugin-image-exif-orientation": "^1.0.11",
     "filepond-plugin-image-preview": "^4.6.11",
     "framer-motion": "^10.16.1",
-    "mjml-browser": "^4.14.1",
+    "mjml-browser": "^4.15.2",
     "react": "^18.2.0",
     "react-bootstrap": "^2.8.0",
     "react-dom": "^18.2.0",

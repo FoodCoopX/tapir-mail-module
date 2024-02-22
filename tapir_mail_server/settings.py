@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_filters",
-    "mjml",
 ]
 DEPENDENCIES_APPS = [
     "rest_framework",
@@ -225,7 +224,6 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-MJML_BACKEND_MODE = "cmd"
 MJML_EXEC_CMD = [
     "mjml",
     "--config.juicePreserveTags",
