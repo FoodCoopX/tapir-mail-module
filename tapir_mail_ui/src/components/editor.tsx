@@ -15,16 +15,16 @@ import { ExtensionProps, StandardLayout } from "easy-email-extensions";
 import "easy-email-extensions/lib/style.css";
 import { Alert, Button, Form } from "react-bootstrap";
 import { useWindowSize } from "react-use";
-import { TokensApi } from "../api_client";
 import { useAlert } from "../contexts/alerts";
-import { useApi } from "../hooks/useApi";
+import env from "../env";
 import { getMediaLibraryFileUrl } from "../utils/getMediaLibraryFileUrl";
 import { mjmlToJson } from "../utils/mjml";
-import env from "../env";
 import { addCsrfToken } from "../utils/requests";
+import { useApi } from "../hooks/useApi";
+import { TokensApi } from "../api_client";
 //import './CustomBlocks';
 
-const fontList = [
+const customFontList = [
   {
     name: "Montserrat",
     css: "/static/fonts/Montserrat.css",
@@ -33,6 +33,9 @@ const fontList = [
     name: "Bitter",
     css: "/static/fonts/Bitter.css",
   },
+].map(({ name, css }) => ({ value: name, label: name, css: css }));
+
+const fontList = [
   { name: "Arial" },
   { name: "Tahoma" },
   { name: "Verdana" },
@@ -40,7 +43,7 @@ const fontList = [
   { name: "Courier New" },
   { name: "Georgia" },
   { name: "Lato" },
-].map(({ name, css }) => ({ value: name, label: name, css: css }));
+].map(({ name }) => ({ value: name, label: name }));
 
 const categories: ExtensionProps["categories"] = [
   {
@@ -106,14 +109,14 @@ const categories: ExtensionProps["categories"] = [
 ];
 export const EMPTY_PAGE = mjmlToJson(
   "<mjml><mj-head>" +
-    fontList
-      .filter((f) => f.css)
+    customFontList
       .map(
         (f) =>
           `<mj-font name="${f.label}" href="${
             (f.css!!.startsWith("/") ? env.REACT_APP_API_ROOT : "") + f.css!!
           }" />`,
-      ) +
+      )
+      .join("") +
     "</mj-head><mj-body></mj-body></mjml>",
 );
 
@@ -206,7 +209,7 @@ const Editor: React.FC<EditorProps> = ({
           height={"calc(100vh)"}
           onUploadImage={handleUploadImage}
           autoComplete={false}
-          fontList={fontList}
+          fontList={fontList} // don't include custom fonts here, they are already in the mjml
           onSubmit={onSave}
           enabledLogic={false} // conditional blocks and stuff, interesting but maybe complex at the beginning
           mergeTags={mergeTags}

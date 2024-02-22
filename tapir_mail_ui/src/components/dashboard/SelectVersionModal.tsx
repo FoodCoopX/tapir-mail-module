@@ -48,6 +48,7 @@ const SelectVersionModal = ({
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [versions, setVersions] = useState<EmailConfigurationVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string>("");
+  const [htmlContent, setHtmlContent] = useState<string>("");
 
   const [confirmArchiveVersionModalOpen, setConfirmArchiveVersionModalOpen] =
     useState(false);
@@ -76,6 +77,11 @@ const SelectVersionModal = ({
   };
 
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
+
+  useEffect(() => {
+    if (!selectedVersion) return;
+    setHtmlContent(mjmlToHtml(selectedVersion!!.content ?? ""));
+  }, [selectedVersion]);
 
   const fetchVersions = () =>
     configApi
@@ -285,7 +291,7 @@ const SelectVersionModal = ({
               <strong>Betreff:</strong>&nbsp;{selectedVersion?.subject}
             </div>
             {selectedVersion?.content && (
-              <HtmlInDiv htmlContent={mjmlToHtml(selectedVersion?.content)} />
+              <HtmlInDiv htmlContent={htmlContent} />
             )}
           </Modal.Body>
         )}
