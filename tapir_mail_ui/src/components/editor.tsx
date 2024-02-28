@@ -20,8 +20,6 @@ import env from "../env";
 import { getMediaLibraryFileUrl } from "../utils/getMediaLibraryFileUrl";
 import { mjmlToJson } from "../utils/mjml";
 import { addCsrfToken } from "../utils/requests";
-import { useApi } from "../hooks/useApi";
-import { TokensApi } from "../api_client";
 //import './CustomBlocks';
 
 const customFontList = [
@@ -107,18 +105,20 @@ const categories: ExtensionProps["categories"] = [
     ],
   },
 ];
-export const EMPTY_PAGE = mjmlToJson(
-  "<mjml><mj-head>" +
-    customFontList
-      .map(
-        (f) =>
-          `<mj-font name="${f.label}" href="${
-            (f.css!!.startsWith("/") ? env.REACT_APP_API_ROOT : "") + f.css!!
-          }" />`,
-      )
-      .join("") +
-    "</mj-head><mj-body></mj-body></mjml>",
-);
+
+const createEmptyPage = () => {
+  const baseUrl = new URL(env.REACT_APP_API_ROOT as string).origin;
+
+  return mjmlToJson(
+    "<mjml><mj-head>" +
+      customFontList
+        .map((f) => `<mj-font name="${f.label}" href="${baseUrl + f.css!!}" />`)
+        .join("") +
+      "</mj-head><mj-body></mj-body></mjml>",
+  );
+};
+
+export const EMPTY_PAGE = createEmptyPage();
 
 type EditorProps = {
   onGoBack?: (values: IEmailTemplate) => void;
