@@ -1,5 +1,4 @@
 import copy
-import html
 import json
 import subprocess
 import tempfile
@@ -10,7 +9,6 @@ from lxml import etree
 
 
 def _extract_fonts(mjml: str):
-    mjml = html.unescape(mjml)
     parser = etree.XMLParser(remove_blank_text=True)
     xmlDoc = etree.fromstring(mjml.encode("utf-8"), parser)
     mjFontElements = xmlDoc.xpath("//mj-font")
