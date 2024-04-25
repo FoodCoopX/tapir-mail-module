@@ -11,8 +11,10 @@ from lxml import etree
 
 
 def _extract_fonts(mjml: str):
-    soup = BeautifulSoup(mjml, 'xml')
-    font_elements = [font_element.extract() for font_element in soup.find_all("mj-font")]
+    soup = BeautifulSoup(mjml, "xml")
+    font_elements = [
+        font_element.extract() for font_element in soup.find_all("mj-font")
+    ]
     fonts = [font_element["href"] for font_element in font_elements]
     return fonts, soup.prettify()
 
