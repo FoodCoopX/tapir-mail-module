@@ -4,25 +4,19 @@ import json
 import subprocess
 import tempfile
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils.encoding import force_bytes, force_str
 from lxml import etree
 
 
 def _extract_fonts(mjml: str):
-    mjml = html.unescape(mjml)
-    parser = etree.XMLParser(remove_blank_text=True)
-    xmlDoc = etree.fromstring(mjml.encode("utf-8"), parser)
-    mjFontElements = xmlDoc.xpath("//mj-font")
-
-    fonts = [element.get("href") for element in mjFontElements if element.get("href")]
-
-    for element in mjFontElements:
-        element.getparent().remove(element)
-
-    updatedMjml = etree.tostring(xmlDoc, pretty_print=True, encoding="unicode")
-
-    return fonts, updatedMjml
+    soup = BeautifulSoup(mjml, "xml")
+    font_elements = [
+        font_element.extract() for font_element in soup.find_all("mj-font")
+    ]
+    fonts = [font_element["href"] for font_element in font_elements]
+    return fonts, soup.prettify()
 
 
 def mjml2html(mjml: str) -> str:
