@@ -122,5 +122,9 @@ class StoredUploadViewSet(viewsets.ModelViewSet):
 
 
 def get_file_view(request, upload_id: str):
-    stored_upload = get_object_or_404(StoredUpload, upload_id=upload_id)
+    try:
+        stored_upload = get_object_or_404(StoredUpload, upload_id=upload_id)
+    except StoredUpload.DoesNotExist as e:
+        LOG.error(f"Trying to fetch file that doesn't exist: {upload_id}")
+        raise e
     return FileResponse(stored_upload.file, filename=stored_upload.file.name)
