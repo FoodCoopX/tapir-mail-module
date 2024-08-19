@@ -154,6 +154,10 @@ def resolve_segments(
                 BASE_QUERYSET.filter(id__in=id_list), filter_list
             )
 
+        # Can't call distinct() right away because we called difference() before on combined
+        ids = combined.values_list("id", flat=True)
+        combined = BASE_QUERYSET.filter(id__in=ids).distinct()
+
         result = list(combined)
 
         # Add static segments
