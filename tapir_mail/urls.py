@@ -8,8 +8,12 @@ from rest_framework import routers
 from tapir_mail import views
 
 router = routers.DefaultRouter()
-router.register("email_template", views.EmailTemplateViewSet)
-router.register("email_template_paginated", views.PaginatedEmailTemplateViewSet)
+router.register("email_template", views.EmailTemplateViewSet, basename="email_template")
+router.register(
+    "email_template_paginated",
+    views.PaginatedEmailTemplateViewSet,
+    basename="email_template_paginated",
+)
 router.register("email_configuration", views.EmailConfigurationViewSet)
 router.register("email_configuration_version", views.EmailConfigurationVersionViewSet)
 router.register("email_configuration_dispatch", views.EmailConfigurationDispatchViewSet)
