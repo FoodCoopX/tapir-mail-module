@@ -54,11 +54,10 @@ class EmailTemplateViewSet(viewsets.ModelViewSet):
     serializer_class = EmailTemplateSerializer
 
 
-class PaginatedEmailTemplateViewSet(EmailTemplateViewSet):
+class PaginatedEmailTemplateViewSet(viewsets.ModelViewSet):
+    queryset = EmailTemplate.objects.all()
+    serializer_class = EmailTemplateSerializer
     pagination_class = LimitOffsetPagination
-
-    def get_view_name(self):
-        return "PaginatedEmailTemplate"
 
 
 class EmailConfigurationViewSet(viewsets.ModelViewSet):
