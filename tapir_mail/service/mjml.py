@@ -16,11 +16,11 @@ def _extract_fonts(mjml: str):
         font_element.extract() for font_element in soup.find_all("mj-font")
     ]
     fonts = [font_element["href"] for font_element in font_elements]
-    return fonts, soup.prettify()
+    return fonts
 
 
 def mjml2html(mjml: str) -> str:
-    fonts, mjml = _extract_fonts(mjml)
+    fonts = _extract_fonts(mjml)
 
     cmd_args = copy.copy(settings.MJML_EXEC_CMD)
     if not isinstance(cmd_args, list):
