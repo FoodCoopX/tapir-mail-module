@@ -1,5 +1,7 @@
 import React from "react";
 import { Pagination } from "react-bootstrap";
+import TapirPaginationComplex from "./TapirPaginationComplex";
+import TapirPaginationSimple from "./TapirPaginationSimple";
 
 interface TapirPaginationProps {
   pageSize: number;
@@ -14,19 +16,22 @@ const TapirPagination: React.FC<TapirPaginationProps> = ({
   currentPage,
   goToPage,
 }) => {
+  const nbPages = Math.ceil(itemCount / pageSize);
+
   return (
     <Pagination className="mb-0">
-      {Array.from(
-        { length: Math.ceil(itemCount / pageSize) },
-        (_, pageIndex) => (
-          <Pagination.Item
-            key={pageIndex}
-            onClick={() => goToPage(pageIndex)}
-            active={currentPage === pageIndex}
-          >
-            {pageIndex + 1}
-          </Pagination.Item>
-        ),
+      {nbPages > 9 ? (
+        <TapirPaginationComplex
+          nbPages={nbPages}
+          currentPage={currentPage}
+          goToPage={goToPage}
+        />
+      ) : (
+        <TapirPaginationSimple
+          nbPages={nbPages}
+          currentPage={currentPage}
+          goToPage={goToPage}
+        />
       )}
     </Pagination>
   );
