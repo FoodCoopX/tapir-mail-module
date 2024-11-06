@@ -73,6 +73,7 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
               <tbody>
                 {staticSegments.map((segment: StaticSegment) => (
                   <tr
+                    key={segment.id}
                     onClick={() => {
                       setSelectedSegment(segment);
                     }}

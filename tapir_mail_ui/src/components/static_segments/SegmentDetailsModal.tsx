@@ -5,10 +5,13 @@ import {
   StaticSegment,
   StaticSegmentApi,
   StaticSegmentRecipient,
+  StaticSegmentRecipientApi,
 } from "../../api_client";
 import CreateRecipientModal from "./CreateRecipientModal";
 import TapirButton from "../TapirButton";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import ConfirmDeleteModal from "../ConfirmDeleteModal";
+import { useAlert } from "../../contexts/alerts";
 
 interface SegmentDetailsModalProps {
   open: boolean;
@@ -24,7 +27,11 @@ const SegmentDetailsModal: React.FC<SegmentDetailsModalProps> = ({
   const [createRecipientModalOpen, setCreateRecipientModalOpen] =
     useState(false);
   const staticSegmentApi = useApi(StaticSegmentApi);
+  const recipientApi = useApi(StaticSegmentRecipientApi);
+  const showAlert = useAlert();
   const [recipients, setRecipients] = useState<StaticSegmentRecipient[]>([]);
+  const [recipientToDelete, setRecipientToDelete] =
+    useState<StaticSegmentRecipient>();
 
   useEffect(() => {
     if (!open) return;
@@ -42,10 +49,44 @@ const SegmentDetailsModal: React.FC<SegmentDetailsModalProps> = ({
       });
   }
 
+  function buildRecipientToDeleteString() {
+    if (!recipientToDelete) return "";
+
+    return [
+      recipientToDelete.firstName,
+      recipientToDelete.lastName,
+      recipientToDelete.email,
+    ].join(" ");
+  }
+
+  function onConfirmDeleteRecipient() {
+    if (!recipientToDelete) return;
+
+    recipientApi
+      .staticSegmentRecipientDestroy({ id: recipientToDelete.id! })
+      .then(() => {
+        showAlert(
+          "Empfänger gelöscht " + buildRecipientToDeleteString(),
+          "success",
+        );
+      })
+      .catch(() => {
+        showAlert(
+          "Fehler beim löschen des Empfängers " +
+            buildRecipientToDeleteString(),
+          "danger",
+        );
+      })
+      .finally(() => {
+        setRecipientToDelete(undefined);
+        loadData();
+      });
+  }
+
   return (
     <>
       <Modal
-        show={open && !createRecipientModalOpen}
+        show={open && !createRecipientModalOpen && !recipientToDelete}
         onHide={onClose}
       >
         <Modal.Header closeButton>
@@ -61,16 +102,25 @@ const SegmentDetailsModal: React.FC<SegmentDetailsModalProps> = ({
               <tr>
                 <th>Name</th>
                 <th>Adresse</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {(recipients ? recipients : segment.recipients).map(
                 (recipient: StaticSegmentRecipient) => (
-                  <tr>
+                  <tr key={recipient.id}>
                     <td>
                       {recipient.firstName} {recipient.lastName}
                     </td>
                     <td>{recipient.email}</td>
+                    <td>
+                      <TapirButton
+                        variant={"outline-danger"}
+                        icon={TrashIcon}
+                        size={"sm"}
+                        onClick={() => setRecipientToDelete(recipient)}
+                      />
+                    </td>
                   </tr>
                 ),
               )}
@@ -79,7 +129,7 @@ const SegmentDetailsModal: React.FC<SegmentDetailsModalProps> = ({
         </Modal.Body>
         <Modal.Footer className="d-flex justify-content-end align-items-center">
           <TapirButton
-            variant={"primary"}
+            variant={"outline-primary"}
             text={"Empfänger hinzufügen"}
             icon={PlusCircleIcon}
             onClick={() => setCreateRecipientModalOpen(true)}
@@ -93,6 +143,14 @@ const SegmentDetailsModal: React.FC<SegmentDetailsModalProps> = ({
           loadData();
         }}
         segment={segment}
+      />
+      <ConfirmDeleteModal
+        open={!!recipientToDelete}
+        message={
+          "Empfänger löschen bestätigen: " + buildRecipientToDeleteString()
+        }
+        onConfirm={() => onConfirmDeleteRecipient()}
+        onCancel={() => setRecipientToDelete(undefined)}
       />
     </>
   );
