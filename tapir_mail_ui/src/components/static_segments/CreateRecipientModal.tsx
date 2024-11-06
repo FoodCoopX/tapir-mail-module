@@ -23,6 +23,9 @@ const CreateRecipientModal: React.FC<CreateRecipientModalProps> = ({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [firstNameError, setFirstNameError] = useState();
+  const [lastNameError, setLastNameError] = useState();
+  const [emailError, setEmailError] = useState();
 
   function onCreateClicked() {
     setLoading(true);
@@ -39,9 +42,28 @@ const CreateRecipientModal: React.FC<CreateRecipientModalProps> = ({
       .then(() => {
         onClose();
       })
-      .catch((err) => {
-        console.error(err);
-        showAlert("Fehler beim erzeugen der Segment", "danger");
+      .catch((error) => {
+        setFirstNameError(undefined);
+        setLastNameError(undefined);
+        setEmailError(undefined);
+
+        error.response
+          .json()
+          .then((fieldErrors: any) => {
+            if ("first_name" in fieldErrors) {
+              setFirstNameError(fieldErrors["first_name"][0]);
+            }
+            if ("last_name" in fieldErrors) {
+              setLastNameError(fieldErrors["last_name"][0]);
+            }
+            if ("email" in fieldErrors) {
+              setEmailError(fieldErrors["email"][0]);
+            }
+          })
+          .catch(() => {
+            console.error(error);
+            showAlert("Fehler beim erzeugen der Segment", "danger");
+          });
       })
       .finally(() => setLoading(false));
   }
@@ -62,7 +84,11 @@ const CreateRecipientModal: React.FC<CreateRecipientModalProps> = ({
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
+              isInvalid={!!firstNameError}
             />
+            {firstNameError && (
+              <div className={"invalid-feedback"}>{firstNameError}</div>
+            )}
           </Form.Group>
           <Form.Group>
             <Form.Label column={"lg"}>Nachname</Form.Label>
@@ -70,7 +96,11 @@ const CreateRecipientModal: React.FC<CreateRecipientModalProps> = ({
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
+              isInvalid={!!lastNameError}
             />
+            {lastNameError && (
+              <div className={"invalid-feedback"}>{lastNameError}</div>
+            )}
           </Form.Group>
           <Form.Group>
             <Form.Label column={"lg"}>Email-Adresse</Form.Label>
@@ -78,7 +108,11 @@ const CreateRecipientModal: React.FC<CreateRecipientModalProps> = ({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              isInvalid={!!emailError}
             />
+            {emailError && (
+              <div className={"invalid-feedback"}>{emailError}</div>
+            )}
           </Form.Group>
         </Form>
       </Modal.Body>
