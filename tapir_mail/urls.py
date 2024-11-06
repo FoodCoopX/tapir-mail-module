@@ -25,6 +25,7 @@ router.register(
 router.register("segment", views.SegmentAndFilterViewSet, basename="segment")
 router.register("tokens", views.TokensView, basename="tokens")
 router.register("tracking", views.TrackingView, basename="tracking")
+router.register("static_segments", views.StaticSegmentViewSet)
 
 urlpatterns = [
     path("api/media_library/", include("tapir_mail.media_library.urls")),

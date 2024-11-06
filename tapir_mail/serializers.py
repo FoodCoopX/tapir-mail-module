@@ -11,6 +11,7 @@ from tapir_mail.models import (
     EmailTemplate,
     ReleaseStatus,
     StaticSegment,
+    StaticSegmentRecipient,
 )
 from tapir_mail.service.segment import filter_registry, segment_registry
 from tapir_mail.service.triggers import Trigger, trigger_registry
@@ -253,3 +254,17 @@ class EmailDispatchWithRetriesSerializer(EmailDispatchSerializer):
 class GroupedEmailDispatchSerializer(serializers.Serializer):
     recipient = serializers.CharField(required=True)
     count = serializers.IntegerField(required=True)
+
+
+class StaticSegmentRecipientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StaticSegmentRecipient
+        fields = "__all__"
+
+
+class StaticSegmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StaticSegment
+        fields = "__all__"
+
+    recipients = StaticSegmentRecipientSerializer(many=True, read_only=True)

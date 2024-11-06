@@ -33,6 +33,7 @@ from tapir_mail.serializers import (
     RecipientSerializer,
     SegmentDataSerializer,
     TriggerDefinitionSerializer,
+    StaticSegmentSerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
@@ -633,3 +634,9 @@ class TransactionalTriggerTokenView(viewsets.ViewSet):
                 )
             }
         return Response(trigger_tokens, status=status.HTTP_200_OK)
+
+
+class StaticSegmentViewSet(viewsets.ModelViewSet):
+    queryset = StaticSegment.objects.all()
+    serializer_class = StaticSegmentSerializer
+    pagination_class = LimitOffsetPagination
