@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Form, Modal } from "react-bootstrap";
 import { useApi } from "../../hooks/useApi";
 import { useAlert } from "../../contexts/alerts";
-import { StaticSegmentsApi } from "../../api_client";
+import { StaticSegmentApi } from "../../api_client";
 import TapirButton from "../TapirButton";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
@@ -16,7 +16,7 @@ const StaticSegmentsCreateModal: React.FC<StaticSegmentsCreateModalProps> = ({
   onClose,
 }) => {
   const [loading, setLoading] = useState(false);
-  const staticSegmentApi = useApi(StaticSegmentsApi);
+  const staticSegmentApi = useApi(StaticSegmentApi);
   const showAlert = useAlert();
   const [segmentName, setSegmentName] = useState("");
 
@@ -24,7 +24,7 @@ const StaticSegmentsCreateModal: React.FC<StaticSegmentsCreateModalProps> = ({
     setLoading(true);
 
     staticSegmentApi
-      .staticSegmentsCreate({
+      .staticSegmentCreate({
         staticSegmentRequest: { name: segmentName },
       })
       .then(() => {

@@ -2148,24 +2148,11 @@ paths:
                         email:
                           type: string
           description: ''
-  /api/static_segments/:
+  /api/static_segment/:
     get:
-      operationId: static_segments_list
-      parameters:
-      - name: limit
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: offset
-        required: false
-        in: query
-        description: The initial index from which to return the results.
-        schema:
-          type: integer
+      operationId: static_segment_list
       tags:
-      - static_segments
+      - static_segment
       security:
       - tokenAuth: []
       - {}
@@ -2174,12 +2161,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedStaticSegmentList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/StaticSegment'
           description: ''
     post:
-      operationId: static_segments_create
+      operationId: static_segment_create
       tags:
-      - static_segments
+      - static_segment
       requestBody:
         content:
           application/json:
@@ -2202,9 +2191,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/StaticSegment'
           description: ''
-  /api/static_segments/{id}/:
+  /api/static_segment/{id}/:
     get:
-      operationId: static_segments_retrieve
+      operationId: static_segment_retrieve
       parameters:
       - in: path
         name: id
@@ -2213,7 +2202,7 @@ paths:
         description: A unique value identifying this static segment.
         required: true
       tags:
-      - static_segments
+      - static_segment
       security:
       - tokenAuth: []
       - {}
@@ -2225,7 +2214,7 @@ paths:
                 $ref: '#/components/schemas/StaticSegment'
           description: ''
     put:
-      operationId: static_segments_update
+      operationId: static_segment_update
       parameters:
       - in: path
         name: id
@@ -2234,7 +2223,7 @@ paths:
         description: A unique value identifying this static segment.
         required: true
       tags:
-      - static_segments
+      - static_segment
       requestBody:
         content:
           application/json:
@@ -2258,7 +2247,7 @@ paths:
                 $ref: '#/components/schemas/StaticSegment'
           description: ''
     patch:
-      operationId: static_segments_partial_update
+      operationId: static_segment_partial_update
       parameters:
       - in: path
         name: id
@@ -2267,7 +2256,7 @@ paths:
         description: A unique value identifying this static segment.
         required: true
       tags:
-      - static_segments
+      - static_segment
       requestBody:
         content:
           application/json:
@@ -2290,7 +2279,7 @@ paths:
                 $ref: '#/components/schemas/StaticSegment'
           description: ''
     delete:
-      operationId: static_segments_destroy
+      operationId: static_segment_destroy
       parameters:
       - in: path
         name: id
@@ -2299,7 +2288,154 @@ paths:
         description: A unique value identifying this static segment.
         required: true
       tags:
-      - static_segments
+      - static_segment
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/static_segment_recipient/:
+    get:
+      operationId: static_segment_recipient_list
+      tags:
+      - static_segment_recipient
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StaticSegmentRecipient'
+          description: ''
+    post:
+      operationId: static_segment_recipient_create
+      tags:
+      - static_segment_recipient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaticSegmentRecipientRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StaticSegmentRecipientRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StaticSegmentRecipientRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaticSegmentRecipient'
+          description: ''
+  /api/static_segment_recipient/{id}/:
+    get:
+      operationId: static_segment_recipient_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this static segment recipient.
+        required: true
+      tags:
+      - static_segment_recipient
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaticSegmentRecipient'
+          description: ''
+    put:
+      operationId: static_segment_recipient_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this static segment recipient.
+        required: true
+      tags:
+      - static_segment_recipient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaticSegmentRecipientRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StaticSegmentRecipientRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StaticSegmentRecipientRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaticSegmentRecipient'
+          description: ''
+    patch:
+      operationId: static_segment_recipient_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this static segment recipient.
+        required: true
+      tags:
+      - static_segment_recipient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStaticSegmentRecipientRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStaticSegmentRecipientRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStaticSegmentRecipientRequest'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaticSegmentRecipient'
+          description: ''
+    delete:
+      operationId: static_segment_recipient_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this static segment recipient.
+        required: true
+      tags:
+      - static_segment_recipient
       security:
       - tokenAuth: []
       - {}
@@ -3116,26 +3252,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GroupedEmailDispatch'
-    PaginatedStaticSegmentList:
-      type: object
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/StaticSegment'
     PatchedBundledEmailConfigurationRequest:
       type: object
       properties:
@@ -3233,6 +3349,35 @@ components:
           minLength: 1
           maxLength: 255
         content:
+          type: string
+          minLength: 1
+    PatchedStaticSegmentRecipientRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        first_name:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        custom_data:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        segment:
           type: string
           minLength: 1
     PatchedStaticSegmentRequest:

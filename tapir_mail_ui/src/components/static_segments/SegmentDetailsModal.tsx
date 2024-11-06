@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Table } from "react-bootstrap";
 import { useApi } from "../../hooks/useApi";
-import { useAlert } from "../../contexts/alerts";
 import {
   StaticSegment,
+  StaticSegmentApi,
   StaticSegmentRecipient,
-  StaticSegmentsApi,
 } from "../../api_client";
+import CreateRecipientModal from "./CreateRecipientModal";
+import TapirButton from "../TapirButton";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
 interface SegmentDetailsModalProps {
   open: boolean;
@@ -19,12 +21,31 @@ const SegmentDetailsModal: React.FC<SegmentDetailsModalProps> = ({
   onClose,
   segment,
 }) => {
-  const staticSegmentApi = useApi(StaticSegmentsApi);
-  const showAlert = useAlert();
+  const [createRecipientModalOpen, setCreateRecipientModalOpen] =
+    useState(false);
+  const staticSegmentApi = useApi(StaticSegmentApi);
+  const [recipients, setRecipients] = useState<StaticSegmentRecipient[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    loadData();
+  }, [open, segment]);
+
+  function loadData() {
+    if (!segment.id) return;
+
+    staticSegmentApi
+      .staticSegmentRetrieve({ id: segment.id })
+      .then((updatedSegment) => {
+        setRecipients(updatedSegment.recipients);
+      });
+  }
+
   return (
     <>
       <Modal
-        show={open}
+        show={open && !createRecipientModalOpen}
         onHide={onClose}
       >
         <Modal.Header closeButton>
@@ -43,18 +64,36 @@ const SegmentDetailsModal: React.FC<SegmentDetailsModalProps> = ({
               </tr>
             </thead>
             <tbody>
-              {segment.recipients.map((recipient: StaticSegmentRecipient) => (
-                <tr>
-                  <td>
-                    {recipient.firstName} {recipient.lastName}
-                  </td>
-                  <td>{recipient.email}</td>
-                </tr>
-              ))}
+              {(recipients ? recipients : segment.recipients).map(
+                (recipient: StaticSegmentRecipient) => (
+                  <tr>
+                    <td>
+                      {recipient.firstName} {recipient.lastName}
+                    </td>
+                    <td>{recipient.email}</td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </Table>
         </Modal.Body>
+        <Modal.Footer className="d-flex justify-content-end align-items-center">
+          <TapirButton
+            variant={"primary"}
+            text={"Empfänger hinzufügen"}
+            icon={PlusCircleIcon}
+            onClick={() => setCreateRecipientModalOpen(true)}
+          />
+        </Modal.Footer>
       </Modal>
+      <CreateRecipientModal
+        open={createRecipientModalOpen}
+        onClose={() => {
+          setCreateRecipientModalOpen(false);
+          loadData();
+        }}
+        segment={segment}
+      />
     </>
   );
 };

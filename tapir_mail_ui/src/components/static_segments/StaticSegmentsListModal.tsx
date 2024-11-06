@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Table } from "react-bootstrap";
-import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
 import { useApi } from "../../hooks/useApi";
 import { useAlert } from "../../contexts/alerts";
-import TapirPagination from "../TapirPagination";
 import Loading from "./../loading";
-import { StaticSegment, StaticSegmentsApi } from "../../api_client";
+import { StaticSegment, StaticSegmentApi } from "../../api_client";
 import TapirButton from "../TapirButton";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import StaticSegmentsCreateModal from "./StaticSegmentsCreateModal";
@@ -21,19 +19,17 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
   onClose,
 }) => {
   const [staticSegments, setStaticSegments] = useState<StaticSegment[]>([]);
-  const [segmentCount, setSegmentCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState<StaticSegment>();
-  const staticSegmentApi = useApi(StaticSegmentsApi);
+  const staticSegmentApi = useApi(StaticSegmentApi);
   const showAlert = useAlert();
 
   useEffect(() => {
     if (open) {
       loadData();
     }
-  }, [open, currentPage]);
+  }, [open]);
 
   function loadData() {
     if (!open) return;
@@ -41,14 +37,8 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
     setLoading(true);
 
     staticSegmentApi
-      .staticSegmentsList({
-        limit: DEFAULT_PAGE_SIZE,
-        offset: currentPage * DEFAULT_PAGE_SIZE,
-      })
-      .then((paginatedData) => {
-        setStaticSegments(paginatedData.results ?? []);
-        setSegmentCount(paginatedData.count ?? 0);
-      })
+      .staticSegmentList()
+      .then(setStaticSegments)
       .catch((error) => {
         console.error(error);
         showAlert("Fehler beim Laden der Segmente", "danger");
@@ -66,12 +56,6 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
           <Modal.Title>Statische Segmente</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <TapirButton
-            variant={"primary"}
-            text={"Segment hinzufügen"}
-            icon={PlusCircleIcon}
-            onClick={() => setCreateModalOpen(true)}
-          />
           {loading ? (
             <Loading />
           ) : (
@@ -102,16 +86,14 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
             </Table>
           )}
         </Modal.Body>
-        {segmentCount > DEFAULT_PAGE_SIZE && (
-          <Modal.Footer className="d-flex justify-content-center align-items-center">
-            <TapirPagination
-              pageSize={DEFAULT_PAGE_SIZE}
-              currentPage={currentPage}
-              goToPage={setCurrentPage}
-              itemCount={segmentCount}
-            />
-          </Modal.Footer>
-        )}
+        <Modal.Footer className="d-flex justify-content-end align-items-center">
+          <TapirButton
+            variant={"primary"}
+            text={"Segment hinzufügen"}
+            icon={PlusCircleIcon}
+            onClick={() => setCreateModalOpen(true)}
+          />
+        </Modal.Footer>
       </Modal>
       <StaticSegmentsCreateModal
         open={createModalOpen}
@@ -123,7 +105,10 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
       {selectedSegment && (
         <SegmentDetailsModal
           open={!!selectedSegment}
-          onClose={() => setSelectedSegment(undefined)}
+          onClose={() => {
+            setSelectedSegment(undefined);
+            loadData();
+          }}
           segment={selectedSegment}
         />
       )}
