@@ -5,9 +5,10 @@ import { useAlert } from "../../contexts/alerts";
 import Loading from "./../loading";
 import { StaticSegment, StaticSegmentApi } from "../../api_client";
 import TapirButton from "../TapirButton";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import StaticSegmentsCreateModal from "./StaticSegmentsCreateModal";
 import SegmentDetailsModal from "./SegmentDetailsModal";
+import ConfirmDeleteModal from "../ConfirmDeleteModal";
 
 interface StaticSegmentsListModalProps {
   open: boolean;
@@ -22,6 +23,7 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState<StaticSegment>();
+  const [segmentToDelete, setSegmentToDelete] = useState<StaticSegment>();
   const staticSegmentApi = useApi(StaticSegmentApi);
   const showAlert = useAlert();
 
@@ -46,10 +48,30 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
       .finally(() => setLoading(false));
   }
 
+  function onConfirmDeleteSegment() {
+    if (!segmentToDelete) return;
+
+    staticSegmentApi
+      .staticSegmentDestroy({ id: segmentToDelete.id! })
+      .then(() => {
+        showAlert("Segment gelöscht " + segmentToDelete.name, "success");
+      })
+      .catch(() => {
+        showAlert(
+          "Fehler beim löschen des Segments " + segmentToDelete.name,
+          "danger",
+        );
+      })
+      .finally(() => {
+        setSegmentToDelete(undefined);
+        loadData();
+      });
+  }
+
   return (
     <>
       <Modal
-        show={open && !createModalOpen && !selectedSegment}
+        show={open && !createModalOpen && !selectedSegment && !segmentToDelete}
         onHide={onClose}
       >
         <Modal.Header closeButton>
@@ -68,6 +90,7 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
                 <tr>
                   <th>Segment-Name</th>
                   <th>Anzahl an Adressen</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -81,6 +104,17 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
                   >
                     <td>{segment.name}</td>
                     <td>{segment.recipients.length}</td>
+                    <td>
+                      <TapirButton
+                        variant={"outline-danger"}
+                        icon={TrashIcon}
+                        size={"sm"}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSegmentToDelete(segment);
+                        }}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -89,7 +123,7 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
         </Modal.Body>
         <Modal.Footer className="d-flex justify-content-end align-items-center">
           <TapirButton
-            variant={"primary"}
+            variant={"outline-primary"}
             text={"Segment hinzufügen"}
             icon={PlusCircleIcon}
             onClick={() => setCreateModalOpen(true)}
@@ -113,6 +147,12 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
           segment={selectedSegment}
         />
       )}
+      <ConfirmDeleteModal
+        open={!!segmentToDelete}
+        message={"Segment löschen bestätigen: " + segmentToDelete?.name}
+        onConfirm={() => onConfirmDeleteSegment()}
+        onCancel={() => setSegmentToDelete(undefined)}
+      />
     </>
   );
 };
