@@ -100,7 +100,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "tapir_mail_server.wsgi.application"
 
 EMAIL_DISPATCH_BATCH_SIZE = (
-    200  # job runs 1x/minute --> 200 * 60 = 12,000 emails per hour maximum
+    100  # job runs 1x/minute --> 100 * 60 = 6,000 emails per hour maximum
 )
 
 # django-environ EMAIL_URL mechanism is a bit hairy with passwords with slashes in them, so use this instead

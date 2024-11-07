@@ -126,7 +126,7 @@ class SendEmailBatch:
 
     @classmethod
     def send_email_dispatches(cls, batch_size=None):
-        lock = cache.lock("send_email_task_lock", timeout=180)
+        lock = cache.lock("send_email_task_lock", timeout=1800)
         if not lock.acquire(blocking=False):
             LOG.error("Could not acquire lock for send_email_task_lock")
             return
