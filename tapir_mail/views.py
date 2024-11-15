@@ -20,6 +20,7 @@ from tapir_mail.models import (
     EmailTemplate,
     ReleaseStatus,
     StaticSegment,
+    StaticSegmentRecipient,
 )
 from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
@@ -33,6 +34,8 @@ from tapir_mail.serializers import (
     RecipientSerializer,
     SegmentDataSerializer,
     TriggerDefinitionSerializer,
+    StaticSegmentSerializer,
+    StaticSegmentRecipientSerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
@@ -633,3 +636,13 @@ class TransactionalTriggerTokenView(viewsets.ViewSet):
                 )
             }
         return Response(trigger_tokens, status=status.HTTP_200_OK)
+
+
+class StaticSegmentViewSet(viewsets.ModelViewSet):
+    queryset = StaticSegment.objects.all()
+    serializer_class = StaticSegmentSerializer
+
+
+class StaticSegmentRecipientViewSet(viewsets.ModelViewSet):
+    queryset = StaticSegmentRecipient.objects.all()
+    serializer_class = StaticSegmentRecipientSerializer

@@ -6,13 +6,17 @@ import TemplatesCard from "../components/dashboard/TemplatesCard";
 import EmailConfigurationTable from "../components/dashboard/EmailConfigurationsTable";
 import TapirButton from "../components/TapirButton";
 import {
+  AdjustmentsHorizontalIcon,
   ExclamationTriangleIcon,
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import DispatchesWithErrorsModal from "../components/DispatchesWithErrorsModal";
+import StaticSegmentsListModal from "../components/static_segments/StaticSegmentsListModal";
 
 function Dashboard() {
   const [dispatchesWithErrorModalOpen, setDispatchesWithErrorModalOpen] =
+    useState(false);
+  const [staticSegmentListModalOpen, setStaticSegmentListModalOpen] =
     useState(false);
 
   return (
@@ -32,6 +36,12 @@ function Dashboard() {
             icon={PhotoIcon}
           />
         </Link>
+        <TapirButton
+          variant="primary"
+          text="Statische Segmente verwalten"
+          icon={AdjustmentsHorizontalIcon}
+          onClick={() => setStaticSegmentListModalOpen(true)}
+        />
         <TapirButton
           variant="primary"
           text="Email-Adressen mit Fehler"
@@ -62,6 +72,10 @@ function Dashboard() {
       <DispatchesWithErrorsModal
         open={dispatchesWithErrorModalOpen}
         onClose={() => setDispatchesWithErrorModalOpen(false)}
+      />
+      <StaticSegmentsListModal
+        open={staticSegmentListModalOpen}
+        onClose={() => setStaticSegmentListModalOpen(false)}
       />
     </>
   );
