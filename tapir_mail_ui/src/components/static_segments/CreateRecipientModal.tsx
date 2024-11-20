@@ -41,6 +41,9 @@ const CreateRecipientModal: React.FC<CreateRecipientModalProps> = ({
       })
       .then(() => {
         onClose();
+        setFirstName("");
+        setLastName("");
+        setEmail("");
       })
       .catch((error) => {
         setFirstNameError(undefined);
@@ -65,7 +68,9 @@ const CreateRecipientModal: React.FC<CreateRecipientModalProps> = ({
             showAlert("Fehler beim erzeugen der Segment", "danger");
           });
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+      });
   }
 
   return (

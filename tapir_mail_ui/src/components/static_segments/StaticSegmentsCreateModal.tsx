@@ -29,6 +29,7 @@ const StaticSegmentsCreateModal: React.FC<StaticSegmentsCreateModalProps> = ({
       })
       .then(() => {
         onClose();
+        setSegmentName("");
       })
       .catch((err) => {
         console.error(err);
