@@ -111,6 +111,7 @@ def _precedence(operator):
 def resolve_segments(
     add_segments=None,
     static_segments=None,
+    static_segments_subtractive=None,
     remove_segments=None,
     filter_list=None,
     override_recipients: list[str] = None,
@@ -123,6 +124,8 @@ def resolve_segments(
         static_segments = []
     if add_segments is None:
         add_segments = []
+    if static_segments_subtractive is None:
+        static_segments_subtractive = []
 
     from tapir_mail.models import StaticSegment
 
@@ -165,6 +168,20 @@ def resolve_segments(
         for segment in static_segments:
             LOG.info(f"Adding static segment {segment.name}")
             result.extend(segment.recipients.all())
+
+        recipients_subtractive = []
+        for static_segment_subtractive in StaticSegment.objects.filter(
+            name__in=static_segments_subtractive
+        ):
+            recipients_subtractive.extend(
+                static_segment_subtractive.recipients.values_list("email", flat=True)
+            )
+
+        result = [
+            recipient
+            for recipient in result
+            if recipient.email not in recipients_subtractive
+        ]
 
         # apply override recipients again, to filter out static segment recipients
         if override_recipients:

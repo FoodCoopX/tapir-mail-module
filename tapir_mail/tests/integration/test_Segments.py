@@ -98,3 +98,21 @@ class TestSegments(TapirIntegrationTest):
             set(r.email for r in result),
             {self.STATIC_RECIPIENT_1, self.STATIC_RECIPIENT_2},
         )
+
+    def test_resolveSegments_includesSubtractiveStaticSegment_recipientFromSubtractiveSegmentNotInList(
+        self,
+    ):
+        subtractive_static_segment = StaticSegment.objects.create(name="subtractive")
+        StaticSegmentRecipient.objects.create(
+            segment=subtractive_static_segment,
+            email=DummyTapirUser.objects.get(id=1).email,
+        )
+
+        result = resolve_segments(
+            add_segments=[self.SEGMENT_COOP_MEMBERS],
+            static_segments_subtractive=["subtractive"],
+        )
+        self.assertSetEqual(
+            set(r.email for r in result),
+            {DummyTapirUser.objects.get(id=3).email},
+        )

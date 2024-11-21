@@ -562,18 +562,8 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["POST"])
     def combine(self, request):
-        add_segments = request.data.get("add_segments", [])
-        static_segments = request.data.get("static_segments", [])
-        remove_segments = request.data.get("remove_segments", [])
-        filter_list = request.data.get("filter_list", [])
-
         try:
-            combined = resolve_segments(
-                add_segments=add_segments,
-                static_segments=static_segments,
-                remove_segments=remove_segments,
-                filter_list=filter_list,
-            )
+            combined = resolve_segments(**request.data)
             return Response(
                 {
                     "count": len(combined),

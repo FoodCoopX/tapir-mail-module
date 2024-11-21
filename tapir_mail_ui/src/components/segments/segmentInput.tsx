@@ -131,6 +131,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   }, [
     segmentsToAdd,
     staticSegmentsToAdd,
+    staticSegmentsToRemove,
     segmentsToRemove,
     complexFilter,
     isFilterValid,
