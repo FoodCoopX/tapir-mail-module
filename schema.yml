@@ -3458,6 +3458,11 @@ components:
           type: array
           items:
             type: string
+        static_segments_subtractive:
+          type: array
+          items:
+            type: string
+          nullable: true
         remove_segments:
           type: array
           items:
@@ -3471,6 +3476,7 @@ components:
       - filter_list
       - remove_segments
       - static_segments
+      - static_segments_subtractive
     SegmentDataRequest:
       type: object
       properties:
@@ -3484,6 +3490,12 @@ components:
           items:
             type: string
             minLength: 1
+        static_segments_subtractive:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          nullable: true
         remove_segments:
           type: array
           items:
@@ -3499,6 +3511,7 @@ components:
       - filter_list
       - remove_segments
       - static_segments
+      - static_segments_subtractive
     StaticSegment:
       type: object
       properties:

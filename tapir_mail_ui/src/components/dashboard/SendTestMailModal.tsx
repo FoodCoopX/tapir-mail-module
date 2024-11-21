@@ -60,6 +60,7 @@ const SendTestMailModal = ({
       .segmentCombineCreate({
         segmentDataRequest: {
           staticSegments: [selectedSegment],
+          staticSegmentsSubtractive: [],
           addSegments: [],
           removeSegments: [],
           filterList: [],
