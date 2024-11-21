@@ -7,8 +7,9 @@ interface SegmentsDisplayProps {
   segmentData: SegmentData;
   interactions?: {
     onSegmentToAddClicked: (segment: string) => void;
-    onStaticSegmentToAddClicked: (segment: string) => void;
     onSegmentToRemoveClicked: (segment: string) => void;
+    onStaticSegmentToAddClicked: (segment: string) => void;
+    onStaticSegmentToRemoveClicked: (segment: string) => void;
   };
 }
 
@@ -78,6 +79,24 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
             </Badge>
           </Fragment>
         ))}
+        {segmentData.staticSegmentsSubtractive &&
+          segmentData.staticSegmentsSubtractive.map((segment, idx) => (
+            <Fragment key={segment}>
+              {(segmentData.addSegments.length > 0 || idx > 0) && (
+                <OperatorBadge text="-" />
+              )}
+              <Badge
+                style={segmentStyle}
+                onClick={() =>
+                  interactions
+                    ? interactions.onStaticSegmentToRemoveClicked(segment)
+                    : () => {}
+                }
+              >
+                {segment}
+              </Badge>
+            </Fragment>
+          ))}
       </h6>
     </div>
   );

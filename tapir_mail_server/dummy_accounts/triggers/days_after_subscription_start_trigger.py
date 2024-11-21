@@ -66,9 +66,7 @@ class DaysAfterSubscriptionStartTrigger(Trigger[DaysTriggerData]):
     def create_dispatch_if_relevant(
         version: EmailConfigurationVersion, subscription: DummySubscription
     ):
-        if subscription.user not in segment_data_to_recipient_list(
-            version.segment_data
-        ):
+        if subscription.user not in resolve_segments(**version.segment_data):
             return
 
         scheduled_time = subscription.start_date + datetime.timedelta(

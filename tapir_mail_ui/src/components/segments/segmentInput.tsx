@@ -34,6 +34,9 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
 
   const [segmentsToAdd, setSegmentsToAdd] = useState<string[]>([]);
   const [staticSegmentsToAdd, setStaticSegmentsToAdd] = useState<string[]>([]);
+  const [staticSegmentsToRemove, setStaticSegmentsToRemove] = useState<
+    string[]
+  >([]);
   const [segmentsToRemove, setSegmentsToRemove] = useState<string[]>([]);
   const [complexFilter, setComplexFilter] = useState<FilterElement[]>([]);
 
@@ -46,6 +49,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     onChange({
       addSegments: segmentsToAdd,
       staticSegments: staticSegmentsToAdd,
+      staticSegmentsSubtractive: staticSegmentsToRemove,
       removeSegments: segmentsToRemove,
       filterList: isFilterValid ? complexFilter.map((c) => c.value) : [],
     });
@@ -68,6 +72,8 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
           initialData.addSegments && setSegmentsToAdd(initialData.addSegments);
           initialData.staticSegments &&
             setStaticSegmentsToAdd(initialData.staticSegments);
+          initialData.staticSegmentsSubtractive &&
+            setStaticSegmentsToRemove(initialData.staticSegmentsSubtractive);
           initialData.removeSegments &&
             setSegmentsToRemove(initialData.removeSegments);
           initialData.filterList &&
@@ -109,6 +115,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
         segmentDataRequest: {
           addSegments: segmentsToAdd,
           staticSegments: staticSegmentsToAdd,
+          staticSegmentsSubtractive: staticSegmentsToRemove,
           removeSegments: segmentsToRemove,
           filterList: filters,
         },
@@ -124,6 +131,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   }, [
     segmentsToAdd,
     staticSegmentsToAdd,
+    staticSegmentsToRemove,
     segmentsToRemove,
     complexFilter,
     isFilterValid,
@@ -142,7 +150,12 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   const handleRemoveSegment = () => {
     if (selectedSegment === "") return;
 
-    setSegmentsToRemove((prev) => [...prev, selectedSegment]);
+    if (availableStaticSegments.includes(selectedSegment)) {
+      setStaticSegmentsToRemove((prev) => [...prev, selectedSegment]);
+    } else {
+      setSegmentsToRemove((prev) => [...prev, selectedSegment]);
+    }
+
     setSelectedSegment("");
   };
 
@@ -161,9 +174,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
 
   const plusSegmentButtonDisabled = !selectedSegment || selectedSegment === "";
   const minusSegmentButtonDisabled =
-    plusSegmentButtonDisabled ||
-    segmentsToAdd.length === 0 ||
-    availableStaticSegments.includes(selectedSegment);
+    plusSegmentButtonDisabled || segmentsToAdd.length === 0;
 
   function onSegmentToAddClicked(segment: string) {
     const newSegmentsToAdd = segmentsToAdd.filter((s) => s !== segment);
@@ -182,6 +193,10 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     setStaticSegmentsToAdd(staticSegmentsToAdd.filter((s) => s !== segment));
   }
 
+  function onStaticSegmentToRemoveClicked(segment: string) {
+    setStaticSegmentsToRemove(staticSegmentsToAdd.filter((s) => s !== segment));
+  }
+
   return (
     <div>
       <Form.Label>Segmente</Form.Label>
@@ -190,12 +205,14 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
           addSegments: segmentsToAdd,
           removeSegments: segmentsToRemove,
           staticSegments: staticSegmentsToAdd,
+          staticSegmentsSubtractive: staticSegmentsToRemove,
           filterList: [],
         }}
         interactions={{
           onSegmentToAddClicked: onSegmentToAddClicked,
-          onStaticSegmentToAddClicked: onStaticSegmentToAddClicked,
           onSegmentToRemoveClicked: onSegmentToRemoveClicked,
+          onStaticSegmentToAddClicked: onStaticSegmentToAddClicked,
+          onStaticSegmentToRemoveClicked: onStaticSegmentToRemoveClicked,
         }}
       />
       <div style={{ display: "flex" }}>
