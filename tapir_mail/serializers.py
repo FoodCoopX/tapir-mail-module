@@ -1,7 +1,7 @@
 import datetime
 
-from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
+from rest_framework import serializers
 
 from tapir_mail.models import (
     EmailConfiguration,
@@ -101,7 +101,10 @@ class EmailConfigurationSerializer(serializers.ModelSerializer):
 
 class SegmentDataSerializer(serializers.Serializer):
     add_segments = serializers.ListField(child=serializers.CharField())
-    static_segments = serializers.ListField(child=serializers.CharField())
+    static_segments = serializers.ListField(child=serializers.CharField())  # additive
+    static_segments_subtractive = serializers.ListField(
+        child=serializers.CharField(), allow_null=True
+    )
     remove_segments = serializers.ListField(child=serializers.CharField())
     filter_list = serializers.ListField(child=serializers.CharField())
 
@@ -135,9 +138,13 @@ class SegmentDataSerializer(serializers.Serializer):
         return filter_list
 
     def validate_static_segments(self, static_segments):
-        existing_segment_names = [
-            segment.name for segment in StaticSegment.objects.all()
-        ]
+        return self.validate_static_segments_general(static_segments)
+
+    def validate_static_segments_subtractive(self, static_segments):
+        return self.validate_static_segments_general(static_segments)
+
+    def validate_static_segments_general(self, static_segments):
+        existing_segment_names = StaticSegment.objects.values_list("name", flat=True)
         invalid_segments = [
             segment
             for segment in static_segments

@@ -69,7 +69,7 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
             ]:
                 continue
 
-            for recipient in segment_data_to_recipient_list(version.segment_data):
+            for recipient in resolve_segments(**version.segment_data):
                 cls._delete_unsent_config_dispatch(version=version, recipient=recipient)
                 if (
                     not hasattr(recipient, "pickup_location")
@@ -90,7 +90,7 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
             ]:
                 continue
 
-            if recipient not in segment_data_to_recipient_list(version.segment_data):
+            if recipient not in resolve_segments(**version.segment_data):
                 continue
 
             cls._delete_unsent_config_dispatch(version=version, recipient=recipient)

@@ -30,6 +30,7 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         segment_data_before = {
             "add_segments": [self.TEST_SEGMENT],
             "static_segments": [],
+            "static_segments_subtractive": [],
             "remove_segments": [],
             "filter_list": [],
         }
@@ -46,6 +47,7 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         segment_data_after = {
             "add_segments": [],
             "static_segments": [],
+            "static_segments_subtractive": [],
             "remove_segments": [self.TEST_SEGMENT],
             "filter_list": [],
         }
