@@ -83,6 +83,54 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
         serializer = EmailConfigurationVersionSerializer(queryset, many=True)
         return pagination.get_paginated_response(serializer.data)
 
+    @extend_schema(
+        responses={200: EmailConfigurationSerializer(many=False)},
+    )
+    @action(detail=True, methods=["GET"])
+    def duplicate(self, request, pk=None):
+        copy_source = get_object_or_404(EmailConfiguration, id=pk)
+
+        copy_destination = EmailConfiguration(
+            name=f"Kopie von: {copy_source.name}",
+            description=copy_source.description,
+        )
+        copy_destination.save()
+
+        self.duplication_best_version(copy_source, copy_destination)
+
+        serializer = EmailConfigurationSerializer(copy_destination, many=False)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @staticmethod
+    def duplication_best_version(
+        configuration_copy_source: EmailConfiguration,
+        configuration_copy_destination: EmailConfiguration,
+    ):
+        versions = configuration_copy_source.versions.order_by("-updated_at")
+        if not versions.exists():
+            return
+
+        version_copy_source = versions.filter(status=ReleaseStatus.RELEASED).first()
+        if not version_copy_source:
+            version_copy_source = versions.filter(status=ReleaseStatus.DRAFT).first()
+        if not version_copy_source:
+            version_copy_source = versions.filter(status=ReleaseStatus.ARCHIVED).first()
+        if not version_copy_source:
+            version_copy_source = versions.first()
+        if not version_copy_source:
+            return
+
+        fields_to_copy = ["content", "subject", "triggers", "segment_data"]
+        version_copy_destination = EmailConfigurationVersion(
+            **{
+                field_name: getattr(version_copy_source, field_name)
+                for field_name in fields_to_copy
+            },
+            email_configuration=configuration_copy_destination,
+            status=ReleaseStatus.DRAFT,
+        )
+        version_copy_destination.save()
+
 
 @extend_schema_view(
     send_email=extend_schema(
