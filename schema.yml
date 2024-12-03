@@ -487,6 +487,28 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/email_configuration/{id}/duplicate/:
+    get:
+      operationId: email_configuration_duplicate_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this email configuration.
+        required: true
+      tags:
+      - email_configuration
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailConfiguration'
+          description: ''
   /api/email_configuration/{id}/versions/:
     get:
       operationId: email_configuration_versions_list

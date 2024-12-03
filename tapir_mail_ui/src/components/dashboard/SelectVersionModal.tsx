@@ -1,5 +1,6 @@
 import {
   ArchiveBoxArrowDownIcon,
+  DocumentDuplicateIcon,
   PaperAirplaneIcon,
   PencilIcon,
   TrashIcon,
@@ -49,6 +50,7 @@ const SelectVersionModal = ({
   const [versions, setVersions] = useState<EmailConfigurationVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string>("");
   const [htmlContent, setHtmlContent] = useState<string>("");
+  const [duplicateLoading, setDuplicateLoading] = useState(false);
 
   const [confirmArchiveVersionModalOpen, setConfirmArchiveVersionModalOpen] =
     useState(false);
@@ -156,6 +158,25 @@ const SelectVersionModal = ({
       })
       .finally(() => {
         setConfirmDeleteVersionModalOpen(false);
+      });
+  };
+
+  const onDuplicateClicked = () => {
+    setDuplicateLoading(true);
+
+    configApi
+      .emailConfigurationDuplicateRetrieve({ id: emailConfiguration.id! })
+      .then(() => {
+        showAlert("Kopie erstellt", "success");
+        onClose();
+        onDataChanged();
+      })
+      .catch((error) => {
+        console.error(error);
+        showAlert("Fehler beim erstellen der Kopie", "danger");
+      })
+      .finally(() => {
+        setDuplicateLoading(false);
       });
   };
 
@@ -298,12 +319,21 @@ const SelectVersionModal = ({
         <Modal.Footer
           style={{ display: "flex", justifyContent: "space-between" }}
         >
-          <TapirButton
-            variant="secondary"
-            text="Abbrechen"
-            icon={XMarkIcon}
-            onClick={onClose}
-          />
+          <div className="d-flex gap-2">
+            <TapirButton
+              variant="secondary"
+              text="Abbrechen"
+              icon={XMarkIcon}
+              onClick={onClose}
+            />
+            <TapirButton
+              variant="primary"
+              text="Kopie erstellen"
+              icon={DocumentDuplicateIcon}
+              onClick={onDuplicateClicked}
+              disabled={duplicateLoading}
+            />
+          </div>
           <div className="d-flex gap-2">
             <TapirButton
               variant="outline-primary"
