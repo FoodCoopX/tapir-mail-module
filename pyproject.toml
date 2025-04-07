@@ -5,7 +5,8 @@ description = ""
 authors = ["Théophile Madet <theo.madet@posteo.net>", "Michael Kleimann <dev@mkleimann.com>"]
 readme = "README.md"
 packages = [{include = "tapir_mail"}]
-include = ["tapir_mail/__ui__/**/*", "tapir_mail/__ui__/*", "tapir_mail/__static__/**/*", "tapir_mail/scripts/*"]
+include = [{path = "tapir_mail/__ui__/*", format = ["sdist", "wheel"]}, {path = "tapir_mail/__static__/*", format = ["sdist", "wheel"]}]
+
 
 [tool.poetry.dependencies]
 python = "^3.13"
