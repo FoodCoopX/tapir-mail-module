@@ -1,8 +1,7 @@
+from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path, re_path
 from django.views.generic.base import TemplateView
-from django.conf import settings
-
 from rest_framework import routers
 
 from tapir_mail import views
