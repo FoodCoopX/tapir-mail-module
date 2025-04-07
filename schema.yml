@@ -1974,6 +1974,7 @@ paths:
           - br
           - bs
           - ca
+          - ckb
           - cs
           - cy
           - da
@@ -2026,6 +2027,7 @@ paths:
           - ml
           - mn
           - mr
+          - ms
           - my
           - nb
           - ne
@@ -2053,6 +2055,7 @@ paths:
           - tr
           - tt
           - udm
+          - ug
           - uk
           - ur
           - uz
@@ -2650,7 +2653,10 @@ components:
           type: string
           maxLength: 255
         delivery_day:
-          $ref: '#/components/schemas/DeliveryDayEnum'
+          allOf:
+          - $ref: '#/components/schemas/DeliveryDayEnum'
+          minimum: -9223372036854775808
+          maximum: 9223372036854775807
       required:
       - delivery_day
       - id
@@ -2663,7 +2669,10 @@ components:
           minLength: 1
           maxLength: 255
         delivery_day:
-          $ref: '#/components/schemas/DeliveryDayEnum'
+          allOf:
+          - $ref: '#/components/schemas/DeliveryDayEnum'
+          minimum: -9223372036854775808
+          maximum: 9223372036854775807
       required:
       - delivery_day
       - name
@@ -2761,9 +2770,7 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        override_recipients:
-          type: object
-          additionalProperties: {}
+        override_recipients: {}
         sent_count:
           type: integer
           readOnly: true
@@ -2792,9 +2799,7 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        override_recipients:
-          type: object
-          additionalProperties: {}
+        override_recipients: {}
       required:
       - email_configuration_version
       - id
@@ -2907,12 +2912,8 @@ components:
           format: email
           maxLength: 254
         recipient_tokens:
-          type: object
-          additionalProperties: {}
           nullable: true
         additional_tokens:
-          type: object
-          additionalProperties: {}
           nullable: true
         sent_time:
           type: string
@@ -2956,12 +2957,8 @@ components:
           minLength: 1
           maxLength: 254
         recipient_tokens:
-          type: object
-          additionalProperties: {}
           nullable: true
         additional_tokens:
-          type: object
-          additionalProperties: {}
           nullable: true
         sent_time:
           type: string
@@ -3015,12 +3012,8 @@ components:
           format: email
           maxLength: 254
         recipient_tokens:
-          type: object
-          additionalProperties: {}
           nullable: true
         additional_tokens:
-          type: object
-          additionalProperties: {}
           nullable: true
         sent_time:
           type: string
@@ -3136,6 +3129,9 @@ components:
         * `Sunday` - Sunday
     PaginatedEmailConfigurationDispatchList:
       type: object
+      required:
+      - count
+      - results
       properties:
         count:
           type: integer
@@ -3156,6 +3152,9 @@ components:
             $ref: '#/components/schemas/EmailConfigurationDispatch'
     PaginatedEmailConfigurationList:
       type: object
+      required:
+      - count
+      - results
       properties:
         count:
           type: integer
@@ -3176,6 +3175,9 @@ components:
             $ref: '#/components/schemas/EmailConfiguration'
     PaginatedEmailConfigurationVersionList:
       type: object
+      required:
+      - count
+      - results
       properties:
         count:
           type: integer
@@ -3196,6 +3198,9 @@ components:
             $ref: '#/components/schemas/EmailConfigurationVersion'
     PaginatedEmailDispatchList:
       type: object
+      required:
+      - count
+      - results
       properties:
         count:
           type: integer
@@ -3216,6 +3221,9 @@ components:
             $ref: '#/components/schemas/EmailDispatch'
     PaginatedEmailDispatchWithRetriesList:
       type: object
+      required:
+      - count
+      - results
       properties:
         count:
           type: integer
@@ -3236,6 +3244,9 @@ components:
             $ref: '#/components/schemas/EmailDispatchWithRetries'
     PaginatedEmailTemplateList:
       type: object
+      required:
+      - count
+      - results
       properties:
         count:
           type: integer
@@ -3256,6 +3267,9 @@ components:
             $ref: '#/components/schemas/EmailTemplate'
     PaginatedGroupedEmailDispatchList:
       type: object
+      required:
+      - count
+      - results
       properties:
         count:
           type: integer
@@ -3312,7 +3326,10 @@ components:
           minLength: 1
           maxLength: 255
         delivery_day:
-          $ref: '#/components/schemas/DeliveryDayEnum'
+          allOf:
+          - $ref: '#/components/schemas/DeliveryDayEnum'
+          minimum: -9223372036854775808
+          maximum: 9223372036854775807
     PatchedDummyTapirUserRequest:
       type: object
       properties:
@@ -3342,9 +3359,7 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        override_recipients:
-          type: object
-          additionalProperties: {}
+        override_recipients: {}
     PatchedEmailConfigurationRequest:
       type: object
       properties:
@@ -3396,8 +3411,6 @@ components:
           minLength: 1
           maxLength: 254
         custom_data:
-          type: object
-          additionalProperties: {}
           nullable: true
         segment:
           type: string
@@ -3588,8 +3601,6 @@ components:
           format: email
           maxLength: 254
         custom_data:
-          type: object
-          additionalProperties: {}
           nullable: true
         segment:
           type: string
@@ -3621,8 +3632,6 @@ components:
           minLength: 1
           maxLength: 254
         custom_data:
-          type: object
-          additionalProperties: {}
           nullable: true
         segment:
           type: string
@@ -3826,9 +3835,7 @@ components:
           type: string
         field_name:
           type: string
-        additional_data:
-          type: object
-          additionalProperties: {}
+        additional_data: {}
       required:
       - field_name
       - label
