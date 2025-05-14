@@ -1,6 +1,7 @@
 import logging
 import traceback
 from collections import deque
+from typing import Iterable
 
 from django.db.models import Q
 
@@ -185,7 +186,7 @@ def resolve_segments(
         return result
     except Exception as e:
         LOG.error(
-            f"Error combining segments: {e}. addSegments: {add_segments}, removeSegments: {remove_segments}, filterList: {filter_list}"
+            f"Error combining segments: {e}. addSegments: {add_segments}, removeSegments: {remove_segments}, filterList: {filter_list}, override_recipients: {override_recipients}"
         )
         traceback.print_exc()
         raise e
@@ -196,7 +197,7 @@ def apply_recipient_override(
 ) -> list:
     override_map = {}
     for data in override:
-        if isinstance(data, tuple):
+        if isinstance(data, Iterable) and not isinstance(data, str):
             email_source = data[0]
             email_target = data[1]
         else:
