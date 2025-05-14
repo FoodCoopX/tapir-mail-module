@@ -69,7 +69,7 @@ class Trigger(Generic[TriggerData], ABC):
     @classmethod
     def get_recipients_override(
         cls, email_configuration_version, data: TriggerData
-    ) -> [str]:
+    ) -> [str | tuple[str, str]]:
         return None
 
     @classmethod

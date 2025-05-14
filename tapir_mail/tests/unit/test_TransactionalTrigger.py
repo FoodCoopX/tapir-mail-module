@@ -5,7 +5,6 @@ from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 
 from tapir_mail.models import (
-    EmailConfigurationDispatch,
     EmailConfigurationVersion,
     ReleaseStatus,
 )
@@ -48,7 +47,10 @@ class TransactionalTriggerTest(TapirUnitTest):
         TransactionalTrigger.fire_action("test_key", "test@example.com")
         mock_fire_all.assert_called_once_with(
             TransactionalTriggerData(
-                key="test_key", recipient_email="test@example.com", token_data={}
+                key="test_key",
+                recipient_email="test@example.com",
+                recipient_email_override=None,
+                token_data={},
             )
         )
 
@@ -84,21 +86,30 @@ class TransactionalTriggerTest(TapirUnitTest):
         TransactionalTrigger.register_action("test_action_2", "test_key_2")
         TransactionalTrigger.fire_all_released_configs(
             TransactionalTriggerData(
-                key="test_key_1", recipient_email="test@example.com", token_data={}
+                key="test_key_1",
+                recipient_email="test@example.com",
+                recipient_email_override=None,
+                token_data={},
             )
         )
 
         mock_fire_version.assert_called_once_with(
             version_1,
             TransactionalTriggerData(
-                key="test_key_1", recipient_email="test@example.com", token_data={}
+                key="test_key_1",
+                recipient_email="test@example.com",
+                recipient_email_override=None,
+                token_data={},
             ),
         )
 
     @patch("tapir_mail.models.EmailConfigurationDispatch.objects.create")
     def test_fireVersion_validInput_createDispatchCalled(self, mock_create_dispatch):
         data = TransactionalTriggerData(
-            key="test_key", recipient_email="test@example.com", token_data={}
+            key="test_key",
+            recipient_email="test@example.com",
+            recipient_email_override=None,
+            token_data={},
         )
         version = MagicMock(spec=EmailConfigurationVersion)
         TransactionalTrigger.fire_version(version, data)
@@ -139,31 +150,57 @@ class TransactionalTriggerTest(TapirUnitTest):
         TransactionalTrigger.register_action("test_action", "test_key")
         TransactionalTrigger.fire_all_released_configs(
             TransactionalTriggerData(
-                key="test_key", recipient_email="test@example.com", token_data={}
+                key="test_key",
+                recipient_email="test@example.com",
+                recipient_email_override=None,
+                token_data={},
             )
         )
 
         mock_fire_version.assert_called_once_with(
             released_version,
             TransactionalTriggerData(
-                key="test_key", recipient_email="test@example.com", token_data={}
+                key="test_key",
+                recipient_email="test@example.com",
+                recipient_email_override=None,
+                token_data={},
             ),
         )
 
-    def test_getRecipientsOverride_validData_correctRecipientReturned(self):
+    def test_getRecipientsOverride_simpleOverride_correctRecipientReturned(self):
         recipients = TransactionalTrigger.get_recipients_override(
             None,
             TransactionalTriggerData(
-                key="test", recipient_email="test@example.com", token_data={}
+                key="test",
+                recipient_email="test@example.com",
+                recipient_email_override=None,
+                token_data={},
             ),
         )
         self.assertEqual(recipients, ["test@example.com"])
+
+    def test_getRecipientsOverride_overrideWithReplacement_correctRecipientReturned(
+        self,
+    ):
+        recipients = TransactionalTrigger.get_recipients_override(
+            None,
+            TransactionalTriggerData(
+                key="test",
+                recipient_email="test@example.com",
+                recipient_email_override="new_email@example.com",
+                token_data={},
+            ),
+        )
+        self.assertEqual(recipients, [("test@example.com", "new_email@example.com")])
 
     def test_getScheduledDate_validData_correctDateCalculated(self):
         scheduled_date = TransactionalTrigger.get_scheduled_date(
             None,
             TransactionalTriggerData(
-                key="test", recipient_email="test@example.com", token_data={}
+                key="test",
+                recipient_email="test@example.com",
+                recipient_email_override=None,
+                token_data={},
             ),
         )
         expected_date = timezone.now() - relativedelta(minutes=10)
@@ -234,11 +271,14 @@ class TransactionalTriggerTest(TapirUnitTest):
         data = TransactionalTriggerData(
             key=action_key,
             recipient_email="test@example.com",
+            recipient_email_override=None,
             token_data={"transactional_token": "Test Value"},
         )
 
         TransactionalTrigger.fire_action(
-            data.key, data.recipient_email, data.token_data
+            key=data.key,
+            recipient_email=data.recipient_email,
+            token_data=data.token_data,
         )
 
         mock_fire_all_released_configs.assert_called_once_with(data)

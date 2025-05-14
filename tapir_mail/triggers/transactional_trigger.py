@@ -11,6 +11,7 @@ from tapir_mail.service.triggers import Trigger
 class TransactionalTriggerData:
     key: str
     recipient_email: str
+    recipient_email_override: str | None
     token_data: dict
 
 
@@ -26,13 +27,20 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
     trigger_tokens = {}
 
     @classmethod
-    def register_action(cls, name, key, tokens: dict = {}):
+    def register_action(cls, name, key, tokens: dict = None):
+        if tokens is None:
+            tokens = {}
         cls.transactional_trigger_registry[key] = name
         if tokens:
             cls.trigger_tokens[key] = tokens
 
     @classmethod
-    def fire_action(cls, key, recipient_email, token_data={}):
+    def fire_action(
+        cls, key, recipient_email, recipient_email_override=None, token_data=None
+    ):
+        if token_data is None:
+            token_data = {}
+
         if key not in cls.transactional_trigger_registry:
             raise Exception(
                 f"Action '{key}' not registered. Available: {set(cls.transactional_trigger_registry.keys())}"
@@ -53,7 +61,10 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
 
         cls.fire_all_released_configs(
             TransactionalTriggerData(
-                key=key, recipient_email=recipient_email, token_data=token_data
+                key=key,
+                recipient_email=recipient_email,
+                recipient_email_override=recipient_email_override,
+                token_data=token_data,
             )
         )
 
@@ -97,8 +108,16 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
         )
 
     @classmethod
-    def get_recipients_override(cls, email_configuration_version, data) -> [str]:
-        return [data.recipient_email]
+    def get_recipients_override(
+        cls, email_configuration_version, data: TransactionalTriggerData
+    ) -> list[str | tuple[str, str]]:
+        return [
+            (
+                data.recipient_email
+                if data.recipient_email_override is None
+                else (data.recipient_email, data.recipient_email_override)
+            )
+        ]
 
     @classmethod
     def get_scheduled_date(

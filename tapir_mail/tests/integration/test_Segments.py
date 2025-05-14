@@ -27,10 +27,14 @@ class TestSegments(TapirIntegrationTest):
     def setUpTestData(cls):
         # Create some dummy users with and without coop shares
         DummyPickupLocationFactory.create()
-        DummyTapirUserFactory.create(id=1, has_coop_shares=True)
-        DummyTapirUserFactory.create(id=2, has_coop_shares=False)
-        DummyTapirUserFactory.create(id=3, has_coop_shares=True)
-        DummyTapirUserFactory.create(id=4, has_coop_shares=False)
+        DummyTapirUserFactory.create(id=1, has_coop_shares=True, email="mail1@test.net")
+        DummyTapirUserFactory.create(
+            id=2, has_coop_shares=False, email="mail2@test.net"
+        )
+        DummyTapirUserFactory.create(id=3, has_coop_shares=True, email="mail3@test.net")
+        DummyTapirUserFactory.create(
+            id=4, has_coop_shares=False, email="mail4@test.net"
+        )
 
         def coop_members():
             return DummyTapirUser.objects.filter(has_coop_shares=True)
@@ -116,3 +120,29 @@ class TestSegments(TapirIntegrationTest):
             set(r.email for r in result),
             {DummyTapirUser.objects.get(id=3).email},
         )
+
+    def test_resolveSegments_overrideRecipientWithSimpleEmail_resultsContainOnlyRecipientWithEmailFromOverride(
+        self,
+    ):
+        result = resolve_segments(
+            add_segments=[self.SEGMENT_ALL_USERS],
+            override_recipients=["mail2@test.net", "mail4@test.net"],
+        )
+        self.assertSetEqual(set(r.id for r in result), {2, 4})
+
+    def test_resolveSegments_overrideRecipientWithReplacedEmail_recipientEmailGetsReplaced(
+        self,
+    ):
+        result = resolve_segments(
+            add_segments=[self.SEGMENT_ALL_USERS],
+            override_recipients=[
+                ("mail2@test.net", "a_new_mail@test.net"),
+                "mail4@test.net",
+            ],
+        )
+        self.assertSetEqual(set(r.id for r in result), {2, 4})
+        for recipient in result:
+            if recipient.id == 2:
+                self.assertEqual("a_new_mail@test.net", recipient.email)
+            if recipient.id == 4:
+                self.assertEqual("mail4@test.net", recipient.email)

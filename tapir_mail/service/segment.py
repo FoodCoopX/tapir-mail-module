@@ -114,7 +114,7 @@ def resolve_segments(
     static_segments_subtractive=None,
     remove_segments=None,
     filter_list=None,
-    override_recipients: list[str] = None,
+    override_recipients: list[str | tuple[str, str]] = None,
 ) -> list:
     if filter_list is None:
         filter_list = []
@@ -134,10 +134,6 @@ def resolve_segments(
 
     try:
         combined = BASE_QUERYSET.none()
-
-        # Start with override recipients if set, to avoid unnecessary DB queries
-        if override_recipients:
-            combined = combined.filter(email__in=override_recipients)
 
         # Combine segments using union
         for segment in add_segments:
@@ -183,9 +179,8 @@ def resolve_segments(
             if recipient.email not in recipients_subtractive
         ]
 
-        # apply override recipients again, to filter out static segment recipients
         if override_recipients:
-            result = [r for r in result if r.email in override_recipients]
+            result = apply_recipient_override(result, override_recipients)
 
         return result
     except Exception as e:
@@ -194,3 +189,25 @@ def resolve_segments(
         )
         traceback.print_exc()
         raise e
+
+
+def apply_recipient_override(
+    recipients: list, override: list[str | tuple[str, str]]
+) -> list:
+    override_map = {}
+    for data in override:
+        if isinstance(data, tuple):
+            email_source = data[0]
+            email_target = data[1]
+        else:
+            email_source = data
+            email_target = data
+        override_map[email_source] = email_target
+
+    result = [
+        recipient for recipient in recipients if recipient.email in override_map.keys()
+    ]
+    for recipient in result:
+        recipient.email = override_map[recipient.email]
+
+    return result
