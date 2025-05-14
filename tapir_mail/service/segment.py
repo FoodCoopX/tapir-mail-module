@@ -132,12 +132,11 @@ def resolve_segments(
     if not add_segments and not static_segments:
         raise ValueError("At least one segment should be added.")
 
+    if override_recipients:
+        return override_recipients
+
     try:
         combined = BASE_QUERYSET.none()
-
-        # Start with override recipients if set, to avoid unnecessary DB queries
-        if override_recipients:
-            combined = combined.filter(email__in=override_recipients)
 
         # Combine segments using union
         for segment in add_segments:
@@ -182,10 +181,6 @@ def resolve_segments(
             for recipient in result
             if recipient.email not in recipients_subtractive
         ]
-
-        # apply override recipients again, to filter out static segment recipients
-        if override_recipients:
-            result = [r for r in result if r.email in override_recipients]
 
         return result
     except Exception as e:
