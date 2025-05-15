@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import EmailConfigurationDispatchTable from "../components/dashboard/EmailConfigurationDispatchTable";
 import Paths from "../routing";
@@ -12,12 +12,26 @@ import {
 } from "@heroicons/react/24/outline";
 import DispatchesWithErrorsModal from "../components/DispatchesWithErrorsModal";
 import StaticSegmentsListModal from "../components/static_segments/StaticSegmentsListModal";
+import { useApi } from "../hooks/useApi";
+import { MissingTrigger, MissingTriggersApi } from "../api_client";
 
 function Dashboard() {
+  const api = useApi(MissingTriggersApi);
   const [dispatchesWithErrorModalOpen, setDispatchesWithErrorModalOpen] =
     useState(false);
   const [staticSegmentListModalOpen, setStaticSegmentListModalOpen] =
     useState(false);
+  const [missingTriggers, setMissingTriggers] = useState<MissingTrigger[]>([]);
+
+  useEffect(() => {
+    api
+      .missingTriggersList()
+      .then(setMissingTriggers)
+      .catch((error) => {
+        console.log(error);
+        alert("Fehler beim laden der fehlende triggers");
+      });
+  }, []);
 
   return (
     <>
@@ -48,6 +62,15 @@ function Dashboard() {
           icon={ExclamationTriangleIcon}
           onClick={() => setDispatchesWithErrorModalOpen(true)}
         />
+        {missingTriggers.length > 0 && (
+          <TapirButton
+            variant={"danger"}
+            text={"Fehlende Trigger"}
+            icon={ExclamationTriangleIcon}
+            onClick={() => alert("TODO")}
+            notification={missingTriggers.length}
+          />
+        )}
       </div>
 
       <div

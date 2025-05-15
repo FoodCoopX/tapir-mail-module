@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "react-bootstrap";
+import { Badge, Button } from "react-bootstrap";
 import { ButtonVariant } from "react-bootstrap/types";
 
 interface TapirButtonProps {
@@ -10,6 +10,7 @@ interface TapirButtonProps {
   disabled?: boolean;
   size?: "sm" | "lg" | undefined;
   style?: React.CSSProperties;
+  notification?: number;
 }
 
 const TapirButton: React.FC<TapirButtonProps> = (props) => {
@@ -28,12 +29,23 @@ const TapirButton: React.FC<TapirButtonProps> = (props) => {
       onClick={props.onClick}
       disabled={props.disabled}
     >
-      {props.text && <span>{props.text}</span>}
-      {props.icon && (
-        <props.icon
-          style={{ width: "1.5em", marginLeft: props.text ? "0.25em" : "0em" }}
-        />
-      )}
+      <span>
+        {props.text && <span>{props.text}</span>}
+        {props.notification !== undefined && (
+          <>
+            {" "}
+            <Badge bg={"secondary"}>{props.notification}</Badge>
+          </>
+        )}
+        {props.icon && (
+          <props.icon
+            style={{
+              width: "1.5em",
+              marginLeft: props.text ? "0.25em" : "0em",
+            }}
+          />
+        )}
+      </span>
     </Button>
   );
 };

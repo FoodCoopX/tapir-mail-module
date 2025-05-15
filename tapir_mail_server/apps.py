@@ -20,6 +20,7 @@ class TapirMailServerAppConfig(AppConfig):
             TransactionalTrigger.register_action(
                 "Absenden Bestell Wizard (nur Mitgliedschaft)",
                 "register_coop_shares",
+                required=True,
             )
 
             TransactionalTrigger.register_action(
@@ -31,6 +32,7 @@ class TapirMailServerAppConfig(AppConfig):
                 "Mitgliedsdatenänderungen",
                 "update_member",
                 {"Geänderte Daten": "changed_fields"},
+                required=True,
             )
 
         except Exception as e:

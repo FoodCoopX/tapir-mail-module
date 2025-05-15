@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from tapir_mail.models import (
     EmailConfiguration,
@@ -36,6 +37,7 @@ from tapir_mail.serializers import (
     TriggerDefinitionSerializer,
     StaticSegmentSerializer,
     StaticSegmentRecipientSerializer,
+    MissingTriggerSerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
@@ -684,3 +686,46 @@ class StaticSegmentViewSet(viewsets.ModelViewSet):
 class StaticSegmentRecipientViewSet(viewsets.ModelViewSet):
     queryset = StaticSegmentRecipient.objects.all()
     serializer_class = StaticSegmentRecipientSerializer
+
+
+class MissingTriggersView(APIView):
+    @extend_schema(
+        responses={200: MissingTriggerSerializer(many=True)},
+    )
+    def get(self, request):
+        released_versions = list(
+            EmailConfigurationVersion.objects.filter(status=ReleaseStatus.RELEASED)
+        )
+        keys_without_released_version = []
+        for key in TransactionalTrigger.required_trigger_keys:
+            if not self.does_trigger_have_at_least_one_released_version(
+                trigger_key=key, released_versions=released_versions
+            ):
+                keys_without_released_version.append(key)
+
+        data = [
+            {
+                "key": key,
+                "name": TransactionalTrigger.transactional_trigger_registry[key],
+            }
+            for key in keys_without_released_version
+        ]
+        return Response(
+            MissingTriggerSerializer(data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @staticmethod
+    def does_trigger_have_at_least_one_released_version(trigger_key, released_versions):
+        for key in TransactionalTrigger.required_trigger_keys:
+            for version in released_versions:
+                if not version.triggers:
+                    continue
+                for trigger in version.triggers:
+                    if (
+                        trigger["trigger_id"] == TransactionalTrigger.get_id()
+                        and trigger.get("trigger_field_values", {}).get("key", None)
+                        == key
+                    ):
+                        return True
+        return False

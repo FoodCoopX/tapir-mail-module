@@ -1942,6 +1942,23 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/missing_triggers:
+    get:
+      operationId: missing_triggers_list
+      tags:
+      - missing_triggers
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MissingTrigger'
+          description: ''
   /api/schema/:
     get:
       operationId: schema_retrieve
@@ -3110,6 +3127,16 @@ components:
         * `4` - 4
         * `5` - 5
         * `6` - 6
+    MissingTrigger:
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+      required:
+      - key
+      - name
     NameEnum:
       enum:
       - Monday

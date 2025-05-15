@@ -275,3 +275,8 @@ class StaticSegmentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     recipients = StaticSegmentRecipientSerializer(many=True, read_only=True)
+
+
+class MissingTriggerSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    name = serializers.CharField()

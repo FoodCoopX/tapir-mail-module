@@ -25,14 +25,17 @@ class TransactionalTriggerDataDropdownFieldChoice(
 class TransactionalTrigger(Trigger[TransactionalTriggerData]):
     transactional_trigger_registry = {}
     trigger_tokens = {}
+    required_trigger_keys = []
 
     @classmethod
-    def register_action(cls, name, key, tokens: dict = None):
+    def register_action(cls, name, key, tokens: dict = None, required=False):
         if tokens is None:
             tokens = {}
         cls.transactional_trigger_registry[key] = name
         if tokens:
             cls.trigger_tokens[key] = tokens
+        if required:
+            cls.required_trigger_keys.append(key)
 
     @classmethod
     def fire_action(
