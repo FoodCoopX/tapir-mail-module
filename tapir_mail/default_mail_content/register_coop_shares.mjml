@@ -1,7 +1,5 @@
 <mj-section>
-    <mj-column>
-        <mj-text>
-            This should be the default register coop shares content
-        </mj-text>
-    </mj-column>
+  <mj-column>
+    <mj-text> This should be the default register coop shares content </mj-text>
+  </mj-column>
 </mj-section>
