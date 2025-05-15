@@ -3,6 +3,33 @@ info:
   title: ''
   version: 0.0.0
 paths:
+  /api/create_missing_trigger:
+    post:
+      operationId: create_missing_trigger_create
+      tags:
+      - create_missing_trigger
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMissingTriggerMailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateMissingTriggerMailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateMissingTriggerMailRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+          description: ''
   /api/dummy_accounts/dummy_pickup_location/:
     get:
       operationId: dummy_accounts_dummy_pickup_location_list
@@ -1942,6 +1969,23 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/missing_triggers:
+    get:
+      operationId: missing_triggers_list
+      tags:
+      - missing_triggers
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MissingTrigger'
+          description: ''
   /api/schema/:
     get:
       operationId: schema_retrieve
@@ -2611,6 +2655,18 @@ components:
       - content
       - name
       - release_status
+    CreateMissingTriggerMailRequest:
+      type: object
+      properties:
+        trigger_key:
+          type: string
+          minLength: 1
+        empty_mjml:
+          type: string
+          minLength: 1
+      required:
+      - empty_mjml
+      - trigger_key
     DeliveryDayEnum:
       enum:
       - 0
@@ -3110,6 +3166,19 @@ components:
         * `4` - 4
         * `5` - 5
         * `6` - 6
+    MissingTrigger:
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        draft_version_exists:
+          type: boolean
+      required:
+      - draft_version_exists
+      - key
+      - name
     NameEnum:
       enum:
       - Monday

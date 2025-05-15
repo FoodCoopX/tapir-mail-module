@@ -275,3 +275,14 @@ class StaticSegmentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     recipients = StaticSegmentRecipientSerializer(many=True, read_only=True)
+
+
+class MissingTriggerSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    name = serializers.CharField()
+    draft_version_exists = serializers.BooleanField()
+
+
+class CreateMissingTriggerMailSerializer(serializers.Serializer):
+    trigger_key = serializers.CharField()
+    empty_mjml = serializers.CharField()

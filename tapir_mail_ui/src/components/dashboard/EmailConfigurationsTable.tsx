@@ -14,7 +14,12 @@ import SelectVersionModal from "./SelectVersionModal";
 import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
 import TapirPagination from "../TapirPagination";
 
-const EmailConfigurationTable = () => {
+interface EmailConfigurationTableProps {
+  reloadConfigurations: number;
+}
+const EmailConfigurationTable: React.FC<EmailConfigurationTableProps> = ({
+  reloadConfigurations,
+}) => {
   const showAlert = useAlert();
   const [loading, setLoading] = useState(true);
   const [emailConfigurations, setEmailConfigurations] = useState<
@@ -51,7 +56,7 @@ const EmailConfigurationTable = () => {
     if (!api || !showAlert) return;
 
     fetchEmailConfigurations();
-  }, [currentPage]);
+  }, [currentPage, reloadConfigurations]);
 
   const handleSelectEmailConfiguration = (ec: EmailConfiguration) => {
     setSelectedEmailConfiguration(ec);

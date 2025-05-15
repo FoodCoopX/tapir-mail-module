@@ -25,14 +25,23 @@ class TransactionalTriggerDataDropdownFieldChoice(
 class TransactionalTrigger(Trigger[TransactionalTriggerData]):
     transactional_trigger_registry = {}
     trigger_tokens = {}
+    required_trigger_to_default_content_map = {}
 
     @classmethod
-    def register_action(cls, name, key, tokens: dict = None):
+    def register_action(
+        cls, name, key, tokens: dict = None, required=False, default_content=None
+    ):
         if tokens is None:
             tokens = {}
         cls.transactional_trigger_registry[key] = name
         if tokens:
             cls.trigger_tokens[key] = tokens
+        if required:
+            if default_content is None:
+                raise ValueError(
+                    "If the trigger is required, the default content must valid MJML content"
+                )
+            cls.required_trigger_to_default_content_map[key] = default_content
 
     @classmethod
     def fire_action(
