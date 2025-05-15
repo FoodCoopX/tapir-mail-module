@@ -39,6 +39,11 @@ urlpatterns = [
         views.MissingTriggersView.as_view(),
         name="missing_triggers",
     ),
+    path(
+        "api/create_missing_trigger",
+        views.CreateMissingTriggerMailView.as_view(),
+        name="create_missing_trigger",
+    ),
 ] + static(
     settings.STATIC_URL, document_root=settings.STATIC_ROOT  # React static files
 )

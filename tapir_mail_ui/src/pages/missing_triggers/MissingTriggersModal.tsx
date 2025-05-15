@@ -1,22 +1,50 @@
-import React from "react";
+import React, { useState } from "react";
 import { Modal } from "react-bootstrap";
-import { MissingTrigger } from "../../api_client";
+import { CreateMissingTriggerApi, MissingTrigger } from "../../api_client";
+import TapirButton from "../../components/TapirButton";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { useApi } from "../../hooks/useApi";
+import { createEmptyMjml } from "../../components/editor";
 
 interface MissingTriggersModalProps {
   open: boolean;
   onHide: () => void;
   missingTriggers: MissingTrigger[];
+  reloadData: () => void;
 }
 
-const ConfirmModal: React.FC<MissingTriggersModalProps> = ({
+const MissingTriggersModal: React.FC<MissingTriggersModalProps> = ({
   open,
   onHide,
   missingTriggers,
+  reloadData,
 }) => {
+  const api = useApi(CreateMissingTriggerApi);
+  const [loading, setLoading] = useState(false);
+
+  function onCreate(key: string) {
+    setLoading(true);
+
+    api
+      .createMissingTriggerCreate({
+        createMissingTriggerMailRequest: {
+          triggerKey: key,
+          emptyMjml: createEmptyMjml(),
+        },
+      })
+      .then(reloadData)
+      .catch((error) => {
+        console.error(error);
+        alert("Failed to create missing trigger");
+      })
+      .finally(() => setLoading(false));
+  }
+
   return (
     <Modal
       show={open}
       onHide={onHide}
+      size={"lg"}
     >
       <Modal.Header closeButton>
         <Modal.Title>Fehlende Trigger</Modal.Title>
@@ -33,7 +61,25 @@ const ConfirmModal: React.FC<MissingTriggersModalProps> = ({
         </p>
         <ul>
           {missingTriggers.map((trigger) => (
-            <li>{trigger.name}</li>
+            <li>
+              <span className={"d-flex flex-row gap-2 align-items-center"}>
+                {trigger.name}
+                {
+                  <TapirButton
+                    variant={"primary"}
+                    text={
+                      trigger.draftVersionExists
+                        ? "Entwurf existiert bereits"
+                        : "Erzeugen"
+                    }
+                    icon={PlusCircleIcon}
+                    size={"sm"}
+                    onClick={() => onCreate(trigger.key)}
+                    disabled={loading || trigger.draftVersionExists}
+                  />
+                }
+              </span>
+            </li>
           ))}
         </ul>
       </Modal.Body>
@@ -41,4 +87,4 @@ const ConfirmModal: React.FC<MissingTriggersModalProps> = ({
   );
 };
 
-export default ConfirmModal;
+export default MissingTriggersModal;

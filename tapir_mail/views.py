@@ -4,6 +4,7 @@ import logging
 from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
@@ -38,6 +39,7 @@ from tapir_mail.serializers import (
     StaticSegmentSerializer,
     StaticSegmentRecipientSerializer,
     MissingTriggerSerializer,
+    CreateMissingTriggerMailSerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
@@ -697,16 +699,27 @@ class MissingTriggersView(APIView):
             EmailConfigurationVersion.objects.filter(status=ReleaseStatus.RELEASED)
         )
         keys_without_released_version = []
-        for key in TransactionalTrigger.required_trigger_keys:
-            if not self.does_trigger_have_at_least_one_released_version(
+        for key in TransactionalTrigger.required_trigger_to_default_content_map.keys():
+            if not self.does_trigger_show_in_given_versions(
                 trigger_key=key, released_versions=released_versions
             ):
                 keys_without_released_version.append(key)
+
+        draft_versions = list(
+            EmailConfigurationVersion.objects.filter(status=ReleaseStatus.DRAFT)
+        )
+        keys_with_draft_version = []
+        for key in keys_without_released_version:
+            if self.does_trigger_show_in_given_versions(
+                trigger_key=key, released_versions=draft_versions
+            ):
+                keys_with_draft_version.append(key)
 
         data = [
             {
                 "key": key,
                 "name": TransactionalTrigger.transactional_trigger_registry[key],
+                "draft_version_exists": key in keys_with_draft_version,
             }
             for key in keys_without_released_version
         ]
@@ -716,16 +729,69 @@ class MissingTriggersView(APIView):
         )
 
     @staticmethod
-    def does_trigger_have_at_least_one_released_version(trigger_key, released_versions):
-        for key in TransactionalTrigger.required_trigger_keys:
-            for version in released_versions:
-                if not version.triggers:
-                    continue
-                for trigger in version.triggers:
-                    if (
-                        trigger["trigger_id"] == TransactionalTrigger.get_id()
-                        and trigger.get("trigger_field_values", {}).get("key", None)
-                        == key
-                    ):
-                        return True
+    def does_trigger_show_in_given_versions(trigger_key, released_versions):
+        for version in released_versions:
+            if not version.triggers:
+                continue
+            for trigger in version.triggers:
+                if (
+                    trigger["trigger_id"] == TransactionalTrigger.get_id()
+                    and trigger.get("trigger_field_values", {}).get("key", None)
+                    == trigger_key
+                ):
+                    return True
         return False
+
+
+class CreateMissingTriggerMailView(APIView):
+    @extend_schema(
+        responses={200: str},
+        request=CreateMissingTriggerMailSerializer,
+    )
+    @transaction.atomic
+    def post(self, request):
+        serializer = CreateMissingTriggerMailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        trigger_key = serializer.validated_data["trigger_key"]
+        if (
+            trigger_key
+            not in TransactionalTrigger.required_trigger_to_default_content_map.keys()
+        ):
+            raise ValueError(
+                f"The trigger key {trigger_key} is either not required or does not exist"
+            )
+
+        email_configuration = EmailConfiguration.objects.create(
+            name=f"Entwurf für wichtige Trigger: {TransactionalTrigger.transactional_trigger_registry[trigger_key]}, "
+            + timezone.now().strftime("%d.%m.%Y %H:%M:%S")
+        )
+
+        content = serializer.validated_data["empty_mjml"]
+        insert_index = content.find("</mj-body>")
+        content = (
+            content[:insert_index]
+            + TransactionalTrigger.required_trigger_to_default_content_map[trigger_key]
+            + content[insert_index:]
+        )
+
+        EmailConfigurationVersion.objects.create(
+            content=content,
+            subject="TODO",
+            email_configuration=email_configuration,
+            status=ReleaseStatus.DRAFT,
+            triggers=[
+                {
+                    "trigger_id": TransactionalTrigger.get_id(),
+                    "trigger_field_values": {"key": trigger_key},
+                }
+            ],
+            segment_data={
+                "add_segments": [],
+                "static_segments": [],
+                "static_segments_subtractive": [],
+                "remove_segments": [],
+                "filter_list": [],
+            },
+        )
+
+        return Response("OK", status=status.HTTP_200_OK)

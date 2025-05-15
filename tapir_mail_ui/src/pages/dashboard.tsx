@@ -25,8 +25,18 @@ function Dashboard() {
   const [missingTriggers, setMissingTriggers] = useState<MissingTrigger[]>([]);
   const [missingTriggersModalOpen, setMissingTriggersModalOpen] =
     useState(false);
+  const [reloadConfigurations, setReloadConfigurations] = useState(0);
 
   useEffect(() => {
+    loadMissingTriggers();
+  }, []);
+
+  function reloadData() {
+    loadMissingTriggers();
+    setReloadConfigurations(reloadConfigurations + 1);
+  }
+
+  function loadMissingTriggers() {
     api
       .missingTriggersList()
       .then(setMissingTriggers)
@@ -34,7 +44,7 @@ function Dashboard() {
         console.log(error);
         alert("Fehler beim laden der fehlende triggers");
       });
-  }, []);
+  }
 
   return (
     <>
@@ -84,7 +94,7 @@ function Dashboard() {
           margin: "2em",
         }}
       >
-        <EmailConfigurationTable />
+        <EmailConfigurationTable reloadConfigurations={reloadConfigurations} />
         <TemplatesCard />
         <EmailConfigurationDispatchTable
           cardTitle="Zuletzt gesendete E-Mails"
@@ -107,6 +117,7 @@ function Dashboard() {
         open={missingTriggersModalOpen}
         onHide={() => setMissingTriggersModalOpen(false)}
         missingTriggers={missingTriggers}
+        reloadData={reloadData}
       />
     </>
   );

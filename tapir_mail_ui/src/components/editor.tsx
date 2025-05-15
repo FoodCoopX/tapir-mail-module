@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-wrap-multilines */
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect } from "react";
 
 import {
   EmailEditor,
@@ -106,16 +106,20 @@ const categories: ExtensionProps["categories"] = [
   },
 ];
 
-const createEmptyPage = () => {
+export const createEmptyMjml = () => {
   const baseUrl = new URL(env.REACT_APP_API_ROOT as string).origin;
 
-  return mjmlToJson(
+  return (
     "<mjml><mj-head>" +
-      customFontList
-        .map((f) => `<mj-font name="${f.label}" href="${baseUrl + f.css!!}" />`)
-        .join("") +
-      "</mj-head><mj-body></mj-body></mjml>",
+    customFontList
+      .map((f) => `<mj-font name="${f.label}" href="${baseUrl + f.css!!}" />`)
+      .join("") +
+    "</mj-head><mj-body></mj-body></mjml>"
   );
+};
+
+const createEmptyPage = () => {
+  return mjmlToJson(createEmptyMjml());
 };
 
 export const EMPTY_PAGE = createEmptyPage();
