@@ -8,31 +8,35 @@ class TapirMailServerAppConfig(AppConfig):
     name = "tapir_mail_server"
 
     def ready(self):
-        from .segments import register_all
+        try:
+            from .segments import register_all
 
-        register_all()
+            register_all()
 
-        TransactionalTrigger.register_action(
-            "Absenden Bestell Wizard (Mitgliedschaft + Ernteanteile)",
-            "register_coop_shares_and_harvest_shares",
-        )
-        TransactionalTrigger.register_action(
-            "Absenden Bestell Wizard (nur Mitgliedschaft)",
-            "register_coop_shares",
-            required=True,
-            default_content=open(
-                "tapir_mail/default_mail_content/register_coop_shares.mjml", "r"
-            ).read(),
-        )
+            TransactionalTrigger.register_action(
+                "Absenden Bestell Wizard (Mitgliedschaft + Ernteanteile)",
+                "register_coop_shares_and_harvest_shares",
+            )
+            TransactionalTrigger.register_action(
+                "Absenden Bestell Wizard (nur Mitgliedschaft)",
+                "register_coop_shares",
+                required=True,
+                default_content=open(
+                    "tapir_mail/default_mail_content/register_coop_shares.mjml", "r"
+                ).read(),
+            )
 
-        TransactionalTrigger.register_action(
-            "Vertragsänderungen im Mitgliederbereich",
-            "update_contract",
-        )
+            TransactionalTrigger.register_action(
+                "Vertragsänderungen im Mitgliederbereich",
+                "update_contract",
+            )
 
-        TransactionalTrigger.register_action(
-            "Mitgliedsdatenänderungen",
-            "update_member",
-            {"Geänderte Daten": "changed_fields"},
-            required=False,
-        )
+            TransactionalTrigger.register_action(
+                "Mitgliedsdatenänderungen",
+                "update_member",
+                {"Geänderte Daten": "changed_fields"},
+                required=False,
+            )
+        except Exception as e:
+            print(e)
+            pass
