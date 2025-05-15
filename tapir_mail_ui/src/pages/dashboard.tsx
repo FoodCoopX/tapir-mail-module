@@ -14,6 +14,7 @@ import DispatchesWithErrorsModal from "../components/DispatchesWithErrorsModal";
 import StaticSegmentsListModal from "../components/static_segments/StaticSegmentsListModal";
 import { useApi } from "../hooks/useApi";
 import { MissingTrigger, MissingTriggersApi } from "../api_client";
+import MissingTriggersModal from "./missing_triggers/MissingTriggersModal";
 
 function Dashboard() {
   const api = useApi(MissingTriggersApi);
@@ -22,6 +23,8 @@ function Dashboard() {
   const [staticSegmentListModalOpen, setStaticSegmentListModalOpen] =
     useState(false);
   const [missingTriggers, setMissingTriggers] = useState<MissingTrigger[]>([]);
+  const [missingTriggersModalOpen, setMissingTriggersModalOpen] =
+    useState(false);
 
   useEffect(() => {
     api
@@ -67,7 +70,7 @@ function Dashboard() {
             variant={"danger"}
             text={"Fehlende Trigger"}
             icon={ExclamationTriangleIcon}
-            onClick={() => alert("TODO")}
+            onClick={() => setMissingTriggersModalOpen(true)}
             notification={missingTriggers.length}
           />
         )}
@@ -99,6 +102,11 @@ function Dashboard() {
       <StaticSegmentsListModal
         open={staticSegmentListModalOpen}
         onClose={() => setStaticSegmentListModalOpen(false)}
+      />
+      <MissingTriggersModal
+        open={missingTriggersModalOpen}
+        onHide={() => setMissingTriggersModalOpen(false)}
+        missingTriggers={missingTriggers}
       />
     </>
   );
