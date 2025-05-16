@@ -3495,8 +3495,6 @@ components:
           type: string
           minLength: 1
           maxLength: 255
-        can_be_selected_in_the_ui:
-          type: boolean
     PatchedStoredUploadRequest:
       type: object
       properties:
@@ -3640,8 +3638,6 @@ components:
         name:
           type: string
           maxLength: 255
-        can_be_selected_in_the_ui:
-          type: boolean
       required:
       - created_at
       - name
@@ -3723,8 +3719,6 @@ components:
           type: string
           minLength: 1
           maxLength: 255
-        can_be_selected_in_the_ui:
-          type: boolean
       required:
       - name
     StatusEnum:

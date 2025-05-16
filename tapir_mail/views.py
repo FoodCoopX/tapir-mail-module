@@ -580,9 +580,7 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
     def available_segments(self, request):
         static_segments = [
             x["name"]
-            for x in StaticSegment.objects.filter(
-                recipients__isnull=False, can_be_selected_in_the_ui=True
-            )
+            for x in StaticSegment.objects.filter(recipients__isnull=False)
             .distinct()
             .values("name")
         ]
