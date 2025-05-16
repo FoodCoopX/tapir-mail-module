@@ -69,8 +69,8 @@ class Trigger(Generic[TriggerData], ABC):
     @classmethod
     def get_recipients_override(
         cls, email_configuration_version, data: TriggerData
-    ) -> [str | tuple[str, str]]:
-        return None
+    ) -> list:
+        return []
 
     @classmethod
     @abstractmethod
@@ -83,7 +83,7 @@ class Trigger(Generic[TriggerData], ABC):
         pass
 
     @classmethod
-    def get_field_definitions(cls) -> [FieldDefinition]:
+    def get_field_definitions(cls) -> list[FieldDefinition]:
         return []
 
     @staticmethod

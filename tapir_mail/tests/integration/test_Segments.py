@@ -5,6 +5,7 @@ from tapir_mail.service.segment import (
     register_segment,
 )
 from tapir_mail.tests.test_utils import TapirIntegrationTest
+from tapir_mail.triggers.transactional_trigger import TransactionalTriggerData
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 from tapir_mail_server.dummy_accounts.tests.factories import (
     DummyTapirUserFactory,
@@ -121,28 +122,39 @@ class TestSegments(TapirIntegrationTest):
             {DummyTapirUser.objects.get(id=3).email},
         )
 
-    def test_resolveSegments_overrideRecipientWithSimpleEmail_resultsContainOnlyRecipientWithEmailFromOverride(
-        self,
-    ):
-        result = resolve_segments(
-            add_segments=[self.SEGMENT_ALL_USERS],
-            override_recipients=["mail2@test.net", "mail4@test.net"],
-        )
-        self.assertSetEqual(set(r.id for r in result), {2, 4})
-
-    def test_resolveSegments_overrideRecipientWithReplacedEmail_recipientEmailGetsReplaced(
+    def test_resolveSegments_overrideRecipientByBaseQuerysetId_resultsContainOnlyRecipientWithEmailFromOverride(
         self,
     ):
         result = resolve_segments(
             add_segments=[self.SEGMENT_ALL_USERS],
             override_recipients=[
-                ("mail2@test.net", "a_new_mail@test.net"),
-                "mail4@test.net",
+                {"recipient_id_in_base_queryset": 2},
+                {"recipient_id_in_base_queryset": 4},
             ],
         )
         self.assertSetEqual(set(r.id for r in result), {2, 4})
-        for recipient in result:
-            if recipient.id == 2:
-                self.assertEqual("a_new_mail@test.net", recipient.email)
-            if recipient.id == 4:
-                self.assertEqual("mail4@test.net", recipient.email)
+
+    def test_resolveSegments_recipientsOutsideTheBaseQueryset_resultContainsFirstGivenRecipient(
+        self,
+    ):
+        result = resolve_segments(
+            add_segments=[self.SEGMENT_ALL_USERS],
+            override_recipients=[
+                {
+                    "recipient_outside_of_base_queryset": {
+                        "email": "test@email.com",
+                        "first_name": "Max",
+                        "last_name": "Mustermann",
+                    }
+                }
+            ],
+        )
+        self.assertEqual(1, len(result))
+        self.assertEqual(
+            TransactionalTriggerData.RecipientOutsideOfBaseQueryset(
+                email="test@email.com",
+                first_name="Max",
+                last_name="Mustermann",
+            ),
+            result[0],
+        )

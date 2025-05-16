@@ -1,5 +1,5 @@
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -9,10 +9,16 @@ from tapir_mail.service.triggers import Trigger
 
 @dataclass
 class TransactionalTriggerData:
+    @dataclass
+    class RecipientOutsideOfBaseQueryset:
+        email: str
+        first_name: str
+        last_name: str
+
     key: str
-    recipient_email: str
-    recipient_email_override: str | None
-    token_data: dict
+    recipient_id_in_base_queryset: str | None = None
+    recipient_outside_of_base_queryset: RecipientOutsideOfBaseQueryset | None = None
+    token_data: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -44,38 +50,42 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
             cls.required_trigger_to_default_content_map[key] = default_content
 
     @classmethod
-    def fire_action(
-        cls, key, recipient_email, recipient_email_override=None, token_data=None
-    ):
-        if token_data is None:
-            token_data = {}
-
-        if key not in cls.transactional_trigger_registry:
-            raise Exception(
-                f"Action '{key}' not registered. Available: {set(cls.transactional_trigger_registry.keys())}"
+    def fire_action(cls, trigger_data: TransactionalTriggerData):
+        if (
+            trigger_data.recipient_id_in_base_queryset is None
+            and trigger_data.recipient_outside_of_base_queryset is None
+        ):
+            raise ValueError(
+                "At least one of [base_queryset_object_id, recipient_outside_of_base_queryset] must be set"
             )
 
-        known_tokens = cls.trigger_tokens.get(key, {})
+        if (
+            trigger_data.recipient_id_in_base_queryset is not None
+            and trigger_data.recipient_outside_of_base_queryset is not None
+        ):
+            raise ValueError(
+                "At most one of [base_queryset_object_id, recipient_outside_of_base_queryset] must be set"
+            )
+
+        if trigger_data.key not in cls.transactional_trigger_registry:
+            raise ValueError(
+                f"Action '{trigger_data.key}' not registered. Available: {set(cls.transactional_trigger_registry.keys())}"
+            )
+
+        known_tokens = cls.trigger_tokens.get(trigger_data.key, {})
         for label, token_key in known_tokens.items():
-            if token_key not in token_data:
+            if token_key not in trigger_data.token_data:
                 raise ValueError(
-                    f"Token '{token_key}' ({label}) is required for action '{key}'."
+                    f"Token '{token_key}' ({label}) is required for action '{trigger_data.key}'."
                 )
 
-        for token_key in token_data:
+        for token_key in trigger_data.token_data:
             if token_key not in known_tokens.values():
                 raise ValueError(
-                    f"Token '{token_key}' not known for action '{key}'. Available: {set(known_tokens.values())}"
+                    f"Token '{token_key}' not known for action '{trigger_data.key}'. Available: {set(known_tokens.values())}"
                 )
 
-        cls.fire_all_released_configs(
-            TransactionalTriggerData(
-                key=key,
-                recipient_email=recipient_email,
-                recipient_email_override=recipient_email_override,
-                token_data=token_data,
-            )
-        )
+        cls.fire_all_released_configs(trigger_data)
 
     @classmethod
     def fire_all_released_configs(cls, data: TransactionalTriggerData):
@@ -119,14 +129,22 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
     @classmethod
     def get_recipients_override(
         cls, email_configuration_version, data: TransactionalTriggerData
-    ) -> list[str | tuple[str, str]]:
-        return [
-            (
-                data.recipient_email
-                if data.recipient_email_override is None
-                else (data.recipient_email, data.recipient_email_override)
-            )
-        ]
+    ) -> list:
+        if data.recipient_id_in_base_queryset is not None:
+            return [
+                {"recipient_id_in_base_queryset": data.recipient_id_in_base_queryset}
+            ]
+        if data.recipient_outside_of_base_queryset is not None:
+            return [
+                {
+                    "recipient_outside_of_base_queryset": {
+                        "email": data.recipient_outside_of_base_queryset.email,
+                        "first_name": data.recipient_outside_of_base_queryset.first_name,
+                        "last_name": data.recipient_outside_of_base_queryset.last_name,
+                    }
+                }
+            ]
+        return []
 
     @classmethod
     def get_scheduled_date(
@@ -145,7 +163,7 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
         return "Bei Aktion senden"
 
     @classmethod
-    def get_field_definitions(cls) -> [Trigger.FieldDefinition]:
+    def get_field_definitions(cls) -> list[Trigger.FieldDefinition]:
         return [
             cls.DropdownFieldDefinition(
                 field_name="key",
