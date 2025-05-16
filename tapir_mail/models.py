@@ -229,6 +229,7 @@ class EmailDispatch(BaseModel):
 
 class StaticSegment(BaseModel):
     name = models.CharField(max_length=255, unique=True)
+    can_be_selected_in_the_ui = models.BooleanField(default=True)
 
 
 class StaticSegmentRecipient(BaseModel):
