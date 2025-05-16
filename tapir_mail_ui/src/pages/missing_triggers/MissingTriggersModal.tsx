@@ -61,7 +61,7 @@ const MissingTriggersModal: React.FC<MissingTriggersModalProps> = ({
         </p>
         <ul>
           {missingTriggers.map((trigger) => (
-            <li>
+            <li key={trigger.key}>
               <span className={"d-flex flex-row gap-2 align-items-center"}>
                 {trigger.name}
                 {
