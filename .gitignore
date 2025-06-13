@@ -249,3 +249,4 @@ tapir_mail_ui/src/api_client/
 
 node_modules
 /.idea/
+static/

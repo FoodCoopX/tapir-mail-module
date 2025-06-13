@@ -28,6 +28,7 @@ django-filter = "^25.1"
 flufl-bounce = "^4.0"
 lxml = "^5.3.2"
 beautifulsoup4 = "^4.13.3"
+whitenoise = "^6.9.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
