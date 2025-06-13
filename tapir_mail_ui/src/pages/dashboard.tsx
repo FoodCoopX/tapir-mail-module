@@ -17,6 +17,7 @@ import { MissingTrigger, MissingTriggersApi } from "../api_client";
 import MissingTriggersModal from "./missing_triggers/MissingTriggersModal";
 
 function Dashboard() {
+  console.log("THEO TEST DASHBOARD")
   const api = useApi(MissingTriggersApi);
   const [dispatchesWithErrorModalOpen, setDispatchesWithErrorModalOpen] =
     useState(false);
