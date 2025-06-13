@@ -7,6 +7,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 console.log("THEO TEST 1")
 const root = ReactDOM.createRoot(document.getElementById("root"));
+console.log("THEO TEST ROOT")
 root.render(<App />);
 
 // If you want to start measuring performance in your app, pass a function

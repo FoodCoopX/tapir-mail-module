@@ -68,6 +68,7 @@ const InnerApp = () => {
   );
 };
 
+console.log("THEO TEST OUTSIDE APP")
 function App() {
   console.log("THEO TEST 2")
   return (
