@@ -26,6 +26,7 @@ const Paths = {
   dummyPickupLocationEdit: "/dummy_accounts/dummy_pickup_location/edit/:id",
 };
 
+console.log("THEO TEST ROUTES")
 const routes = [
   {
     path: Paths.dashboard,

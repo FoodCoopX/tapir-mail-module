@@ -15,6 +15,7 @@ import { routes } from "./routing";
 // add new routes in routing.ts
 
 const InnerApp = () => {
+  console.log("THEO TEST 3")
   useEffect(() => {
     const setCookie = (name, value) => {
       document.cookie = name + "=" + value + "; Path=/; SameSite=Lax;";
@@ -38,6 +39,7 @@ const InnerApp = () => {
   }, []);
 
   const location = useLocation();
+  console.log("THEO TEST 4")
   return (
     <motion.div
       key={location.pathname}
@@ -67,6 +69,7 @@ const InnerApp = () => {
 };
 
 function App() {
+  console.log("THEO TEST 2")
   return (
     <div
       className="App"
