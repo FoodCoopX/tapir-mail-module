@@ -1,7 +1,8 @@
 import os
 import subprocess
+from pathlib import Path
+
 from django.apps import AppConfig
-import pkg_resources
 
 from tapir_mail.service.triggers import register_trigger
 from tapir_mail.triggers.time_trigger import TimeTrigger
@@ -24,9 +25,7 @@ def configure_ui():
 
     # If the script is not in the project root, it is probably in the package
     if not os.path.exists(script_path):
-        script_path = pkg_resources.resource_filename(
-            "tapir_mail", "scripts/configure_ui.sh"
-        )
+        script_path = Path(__file__).parent / "scripts/configure_ui.sh"
         output_path = "./static/config.js"
 
     subprocess.run(["bash", script_path, output_path])
