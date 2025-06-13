@@ -11,6 +11,7 @@ import Loading from "./components/loading";
 import { AlertProvider } from "./contexts/alerts";
 import env from "./env";
 import { routes } from "./routing";
+import RouteNotFound from "./components/RouteNotFound";
 
 // add new routes in routing.ts
 
@@ -62,6 +63,7 @@ const InnerApp = () => {
               element={<route.element />}
             />
           ))}
+          <Route path="*" element={<RouteNotFound />} />
         </Routes>
       </Suspense>
     </motion.div>
