@@ -49,13 +49,22 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
         cls.transactional_trigger_registry[key] = name
         if tokens:
             cls.trigger_tokens[key] = tokens
+
         cls.required_triggers[key] = required
-        if required:
-            if default_content is None:
-                raise ValueError(
-                    "If the trigger is required, the default content must valid MJML content"
-                )
-            cls.required_trigger_to_default_content_map[key] = default_content
+        cls.required_trigger_to_default_content_map[key] = default_content
+
+        must_check_has_default_content = callable(required) or required
+        if must_check_has_default_content and default_content is None:
+            raise ValueError(
+                "If the trigger is required, the default content must valid MJML content"
+            )
+
+    @classmethod
+    def is_trigger_required(cls, key: str) -> bool:
+        required = cls.required_triggers[key]
+        if callable(required):
+            required = required()
+        return required
 
     @classmethod
     def fire_action(cls, trigger_data: TransactionalTriggerData):

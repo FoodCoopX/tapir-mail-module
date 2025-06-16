@@ -758,12 +758,12 @@ class CreateMissingTriggerMailView(APIView):
         serializer.is_valid(raise_exception=True)
         trigger_key = serializer.validated_data["trigger_key"]
         if (
-            trigger_key
-            not in TransactionalTrigger.required_trigger_to_default_content_map.keys()
-        ):
-            raise ValueError(
-                f"The trigger key {trigger_key} is either not required or does not exist"
+            TransactionalTrigger.required_trigger_to_default_content_map.get(
+                trigger_key, None
             )
+            is None
+        ):
+            raise ValueError(f"No default content available for key {trigger_key}")
 
         email_configuration = EmailConfiguration.objects.create(
             name=f"Entwurf für wichtige Trigger: {TransactionalTrigger.transactional_trigger_registry[trigger_key]}, "
