@@ -13,17 +13,17 @@ const DummyAccountsOverview = lazy(
 );
 
 const Paths = {
-  dashboard: "/tapirmail/",
-  emailConfigurationCreate: "/tapirmail/emailconfiguration/new",
-  emailConfigurationEdit: "/tapirmail/emailconfiguration/edit/:id",
-  templateEditorCreate: "/tapirmail/editor",
-  templateEditorEdit: "/tapirmail/editor/:templateId",
-  mediaLibrary: "/tapirmail/media_library",
-  dummyAccounts: "/tapirmail/dummy_accounts",
-  dummyTapirUserCreate: "/tapirmail/dummy_accounts/dummy_tapir_user/new",
-  dummyTapirUserEdit: "/tapirmail/dummy_accounts/dummy_tapir_user/edit/:id",
-  dummyPickupLocationCreate: "/tapirmail/dummy_accounts/dummy_pickup_location/new",
-  dummyPickupLocationEdit: "/tapirmail/dummy_accounts/dummy_pickup_location/edit/:id",
+  dashboard: "/",
+  emailConfigurationCreate: "/emailconfiguration/new",
+  emailConfigurationEdit: "/emailconfiguration/edit/:id",
+  templateEditorCreate: "/editor",
+  templateEditorEdit: "/editor/:templateId",
+  mediaLibrary: "/media_library",
+  dummyAccounts: "/dummy_accounts",
+  dummyTapirUserCreate: "/dummy_accounts/dummy_tapir_user/new",
+  dummyTapirUserEdit: "/dummy_accounts/dummy_tapir_user/edit/:id",
+  dummyPickupLocationCreate: "/dummy_accounts/dummy_pickup_location/new",
+  dummyPickupLocationEdit: "/dummy_accounts/dummy_pickup_location/edit/:id",
 };
 
 
