@@ -61,7 +61,10 @@ const InnerApp = () => {
               element={<route.element />}
             />
           ))}
-          <Route path="*" element={<RouteNotFound />} />
+          <Route
+            path="*"
+            element={<RouteNotFound />}
+          />
         </Routes>
       </Suspense>
     </motion.div>

@@ -26,7 +26,6 @@ const Paths = {
   dummyPickupLocationEdit: "/dummy_accounts/dummy_pickup_location/edit/:id",
 };
 
-
 const routes = [
   {
     path: Paths.dashboard,

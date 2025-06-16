@@ -1,12 +1,9 @@
 import React from "react";
 import { routes } from "../routing";
 
-interface RouteNotFoundProps {
-
-}
+interface RouteNotFoundProps {}
 
 const RouteNotFound: React.FC<RouteNotFoundProps> = ({}) => {
-
   return (
     <>
       <div
@@ -15,14 +12,17 @@ const RouteNotFound: React.FC<RouteNotFoundProps> = ({}) => {
           gap: "10px",
           justifyContent: "center",
           marginTop: "20px",
-          flexDirection: "column"
+          flexDirection: "column",
         }}
       >
         <div>ROUTE NOT FOUND</div>
-        <ul>{routes.map((route) => <li key={route.path}>{route.path}</li>)}</ul>
+        <ul>
+          {routes.map((route) => (
+            <li key={route.path}>{route.path}</li>
+          ))}
+        </ul>
       </div>
     </>
-
   );
 };
 
