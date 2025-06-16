@@ -21,12 +21,13 @@ if (window) {
     env[key] = window._env_[key];
   });
 
-  if (!localKeys.includes("REACT_APP_API_ROOT")) {
+  const finalKeys = Object.keys(env);
+  if (!finalKeys.includes("REACT_APP_API_ROOT")) {
     console.log("REACT_APP_API_ROOT not set, using localhost as default value");
     env["REACT_APP_API_ROOT"] = "http://localhost:8000"
   }
 
-  if (!localKeys.includes("REACT_APP_BASENAME")) {
+  if (!finalKeys.includes("REACT_APP_BASENAME")) {
     console.log("REACT_APP_BASENAME not set, using / as default value");
     env["REACT_APP_BASENAME"] = "/"
   }
