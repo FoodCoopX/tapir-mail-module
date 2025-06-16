@@ -699,7 +699,11 @@ class MissingTriggersView(APIView):
             EmailConfigurationVersion.objects.filter(status=ReleaseStatus.RELEASED)
         )
         keys_without_released_version = []
-        for key in TransactionalTrigger.required_trigger_to_default_content_map.keys():
+        for key, required in TransactionalTrigger.required_triggers.items():
+            if callable(required):
+                required = required()
+            if not required:
+                continue
             if not self.does_trigger_show_in_given_versions(
                 trigger_key=key, released_versions=released_versions
             ):

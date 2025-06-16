@@ -26,6 +26,7 @@ class TransactionalTriggerTest(TapirUnitTest):
         mock_timezone_now(self, self.NOW)
         TransactionalTrigger.transactional_trigger_registry = {}
         TransactionalTrigger.trigger_tokens = {}
+        TransactionalTrigger.required_triggers = {}
         TransactionalTrigger.required_trigger_to_default_content_map = {}
 
     def test_registerAction_validInput_actionRegistered(self):

@@ -1,5 +1,6 @@
 import datetime
 from dataclasses import dataclass, field
+from typing import Callable
 
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -31,17 +32,24 @@ class TransactionalTriggerDataDropdownFieldChoice(
 class TransactionalTrigger(Trigger[TransactionalTriggerData]):
     transactional_trigger_registry = {}
     trigger_tokens = {}
+    required_triggers: dict[str, bool | Callable] = {}
     required_trigger_to_default_content_map = {}
 
     @classmethod
     def register_action(
-        cls, name, key, tokens: dict = None, required=False, default_content=None
+        cls,
+        name,
+        key,
+        tokens: dict = None,
+        required: bool | Callable = False,
+        default_content=None,
     ):
         if tokens is None:
             tokens = {}
         cls.transactional_trigger_registry[key] = name
         if tokens:
             cls.trigger_tokens[key] = tokens
+        cls.required_triggers[key] = required
         if required:
             if default_content is None:
                 raise ValueError(
