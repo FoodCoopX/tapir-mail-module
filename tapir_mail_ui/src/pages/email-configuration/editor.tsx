@@ -28,6 +28,8 @@ import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
+import ConfirmModal from "../../components/ConfirmModal";
+import { CheckIcon } from "@heroicons/react/16/solid";
 
 const ID_NEW_TEMPLATE = "<new>";
 const EMPTY_TRIGGER = [{ triggerId: "", triggerFieldValues: {} }];
@@ -45,7 +47,7 @@ const EmailConfigurationEditor = () => {
   const [loading, setLoading] = useState<Boolean>(Boolean(params.id));
   const [mailingName, setMailingName] = useState("");
   const [subject, setSubject] = useState("");
-  const [selectedTemplate, setSelectedTemplate] =
+  const [selectedTemplateId, setSelectedTemplateId] =
     useState<string>(ID_NEW_TEMPLATE);
   const [triggers, setTriggers] = useState<TriggerDataRequest[]>(EMPTY_TRIGGER);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -69,6 +71,8 @@ const EmailConfigurationEditor = () => {
   const [combinedTokens, setCombinedTokens] = useState<{
     [key: string]: { [key: string]: string };
   }>({});
+  const [showTemplateConfirmModal, setShowTemplateConfirmModal] =
+    useState(false);
 
   const showAlert = useAlert();
   const templateApi = useApi(EmailTemplateApi);
@@ -76,6 +80,12 @@ const EmailConfigurationEditor = () => {
   const triggerTokensApi = useApi(TriggerTokensApi);
   const emailConfigurationVersionApi = useApi(EmailConfigurationVersionApi);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (selectedTemplateId !== ID_NEW_TEMPLATE) {
+      setShowTemplateConfirmModal(true);
+    }
+  }, [selectedTemplateId]);
 
   const fetchTemplates = () =>
     templateApi
@@ -98,6 +108,8 @@ const EmailConfigurationEditor = () => {
   };
 
   useEffect(() => {
+    fetchTemplates();
+
     if (currentId) {
       emailConfigurationVersionApi
         .emailConfigurationVersionGetBundledInfoRetrieve({
@@ -129,8 +141,6 @@ const EmailConfigurationEditor = () => {
       triggerTokensApi.triggerTokensGetTokensRetrieve().then((tokens: any) => {
         setTriggerTokens(tokens);
       });
-    } else {
-      fetchTemplates();
     }
 
     tokensApi
@@ -192,7 +202,6 @@ const EmailConfigurationEditor = () => {
             .then((data) => {
               setUpdatedAt(data.updatedAt || new Date());
               setStatus(stringToStatus(data.releaseStatus));
-              setLoadedContent(content);
               resolve();
             })
             .catch(reject);
@@ -215,6 +224,10 @@ const EmailConfigurationEditor = () => {
   };
 
   const handleEditorChange = (content: IPage) => {
+    if (selectedTemplateId !== ID_NEW_TEMPLATE) {
+      return;
+    }
+
     setContent(content);
 
     const currentTime = Date.now();
@@ -227,32 +240,27 @@ const EmailConfigurationEditor = () => {
     }
   };
 
-  const handleSelectTemplate = (e: any) => {
-    const id = e.target.value;
-    if (id !== ID_NEW_TEMPLATE) {
-      templateApi
-        .emailTemplateRetrieve({ id: id!! })
-        .then((data) => {
-          const content = mjmlToJson(data.content);
-          setContent(content);
-          setLoadedContent(content);
-          setSelectedTemplate(id);
-        })
-        .catch(() => {
-          setSelectedTemplate(ID_NEW_TEMPLATE);
-          showAlert(
-            "Beim Laden der Vorlagen ist ein Fehler aufgetreten.",
-            "danger",
-          );
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    } else {
+  const onConfirmTemplateChange = () => {
+    setShowTemplateConfirmModal(false);
+    setSelectedTemplateId(ID_NEW_TEMPLATE);
+
+    if (selectedTemplateId === ID_NEW_TEMPLATE) {
       setLoadedContent(EMPTY_PAGE);
-      setSelectedTemplate(ID_NEW_TEMPLATE);
       setLoading(false);
+      return;
     }
+
+    const template = templates.find((t) => t.id === selectedTemplateId);
+    if (!template) {
+      showAlert(
+        "Beim Laden der Vorlagen ist ein Fehler aufgetreten.",
+        "danger",
+      );
+      return;
+    }
+
+    const content = mjmlToJson(template.content);
+    setLoadedContent(content);
   };
 
   const handleRelease = () =>
@@ -354,29 +362,25 @@ const EmailConfigurationEditor = () => {
             </Form.Group>
             <br />
 
-            {!currentId && (
-              <>
-                <Form.Group>
-                  <Form.Label>Template auswählen</Form.Label>
-                  <Form.Control
-                    as="select"
-                    value={selectedTemplate || ID_NEW_TEMPLATE}
-                    onChange={handleSelectTemplate}
+            <Form.Group>
+              <Form.Label>Template auswählen</Form.Label>
+              <Form.Control
+                as="select"
+                value={selectedTemplateId || ID_NEW_TEMPLATE}
+                onChange={(event) => setSelectedTemplateId(event.target.value)}
+              >
+                <option value={ID_NEW_TEMPLATE}>Keine Vorlage</option>
+                {templates.map((t: EmailTemplate) => (
+                  <option
+                    key={t.id}
+                    value={t.id}
                   >
-                    <option value={ID_NEW_TEMPLATE}>Keine Vorlage</option>
-                    {templates.map((t: EmailTemplate) => (
-                      <option
-                        key={t.id}
-                        value={t.id}
-                      >
-                        {t.name}
-                      </option>
-                    ))}
-                  </Form.Control>
-                </Form.Group>
-                <br />
-              </>
-            )}
+                    {t.name}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
+            <br />
 
             <div
               style={{
@@ -478,6 +482,18 @@ const EmailConfigurationEditor = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      <ConfirmModal
+        message={
+          "Bist du sicher das du diese Vorlage übernehmen will? Alle aktuelle Inhalte werden gelöscht und durch die Vorlage ersetzt"
+        }
+        title={templates.find((t) => t.id === selectedTemplateId)?.name ?? ""}
+        open={showTemplateConfirmModal}
+        confirmButtonText={"Übernehmen"}
+        confirmButtonVariant={"outline-primary"}
+        confirmButtonIcon={CheckIcon}
+        onConfirm={onConfirmTemplateChange}
+        onCancel={() => setShowTemplateConfirmModal(false)}
+      />
     </>
   );
 };
