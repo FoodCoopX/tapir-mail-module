@@ -643,6 +643,8 @@ class TokensView(viewsets.ViewSet):
 
 
 class TrackingView(viewsets.ViewSet):
+    permission_classes = []
+
     @extend_schema(
         responses={200: None},
     )
