@@ -82,6 +82,18 @@ const EmailConfigurationDispatchTable: React.FC<
     return () => clearInterval(interval);
   }, [currentPage]);
 
+  function hasRecipientOverride(dispatch: EmailConfigurationDispatch): boolean {
+    if (!dispatch.overrideRecipients) {
+      return false;
+    }
+
+    if (Array.isArray(dispatch.overrideRecipients)) {
+      return dispatch.overrideRecipients.length > 0;
+    }
+
+    return true;
+  }
+
   return (
     <>
       <Card>
@@ -144,8 +156,7 @@ const EmailConfigurationDispatchTable: React.FC<
                         {formatDate(emailConfigurationDispatch.scheduledTime)}
                       </td>
                       <td>
-                        {/* FIXME: */}
-                        {emailConfigurationDispatch.overrideRecipients ? (
+                        {hasRecipientOverride(emailConfigurationDispatch) ? (
                           JSON.stringify(
                             emailConfigurationDispatch.overrideRecipients,
                           )
