@@ -229,15 +229,6 @@ const EmailConfigurationEditor = () => {
     }
 
     setContent(content);
-
-    const currentTime = Date.now();
-    if (
-      currentId &&
-      currentTime - lastSavedTime >= 1000 &&
-      content !== loadedContent
-    ) {
-      saveVersion(content, StatusEnum.Draft);
-    }
   };
 
   const onConfirmTemplateChange = () => {
