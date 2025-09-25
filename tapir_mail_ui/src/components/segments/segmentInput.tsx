@@ -72,18 +72,18 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
         if (initialData) {
           initialData.addSegments && setSegmentsToAdd(initialData.addSegments);
           initialData.staticSegments &&
-          setStaticSegmentsToAdd(initialData.staticSegments);
+            setStaticSegmentsToAdd(initialData.staticSegments);
           initialData.staticSegmentsSubtractive &&
-          setStaticSegmentsToRemove(initialData.staticSegmentsSubtractive);
+            setStaticSegmentsToRemove(initialData.staticSegmentsSubtractive);
           initialData.removeSegments &&
-          setSegmentsToRemove(initialData.removeSegments);
+            setSegmentsToRemove(initialData.removeSegments);
           initialData.filterList &&
-          setComplexFilter(
-            initialData.filterList.map((f: string) => ({
-              value: f,
-              elementType: guessElementType(f),
-            })),
-          );
+            setComplexFilter(
+              initialData.filterList.map((f: string) => ({
+                value: f,
+                elementType: guessElementType(f),
+              })),
+            );
         }
       })
       .catch((err) => {
