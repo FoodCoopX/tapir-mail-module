@@ -60,7 +60,6 @@ const EmailConfigurationEditor = () => {
   const [content, setContent] = useState<any | undefined>(undefined);
   const [status, setStatus] = useState<StatusEnum>(StatusEnum.Draft);
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
-  const [lastSavedTime, setLastSavedTime] = useState(Date.now());
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
   const [tokens, setTokens] = useState<{
     [key: string]: { [key: string]: string };
@@ -165,7 +164,6 @@ const EmailConfigurationEditor = () => {
 
   const saveVersion = (content: IPage, newStatus: StatusEnum = status) => {
     return new Promise<void>((resolve, reject) => {
-      setLastSavedTime(Date.now());
       const cleanTriggers = triggers.filter((t) => t.triggerId);
       const props = {
         description: "TODO",
