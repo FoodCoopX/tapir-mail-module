@@ -137,6 +137,9 @@ class SendEmailBatch:
 
             batch = (
                 EmailDispatch.objects.filter(sent_time=None)
+                .exclude(
+                    email_configuration_dispatch__email_configuration_version__status=ReleaseStatus.ERROR
+                )
                 .order_by("created_at")
                 .prefetch_related("email_configuration_dispatch")
                 .prefetch_related(
