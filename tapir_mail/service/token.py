@@ -83,7 +83,9 @@ def find_tokens(mjml: str, token_type: str = TOKEN_TYPE_RECIPIENT) -> list[Any]:
         t_type, key = token.split(".")
         if t_type == token_type and key in token_registry[t_type]:
             internal_key = token_registry[t_type][key]
-            result_tokens.append(internal_key)
+            result_tokens.append(
+                internal_key if token_type == TOKEN_TYPE_RECIPIENT else key
+            )
 
     return result_tokens
 
@@ -101,11 +103,13 @@ def resolve_recipient_tokens(tokens_to_resolve: list[str], recipient: object) ->
 
 
 def resolve_dynamic_tokens(
-    tokens_to_resolve: list[str], recipient: object, registry: dict, cache: dict
+    tokens_to_resolve: list[str], recipient: object, cache: dict
 ) -> dict:
     dynamic_tokens = {}
-    for token_key in tokens_to_resolve:
-        dynamic_tokens[token_key] = registry[token_key](recipient, cache)
+    for token in tokens_to_resolve:
+        dynamic_tokens[token] = token_registry[TOKEN_TYPE_DYNAMIC][token](
+            recipient, cache
+        )
     return dynamic_tokens
 
 
@@ -136,7 +140,7 @@ def replace_tokens(
         )
 
     for token_type, tokens in token_registry.items():
-        if token_type == TOKEN_TYPE_RECIPIENT or token_type == TOKEN_TYPE_DYNAMIC:
+        if token_type == TOKEN_TYPE_RECIPIENT:
             for key, value in tokens.items():
                 mjml = _do_replace(
                     mjml,
@@ -147,6 +151,13 @@ def replace_tokens(
             for key, value in tokens.items():
                 mjml = _do_replace(
                     mjml, f"{token_type}.{key}", value() if callable(value) else value
+                )
+        elif token_type == TOKEN_TYPE_DYNAMIC:
+            for key, bla in tokens.items():
+                mjml = _do_replace(
+                    mjml,
+                    f"{token_type}.{key}",
+                    recipient_tokens.get(key, ""),
                 )
 
     for key, value in transactional_tokens.items():

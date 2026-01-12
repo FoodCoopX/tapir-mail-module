@@ -1,3 +1,5 @@
+import datetime
+
 from tapir_mail.service.segment import (
     register_base_segment,
     register_filter,
@@ -33,6 +35,9 @@ def register_all():
             "WirGarten Standort": lambda: "WirGarten Lüneburg eG",
             "Admin Name": "Max Mustermann",
             "Admin Email": "max.mustermann@example.com",
+        },
+        dynamic_tokens={
+            "Test token Now": lambda recipient, cache: str(datetime.datetime.now())
         },
     )
 
