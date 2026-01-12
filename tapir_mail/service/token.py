@@ -9,9 +9,14 @@ from tapir_mail.service.segment import _check_base_queryset
 LOG = logging.getLogger(__name__)
 
 TOKEN_TYPE_RECIPIENT = "Empfänger"
+TOKEN_TYPE_DYNAMIC = "Empfänger (extra)"
 TOKEN_TYPE_GENERAL = "Allgemein"
 
-token_registry = {TOKEN_TYPE_RECIPIENT: {}, TOKEN_TYPE_GENERAL: {}}
+token_registry = {
+    TOKEN_TYPE_RECIPIENT: {},
+    TOKEN_TYPE_GENERAL: {},
+    TOKEN_TYPE_DYNAMIC: {},
+}
 
 
 def _register_user_tokens(user_tokens: dict):
@@ -42,9 +47,22 @@ def _register_general_tokens(general_tokens: dict):
     token_registry[TOKEN_TYPE_GENERAL].update(general_tokens)
 
 
-def register_tokens(user_tokens: dict, general_tokens: dict):
+def _register_dynamic_tokens(dynamic_tokens: dict):
+    LOG.info(f"Registering dynamic tokens {dynamic_tokens}")
+
+    for k, v in dynamic_tokens.items():
+        if not callable(v):
+            raise ValueError(
+                f"General token {k} is not a callable! Check your token registration."
+            )
+
+    token_registry[TOKEN_TYPE_DYNAMIC].update(dynamic_tokens)
+
+
+def register_tokens(user_tokens: dict, general_tokens: dict, dynamic_tokens: dict):
     _register_user_tokens(user_tokens)
     _register_general_tokens(general_tokens)
+    _register_dynamic_tokens(dynamic_tokens)
 
 
 def find_tokens(mjml: str, token_type: str = TOKEN_TYPE_RECIPIENT) -> list[Any]:
@@ -82,6 +100,15 @@ def resolve_recipient_tokens(tokens_to_resolve: list[str], recipient: object) ->
     return recipient_tokens
 
 
+def resolve_dynamic_tokens(
+    tokens_to_resolve: list[str], recipient: object, registry: dict, cache: dict
+) -> dict:
+    dynamic_tokens = {}
+    for token_key in tokens_to_resolve:
+        dynamic_tokens[token_key] = registry[token_key](recipient, cache)
+    return dynamic_tokens
+
+
 def replace_tokens(
     mjml: str,
     recipient_tokens=None,
@@ -109,7 +136,7 @@ def replace_tokens(
         )
 
     for token_type, tokens in token_registry.items():
-        if token_type == TOKEN_TYPE_RECIPIENT:
+        if token_type == TOKEN_TYPE_RECIPIENT or token_type == TOKEN_TYPE_DYNAMIC:
             for key, value in tokens.items():
                 mjml = _do_replace(
                     mjml,

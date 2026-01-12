@@ -12,6 +12,8 @@ from tapir_mail.service.token import (
     find_tokens,
     replace_tokens,
     resolve_recipient_tokens,
+    TOKEN_TYPE_RECIPIENT,
+    TOKEN_TYPE_DYNAMIC,
 )
 from tapir_mail.service.tracking import get_tracking_url
 from tapir_mail.service.triggers import trigger_registry
@@ -89,8 +91,15 @@ class ResolveAndCreateEmailDispatches:
             )
 
         recipient_tokens = find_tokens(
-            config_dispatch.email_configuration_version.content
+            config_dispatch.email_configuration_version.content,
+            token_type=TOKEN_TYPE_RECIPIENT,
         )
+
+        dynamic_tokens = find_tokens(
+            config_dispatch.email_configuration_version.content,
+            token_type=TOKEN_TYPE_DYNAMIC,
+        )
+        cache = {}
 
         EmailDispatch.objects.bulk_create(
             [
@@ -99,6 +108,12 @@ class ResolveAndCreateEmailDispatches:
                     recipient=recipient.email,
                     recipient_tokens=resolve_recipient_tokens(
                         recipient_tokens, recipient
+                    )
+                    | resolve_dynamic_tokens(
+                        dynamic_tokens,
+                        recipient,
+                        token_registry[TOKEN_TYPE_DYNAMIC],
+                        cache,
                     ),
                     additional_tokens=config_dispatch.additional_tokens,
                     created_at=config_dispatch.scheduled_time,
