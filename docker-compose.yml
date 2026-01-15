@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  django:
+  web:
     build:
       dockerfile: Dockerfile-django
     image: &django-image tapir-mail-module-django
