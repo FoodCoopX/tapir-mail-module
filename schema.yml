@@ -1586,6 +1586,153 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/mail_category/:
+    get:
+      operationId: mail_category_list
+      tags:
+      - mail_category
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MailCategory'
+          description: ''
+    post:
+      operationId: mail_category_create
+      tags:
+      - mail_category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MailCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MailCategoryRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailCategory'
+          description: ''
+  /api/mail_category/{id}/:
+    get:
+      operationId: mail_category_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this mail category.
+        required: true
+      tags:
+      - mail_category
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailCategory'
+          description: ''
+    put:
+      operationId: mail_category_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this mail category.
+        required: true
+      tags:
+      - mail_category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MailCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MailCategoryRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailCategory'
+          description: ''
+    patch:
+      operationId: mail_category_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this mail category.
+        required: true
+      tags:
+      - mail_category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMailCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMailCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMailCategoryRequest'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailCategory'
+          description: ''
+    delete:
+      operationId: mail_category_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        description: A unique value identifying this mail category.
+        required: true
+      tags:
+      - mail_category
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
   /api/media_library/filepond/fetch/:
     get:
       operationId: media_library_filepond_fetch_retrieve
@@ -2539,7 +2686,6 @@ paths:
       - tracking
       security:
       - tokenAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -3166,6 +3312,46 @@ components:
         * `4` - 4
         * `5` - 5
         * `6` - 6
+    MailCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 10
+        name:
+          type: string
+          maxLength: 255
+        mode:
+          $ref: '#/components/schemas/ModeEnum'
+        available_for_external_recipients:
+          type: boolean
+        nb_recipients:
+          type: integer
+          readOnly: true
+      required:
+      - available_for_external_recipients
+      - mode
+      - name
+      - nb_recipients
+    MailCategoryRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        mode:
+          $ref: '#/components/schemas/ModeEnum'
+        available_for_external_recipients:
+          type: boolean
+      required:
+      - available_for_external_recipients
+      - mode
+      - name
     MissingTrigger:
       type: object
       properties:
@@ -3179,6 +3365,16 @@ components:
       - draft_version_exists
       - key
       - name
+    ModeEnum:
+      enum:
+      - always_on
+      - optional_default_on
+      - optional_default_off
+      type: string
+      description: |-
+        * `always_on` - Pflicht
+        * `optional_default_on` - Optional (Standard: ON)
+        * `optional_default_off` - Optional (Standard: OFF)
     NameEnum:
       enum:
       - Monday
@@ -3457,6 +3653,21 @@ components:
         content:
           type: string
           minLength: 1
+    PatchedMailCategoryRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        mode:
+          $ref: '#/components/schemas/ModeEnum'
+        available_for_external_recipients:
+          type: boolean
     PatchedStaticSegmentRecipientRequest:
       type: object
       properties:
@@ -3622,27 +3833,21 @@ components:
         id:
           type: string
           maxLength: 10
+        name:
+          type: string
+          maxLength: 255
         recipients:
           type: array
           items:
             $ref: '#/components/schemas/StaticSegmentRecipient'
           readOnly: true
-        created_at:
-          type: string
-          format: date-time
+        belongs_to_a_category:
+          type: boolean
           readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-        name:
-          type: string
-          maxLength: 255
       required:
-      - created_at
+      - belongs_to_a_category
       - name
       - recipients
-      - updated_at
     StaticSegmentRecipient:
       type: object
       properties:

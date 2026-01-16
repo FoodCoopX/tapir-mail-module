@@ -1,0 +1,167 @@
+import React, { useEffect, useState } from "react";
+import { Modal, Table } from "react-bootstrap";
+import { useApi } from "../../hooks/useApi";
+import { useAlert } from "../../contexts/alerts";
+import Loading from "./../loading";
+import { MailCategory, MailCategoryApi } from "../../api_client";
+import TapirButton from "../TapirButton";
+import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import MailCategoriesCreateModal from "./MailCategoryCreateModal";
+import { getModeDisplay } from "../../utils/getModeDisplay";
+import ConfirmDeleteModal from "../ConfirmDeleteModal";
+
+interface MailCategoryListModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
+  open,
+  onClose,
+}) => {
+  const [mailCategories, setMailCategory] = useState<MailCategory[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [categorySelectedForDeletion, setCategorySelectedForDeletion] =
+    useState<MailCategory>();
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const mailCategoryApi = useApi(MailCategoryApi);
+  const showAlert = useAlert();
+
+  useEffect(() => {
+    if (open) {
+      loadData();
+    }
+  }, [open]);
+
+  function loadData() {
+    if (!open) return;
+
+    setLoading(true);
+
+    mailCategoryApi
+      .mailCategoryList()
+      .then(setMailCategory)
+      .catch((error) => {
+        console.error(error);
+        showAlert("Fehler beim Laden der Mail-Kategorien", "danger");
+      })
+      .finally(() => setLoading(false));
+  }
+
+  function onDelete() {
+    if (categorySelectedForDeletion === undefined) {
+      alert("Keine Kategorie ausgewählt");
+      return;
+    }
+
+    setLoading(true);
+    mailCategoryApi
+      .mailCategoryDestroy({
+        id: categorySelectedForDeletion.id!,
+      })
+      .catch((error) => {
+        console.error(error);
+        showAlert("Fehler beim Laden der Mail-Kategorien", "danger");
+      })
+      .finally(() => {
+        loadData();
+      });
+  }
+
+  return (
+    <>
+      <Modal
+        show={open && !createModalOpen && !categorySelectedForDeletion}
+        onHide={onClose}
+        size={"lg"}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Mail-Kategorien</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {loading ? (
+            <Loading />
+          ) : (
+            <Table
+              striped
+              hover
+              style={{ margin: "0" }}
+            >
+              <thead>
+                <tr>
+                  <th>Kategorie-Name</th>
+                  <th>Modus</th>
+                  <th>Für Externe sichtbar</th>
+                  <th>Anzahl an Empfänger*innen</th>
+                  <th>Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mailCategories.length === 0 && (
+                  <tr>
+                    <td colSpan={5}>Noch keine Kategorien</td>
+                  </tr>
+                )}
+                {mailCategories.map((category: MailCategory) => (
+                  <tr
+                    key={category.id}
+                    onClick={() => {
+                      setCategorySelectedForDeletion(category);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{category.name}</td>
+                    <td>{getModeDisplay(category.mode, false)}</td>
+                    <td>
+                      {category.availableForExternalRecipients ? "Ja" : "Nein"}
+                    </td>
+                    <td>{category.nbRecipients}</td>
+                    <td>
+                      <TapirButton
+                        variant={"outline-danger"}
+                        icon={TrashIcon}
+                        size={"sm"}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setCategorySelectedForDeletion(category);
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="d-flex justify-content-end align-items-center">
+          <TapirButton
+            variant={"outline-primary"}
+            text={"Kategorie hinzufügen"}
+            icon={PlusCircleIcon}
+            onClick={() => setCreateModalOpen(true)}
+          />
+        </Modal.Footer>
+      </Modal>
+      <MailCategoriesCreateModal
+        open={createModalOpen}
+        onClose={() => {
+          setCreateModalOpen(false);
+          loadData();
+        }}
+      />
+      <ConfirmDeleteModal
+        message={
+          "Kategorie löschen bestätigen: " + categorySelectedForDeletion?.name
+        }
+        open={categorySelectedForDeletion !== undefined}
+        onConfirm={() => {
+          onDelete();
+          setCategorySelectedForDeletion(undefined);
+        }}
+        onCancel={() => setCategorySelectedForDeletion(undefined)}
+      />
+    </>
+  );
+};
+
+export default MailCategoryListModal;

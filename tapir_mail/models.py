@@ -253,9 +253,10 @@ class MailCategoryMode(models.TextChoices):
 
 
 class MailCategory(BaseModel):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     mode = models.CharField(max_length=30, choices=MailCategoryMode)
     available_for_external_recipients = models.BooleanField()
+    static_segment = models.OneToOneField(StaticSegment, on_delete=models.PROTECT)
 
 
 class ExternalRecipient(BaseModel):

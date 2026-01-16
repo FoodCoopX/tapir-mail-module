@@ -41,6 +41,7 @@ from tapir_mail.serializers import (
     StaticSegmentRecipientSerializer,
     MissingTriggerSerializer,
     CreateMissingTriggerMailSerializer,
+    MailCategorySerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
@@ -806,15 +807,34 @@ class CreateMissingTriggerMailView(APIView):
 
 class MailCategoryViewSet(viewsets.ModelViewSet):
     queryset = MailCategory.objects.all()
-    serializer_class = BundledEmailConfigurationSerializer
+    serializer_class = MailCategorySerializer
 
-    @extend_schema(responses={200: OpenApiTypes.OBJECT})
     @transaction.atomic
     def create(self, request, *args, **kwargs):
-        serializer = BundledEmailConfigurationSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = MailCategorySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        # WIP
+        data = serializer.validated_data
+        static_segment = StaticSegment.objects.create(
+            name=f"Mail-Kategory:{data["name"]}"
+        )
 
-        return Response({"id": "new_id"}, status=status.HTTP_201_CREATED)
+        category = MailCategory.objects.create(
+            name=data["name"],
+            mode=data["mode"],
+            available_for_external_recipients=data["available_for_external_recipients"],
+            static_segment=static_segment,
+        )
+
+        return Response(
+            MailCategorySerializer(category).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        instance: MailCategory = self.get_object()
+        static_segment = instance.static_segment
+        instance.delete()
+        static_segment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

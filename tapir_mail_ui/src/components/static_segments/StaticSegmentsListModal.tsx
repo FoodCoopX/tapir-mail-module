@@ -73,6 +73,7 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
       <Modal
         show={open && !createModalOpen && !selectedSegment && !segmentToDelete}
         onHide={onClose}
+        size={"lg"}
       >
         <Modal.Header closeButton>
           <Modal.Title>Statische Segmente</Modal.Title>
@@ -105,15 +106,20 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
                     <td>{segment.name}</td>
                     <td>{segment.recipients.length}</td>
                     <td>
-                      <TapirButton
-                        variant={"outline-danger"}
-                        icon={TrashIcon}
-                        size={"sm"}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSegmentToDelete(segment);
-                        }}
-                      />
+                      {segment.belongsToACategory ? (
+                        "Segmente die aus Kategorien stemmen können nicht gelöscht werden"
+                      ) : (
+                        <TapirButton
+                          variant={"outline-danger"}
+                          icon={TrashIcon}
+                          size={"sm"}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSegmentToDelete(segment);
+                          }}
+                          disabled={segment.belongsToACategory}
+                        />
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -273,9 +273,13 @@ class StaticSegmentRecipientSerializer(serializers.ModelSerializer):
 class StaticSegmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = StaticSegment
-        fields = "__all__"
+        fields = ["id", "name", "recipients", "belongs_to_a_category"]
 
     recipients = StaticSegmentRecipientSerializer(many=True, read_only=True)
+    belongs_to_a_category = serializers.SerializerMethodField()
+
+    def get_belongs_to_a_category(self, obj: StaticSegment) -> bool:
+        return getattr(obj, "mailcategory", None) is not None
 
 
 class MissingTriggerSerializer(serializers.Serializer):
@@ -292,4 +296,15 @@ class CreateMissingTriggerMailSerializer(serializers.Serializer):
 class MailCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = MailCategory
-        fields = "__all__"
+        fields = [
+            "id",
+            "name",
+            "mode",
+            "available_for_external_recipients",
+            "nb_recipients",
+        ]
+
+    nb_recipients = serializers.SerializerMethodField()
+
+    def get_nb_recipients(self, obj: MailCategory) -> int:
+        return obj.static_segment.recipients.count()

@@ -9,12 +9,14 @@ import {
   AdjustmentsHorizontalIcon,
   ExclamationTriangleIcon,
   PhotoIcon,
+  TagIcon,
 } from "@heroicons/react/24/outline";
 import DispatchesWithErrorsModal from "../components/DispatchesWithErrorsModal";
 import StaticSegmentsListModal from "../components/static_segments/StaticSegmentsListModal";
 import { useApi } from "../hooks/useApi";
 import { MissingTrigger, MissingTriggersApi } from "../api_client";
 import MissingTriggersModal from "./missing_triggers/MissingTriggersModal";
+import MailCategoryListModal from "../components/mail_categories/MailCategoryListModal";
 
 function Dashboard() {
   const api = useApi(MissingTriggersApi);
@@ -24,6 +26,8 @@ function Dashboard() {
     useState(false);
   const [missingTriggers, setMissingTriggers] = useState<MissingTrigger[]>([]);
   const [missingTriggersModalOpen, setMissingTriggersModalOpen] =
+    useState(false);
+  const [mailCategoryListModalOpen, setMailCategoryListModalOpen] =
     useState(false);
   const [reloadConfigurations, setReloadConfigurations] = useState(0);
 
@@ -84,6 +88,12 @@ function Dashboard() {
             notification={missingTriggers.length}
           />
         )}
+        <TapirButton
+          variant="primary"
+          text="Kategorien verwalten"
+          icon={TagIcon}
+          onClick={() => setMailCategoryListModalOpen(true)}
+        />
       </div>
 
       <div
@@ -118,6 +128,10 @@ function Dashboard() {
         onHide={() => setMissingTriggersModalOpen(false)}
         missingTriggers={missingTriggers}
         reloadData={reloadData}
+      />
+      <MailCategoryListModal
+        open={mailCategoryListModalOpen}
+        onClose={() => setMailCategoryListModalOpen(false)}
       />
     </>
   );
