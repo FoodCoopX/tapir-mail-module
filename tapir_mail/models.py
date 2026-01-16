@@ -1,8 +1,10 @@
+import uuid
 from functools import partial
 
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from nanoid import generate
 
 from tapir_mail.service.segment import resolve_segments
@@ -242,3 +244,21 @@ class StaticSegmentRecipient(BaseModel):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} <{self.email}>"
+
+
+class MailCategoryMode(models.TextChoices):
+    ALWAYS_ON = "always_on", _("Pflicht")
+    OPTIONAL_DEFAULT_ON = "optional_default_on", _("Optional (Standard: ON)")
+    OPTIONAL_DEFAULT_OFF = "optional_default_off", _("Optional (Standard: OFF)")
+
+
+class MailCategory(BaseModel):
+    name = models.CharField(max_length=255)
+    mode = models.CharField(max_length=30, choices=MailCategoryMode)
+    available_for_external_recipients = models.BooleanField()
+
+
+class ExternalRecipient(BaseModel):
+    secret_key = models.UUIDField(default=uuid.uuid4)
+    mail_address = models.EmailField()
+    confirmed_at = models.DateTimeField(null=True)

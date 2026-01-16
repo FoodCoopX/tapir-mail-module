@@ -12,6 +12,7 @@ from tapir_mail.models import (
     ReleaseStatus,
     StaticSegment,
     StaticSegmentRecipient,
+    MailCategory,
 )
 from tapir_mail.service.segment import filter_registry, segment_registry
 from tapir_mail.service.triggers import Trigger, trigger_registry
@@ -286,3 +287,9 @@ class MissingTriggerSerializer(serializers.Serializer):
 class CreateMissingTriggerMailSerializer(serializers.Serializer):
     trigger_key = serializers.CharField()
     empty_mjml = serializers.CharField()
+
+
+class MailCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MailCategory
+        fields = "__all__"

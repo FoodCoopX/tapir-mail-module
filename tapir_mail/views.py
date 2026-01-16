@@ -23,6 +23,7 @@ from tapir_mail.models import (
     ReleaseStatus,
     StaticSegment,
     StaticSegmentRecipient,
+    MailCategory,
 )
 from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
@@ -801,3 +802,19 @@ class CreateMissingTriggerMailView(APIView):
         )
 
         return Response("OK", status=status.HTTP_200_OK)
+
+
+class MailCategoryViewSet(viewsets.ModelViewSet):
+    queryset = MailCategory.objects.all()
+    serializer_class = BundledEmailConfigurationSerializer
+
+    @extend_schema(responses={200: OpenApiTypes.OBJECT})
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        serializer = BundledEmailConfigurationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # WIP
+
+        return Response({"id": "new_id"}, status=status.HTTP_201_CREATED)
