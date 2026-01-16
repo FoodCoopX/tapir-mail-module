@@ -327,9 +327,9 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         email_version_configuration = get_object_or_404(
             EmailConfigurationVersion, id=pk
         )
-        recipients = request.data.get("recipients", None)
+        recipients = request.data.get("recipients", [])
 
-        if recipients is None:
+        if len(recipients) == 0:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
                 data={"message": "Recipients parameter is required"},
@@ -343,17 +343,18 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 data={"message": f"Invalid recipients parameter: {str(e)}"},
             )
 
-        mjml = replace_tokens(
-            email_version_configuration.content,
-            {"email": email for email in recipients_list},
-            strict_token_validation=False,
-        )
-        email = prepare_email(
-            mjml=mjml,
-            subject=email_version_configuration.subject,
-            recipients=recipients_list,
-        )
-        email.send()
+        for email in recipients_list:
+            mjml = replace_tokens(
+                email_version_configuration.content,
+                {"email": email},
+                strict_token_validation=False,
+            )
+            email = prepare_email(
+                mjml=mjml,
+                subject=email_version_configuration.subject,
+                recipients=recipients_list,
+            )
+            email.send()
 
         LOG.info("Test email sent to: " + ", ".join(recipients_list))
 
@@ -816,7 +817,7 @@ class MailCategoryViewSet(viewsets.ModelViewSet):
 
         data = serializer.validated_data
         static_segment = StaticSegment.objects.create(
-            name=f"Mail-Kategory:{data["name"]}"
+            name=f"Mail-Kategorie:{data["name"]}"
         )
 
         category = MailCategory.objects.create(
