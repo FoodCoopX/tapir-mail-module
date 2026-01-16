@@ -5,10 +5,15 @@ import { useAlert } from "../../contexts/alerts";
 import Loading from "./../loading";
 import { MailCategory, MailCategoryApi } from "../../api_client";
 import TapirButton from "../TapirButton";
-import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import {
+  PencilIcon,
+  PlusCircleIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import MailCategoriesCreateModal from "./MailCategoryCreateModal";
 import { getModeDisplay } from "../../utils/getModeDisplay";
 import ConfirmDeleteModal from "../ConfirmDeleteModal";
+import MailCategoryEditModal from "./MailCategoryEditModal";
 
 interface MailCategoryListModalProps {
   open: boolean;
@@ -22,6 +27,8 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
   const [mailCategories, setMailCategory] = useState<MailCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [categorySelectedForDeletion, setCategorySelectedForDeletion] =
+    useState<MailCategory>();
+  const [categorySelectedForEdition, setCategorySelectedForEdition] =
     useState<MailCategory>();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const mailCategoryApi = useApi(MailCategoryApi);
@@ -71,7 +78,12 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
   return (
     <>
       <Modal
-        show={open && !createModalOpen && !categorySelectedForDeletion}
+        show={
+          open &&
+          !createModalOpen &&
+          !categorySelectedForDeletion &&
+          !categorySelectedForEdition
+        }
         onHide={onClose}
         size={"lg"}
       >
@@ -103,13 +115,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                   </tr>
                 )}
                 {mailCategories.map((category: MailCategory) => (
-                  <tr
-                    key={category.id}
-                    onClick={() => {
-                      setCategorySelectedForDeletion(category);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
+                  <tr key={category.id}>
                     <td>{category.name}</td>
                     <td>{getModeDisplay(category.mode, false)}</td>
                     <td>
@@ -117,15 +123,24 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                     </td>
                     <td>{category.nbRecipients}</td>
                     <td>
-                      <TapirButton
-                        variant={"outline-danger"}
-                        icon={TrashIcon}
-                        size={"sm"}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setCategorySelectedForDeletion(category);
-                        }}
-                      />
+                      <div className={"d-flex flex-row gap-2"}>
+                        <TapirButton
+                          variant={"outline-primary"}
+                          icon={PencilIcon}
+                          size={"sm"}
+                          onClick={(event) => {
+                            setCategorySelectedForEdition(category);
+                          }}
+                        />
+                        <TapirButton
+                          variant={"outline-danger"}
+                          icon={TrashIcon}
+                          size={"sm"}
+                          onClick={(event) => {
+                            setCategorySelectedForDeletion(category);
+                          }}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -160,6 +175,16 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
         }}
         onCancel={() => setCategorySelectedForDeletion(undefined)}
       />
+      {categorySelectedForEdition && (
+        <MailCategoryEditModal
+          open={true}
+          onClose={() => {
+            setCategorySelectedForEdition(undefined);
+            loadData();
+          }}
+          category={categorySelectedForEdition}
+        />
+      )}
     </>
   );
 };

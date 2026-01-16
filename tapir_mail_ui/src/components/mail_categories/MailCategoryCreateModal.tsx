@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Form, Modal, Row } from "react-bootstrap";
 import { useApi } from "../../hooks/useApi";
 import { useAlert } from "../../contexts/alerts";
@@ -24,6 +24,13 @@ const MailCategoriesCreateModal: React.FC<MailCategoriesCreateModalProps> = ({
     ModeEnum.OptionalDefaultOn,
   );
   const [externalsEnabled, setExternalsEnabled] = useState(false);
+  const nameRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      nameRef.current?.focus();
+    }
+  }, [open]);
 
   function onCreateClicked() {
     setLoading(true);
@@ -61,6 +68,7 @@ const MailCategoriesCreateModal: React.FC<MailCategoriesCreateModalProps> = ({
           <Form.Group>
             <Form.Label>Name</Form.Label>
             <Form.Control
+              ref={nameRef}
               required={true}
               className={categoryName ? "" : "is-invalid"}
               type="text"
