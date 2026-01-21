@@ -5,6 +5,7 @@ from django.views.generic.base import TemplateView
 from rest_framework import routers
 
 from tapir_mail import views
+from tapir_mail.views import RegisterToMailCategoryView, ConfirmationMailSentView
 
 router = routers.DefaultRouter()
 router.register("email_template", views.EmailTemplateViewSet, basename="email_template")
@@ -32,6 +33,30 @@ router.register("mail_category", views.MailCategoryViewSet)
 urlpatterns = [
     path("api/media_library/", include("tapir_mail.media_library.urls")),
     path("api/", include(router.urls)),  # REST API
+    path(
+        "external/registration/<str:category_id>",
+        RegisterToMailCategoryView.as_view(),
+        name="category_registration_external_form",
+    ),
+    path(
+        "external/confirmation_mail_sent",
+        ConfirmationMailSentView.as_view(),
+        name="confirmation_mail_sent",
+    ),
+    path(
+        "external/confirm<uuid:secret>",
+        TemplateView.as_view(
+            template_name="tapir_mail/confirmation_registration_complete.html"
+        ),
+        name="user_confirms_registration",
+    ),
+    path(
+        "external/confirmation_registration_complete",
+        TemplateView.as_view(
+            template_name="tapir_mail/confirmation_registration_complete.html"
+        ),
+        name="confirmation_registration_complete",
+    ),
     re_path(
         r"^(?!(api|config\.js|static)/).*$",
         TemplateView.as_view(template_name="index.html"),

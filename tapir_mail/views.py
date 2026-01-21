@@ -4,7 +4,11 @@ import logging
 from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.generic import FormView, TemplateView
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
@@ -14,6 +18,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from tapir_mail.config import TransactionalTriggerKeys
+from tapir_mail.forms import RegisterToMailCategoryForm
 from tapir_mail.models import (
     EmailConfiguration,
     EmailConfigurationDispatch,
@@ -24,6 +30,8 @@ from tapir_mail.models import (
     StaticSegment,
     StaticSegmentRecipient,
     MailCategory,
+    ExternalRecipient,
+    ExternalRecipientConfirmation,
 )
 from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
@@ -53,7 +61,10 @@ from tapir_mail.service.segment import (
 from tapir_mail.service.token import replace_tokens, token_registry
 from tapir_mail.service.tracking import track_email_opening
 from tapir_mail.service.triggers import Trigger, trigger_registry
-from tapir_mail.triggers.transactional_trigger import TransactionalTrigger
+from tapir_mail.triggers.transactional_trigger import (
+    TransactionalTrigger,
+    TransactionalTriggerData,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -839,3 +850,75 @@ class MailCategoryViewSet(viewsets.ModelViewSet):
         instance.delete()
         static_segment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@method_decorator(xframe_options_exempt, name="dispatch")
+class RegisterToMailCategoryView(FormView):
+    form_class = RegisterToMailCategoryForm
+    template_name = "tapir_mail/external.html"
+
+    def __init__(self):
+        super().__init__()
+        self.category = None
+
+    def get_category(self):
+        if self.category is None:
+            self.category = get_object_or_404(
+                MailCategory, id=self.kwargs["category_id"]
+            )
+
+        return self.category
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["category_name"] = self.get_category().name
+        return context_data
+
+    def get_success_url(self):
+        return reverse("confirmation_mail_sent")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"category_id": self.kwargs["category_id"]})
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        email_address = form.cleaned_data["email"]
+        first_name = form.cleaned_data["first_name"]
+
+        (external_recipient, _) = ExternalRecipient.objects.get_or_create(
+            mail_address=email_address
+        )
+        (external_recipient_confirmation, _) = (
+            ExternalRecipientConfirmation.objects.get_or_create(
+                external_recipient=external_recipient, mail_category=self.get_category()
+            )
+        )
+
+        TransactionalTrigger.fire_action(
+            TransactionalTriggerData(
+                key=TransactionalTriggerKeys.MAIL_CATEGORY_REGISTRATION_CONFIRMATION_LINK,
+                token_data={
+                    "category_name": self.get_category().name,
+                    "confirmation_link": reverse(
+                        "user_confirms_registration",
+                        args=[external_recipient_confirmation.confirmation_secret],
+                    ),
+                },
+                recipient_outside_of_base_queryset=TransactionalTriggerData.RecipientOutsideOfBaseQueryset(
+                    email=email_address, first_name=first_name, last_name=""
+                ),
+            )
+        )
+
+        return response
+
+
+@method_decorator(xframe_options_exempt, name="get")
+class ConfirmationMailSentView(TemplateView):
+    template_name = "tapir_mail/confirmation_mail_sent.html"
+
+
+class ConfirmRegistrationToMailCategoryView(TemplateView):
+    template_name = "tapir_mail/confirmation_registration_complete.html"

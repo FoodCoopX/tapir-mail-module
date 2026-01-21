@@ -262,4 +262,10 @@ class MailCategory(BaseModel):
 class ExternalRecipient(BaseModel):
     secret_key = models.UUIDField(default=uuid.uuid4)
     mail_address = models.EmailField()
+
+
+class ExternalRecipientConfirmation(BaseModel):
+    external_recipient = models.ForeignKey(ExternalRecipient, on_delete=models.CASCADE)
+    mail_category = models.ForeignKey(MailCategory, on_delete=models.CASCADE)
     confirmed_at = models.DateTimeField(null=True)
+    confirmation_secret = models.UUIDField(default=uuid.uuid4)

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tapir newsletter registration</title>
+</head>
+<body>
+<div>Anmeldung zu Newsletter : {{ category_name }}</div>
+<form method="post">
+  {% csrf_token %}
+  {{ form }}
+  <button type="submit">
+    Anmeldung
+  </button>
+</form>
+</body>
+</html>
