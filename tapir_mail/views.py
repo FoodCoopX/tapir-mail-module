@@ -2,7 +2,7 @@ import datetime
 import logging
 
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, QuerySet
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -147,6 +147,57 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
             status=ReleaseStatus.DRAFT,
         )
         version_copy_destination.save()
+
+    @classmethod
+    def does_email_configuration_version_have_trigger(
+        cls, trigger_id: str, email_configuration_version: EmailConfigurationVersion
+    ):
+        for trigger_data in email_configuration_version.triggers:
+            if trigger_data["trigger_id"] == trigger_id:
+                return True
+
+        return False
+
+    @classmethod
+    def filter_email_configurations_by_trigger_id(
+        cls, queryset: QuerySet[EmailConfiguration], trigger_id: str
+    ):
+        email_configuration_ids_with_trigger = []
+        for email_configuration in EmailConfiguration.objects.all():
+            last_version = email_configuration.versions.order_by("updated_at").last()
+            if cls.does_email_configuration_version_have_trigger(
+                trigger_id=trigger_id,
+                email_configuration_version=last_version,
+            ):
+                email_configuration_ids_with_trigger.append(email_configuration.id)
+
+        return queryset.filter(id__in=email_configuration_ids_with_trigger)
+
+    @extend_schema(
+        responses={200: EmailConfigurationSerializer(many=True)},
+        parameters=[
+            OpenApiParameter(name="trigger_id", required=False, type=OpenApiTypes.STR),
+        ],
+    )
+    @action(detail=False, methods=["GET"])
+    def filter_by_trigger(self, request, *args, **kwargs):
+        queryset: QuerySet[EmailConfiguration] = self.filter_queryset(
+            self.get_queryset()
+        )
+
+        trigger_id = request.query_params.get("trigger_id", None)
+        if trigger_id is not None:
+            queryset = self.filter_email_configurations_by_trigger_id(
+                queryset, trigger_id
+            )
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 @extend_schema_view(

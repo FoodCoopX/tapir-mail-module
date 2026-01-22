@@ -584,6 +584,52 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedEmailConfigurationVersionList'
           description: ''
+  /api/email_configuration/filter_by_trigger/:
+    get:
+      operationId: email_configuration_filter_by_trigger_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - in: query
+        name: trigger_id
+        schema:
+          type: string
+      - in: query
+        name: versions__status
+        schema:
+          type: string
+          enum:
+          - archived
+          - draft
+          - error
+          - released
+        description: |-
+          * `draft` - Draft
+          * `released` - Released
+          * `archived` - Archived
+          * `error` - Error
+      tags:
+      - email_configuration
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEmailConfigurationList'
+          description: ''
   /api/email_configuration_dispatch/:
     get:
       operationId: email_configuration_dispatch_list

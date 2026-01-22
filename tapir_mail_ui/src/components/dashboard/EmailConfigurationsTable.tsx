@@ -1,8 +1,13 @@
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
-import { Badge, Card, Table } from "react-bootstrap";
+import { Badge, Card, Form, Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { EmailConfiguration, EmailConfigurationApi } from "../../api_client";
+import {
+  EmailConfiguration,
+  EmailConfigurationApi,
+  TriggerDefinition,
+  TriggersApi,
+} from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
@@ -32,17 +37,32 @@ const EmailConfigurationTable: React.FC<EmailConfigurationTableProps> = ({
   const [configurationCount, setConfigurationCount] = useState(0);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const api = useApi(EmailConfigurationApi);
+  const emailConfigurationApi = useApi(EmailConfigurationApi);
+  const triggersApi = useApi(TriggersApi);
+  const [triggerDefinitions, setTriggerDefinitions] = useState<
+    TriggerDefinition[]
+  >([]);
+  const [currentFilterTriggerId, setCurrentFilterTriggerId] = useState<
+    string | undefined
+  >(undefined);
 
-  const fetchEmailConfigurations = () =>
-    api
-      .emailConfigurationList({
+  const fetchEmailConfigurations = () => {
+    Promise.all([
+      emailConfigurationApi.emailConfigurationFilterByTriggerList({
         limit: DEFAULT_PAGE_SIZE,
         offset: currentPage * DEFAULT_PAGE_SIZE,
-      })
-      .then((paginatedData) => {
-        setEmailConfigurations(paginatedData.results ?? []);
-        setConfigurationCount(paginatedData.count ?? 0);
+        triggerId:
+          currentFilterTriggerId === "no_filter"
+            ? undefined
+            : currentFilterTriggerId,
+        versionsStatus: undefined,
+      }),
+      triggersApi.triggersList(),
+    ])
+      .then(([paginatedEmailConfigurationData, triggerDefinitions]) => {
+        setEmailConfigurations(paginatedEmailConfigurationData.results ?? []);
+        setConfigurationCount(paginatedEmailConfigurationData.count ?? 0);
+        setTriggerDefinitions(triggerDefinitions);
       })
       .catch((err) => {
         console.error(err);
@@ -51,12 +71,13 @@ const EmailConfigurationTable: React.FC<EmailConfigurationTableProps> = ({
       .finally(() => {
         setLoading(false);
       });
+  };
 
   useEffect(() => {
-    if (!api || !showAlert) return;
+    if (!emailConfigurationApi || !showAlert) return;
 
     fetchEmailConfigurations();
-  }, [currentPage, reloadConfigurations]);
+  }, [currentPage, reloadConfigurations, currentFilterTriggerId]);
 
   const handleSelectEmailConfiguration = (ec: EmailConfiguration) => {
     setSelectedEmailConfiguration(ec);
@@ -77,13 +98,32 @@ const EmailConfigurationTable: React.FC<EmailConfigurationTableProps> = ({
           }}
         >
           <span>E-Mails</span>
-          <Link to={Paths.emailConfigurationCreate}>
-            <TapirButton
-              variant="primary"
-              text="Neue E-Mail erstellen"
-              icon={PlusCircleIcon}
-            />
-          </Link>
+
+          <span className={"d-flex flex-row gap-2"}>
+            <Form.Select
+              onChange={(event) =>
+                setCurrentFilterTriggerId(event.target.value)
+              }
+              value={currentFilterTriggerId}
+            >
+              <option value={"no_filter"}>Kein Filter</option>
+              {triggerDefinitions.map((triggerDefinition) => (
+                <option
+                  key={triggerDefinition.id}
+                  value={triggerDefinition.id}
+                >
+                  {triggerDefinition.name}
+                </option>
+              ))}
+            </Form.Select>
+            <Link to={Paths.emailConfigurationCreate}>
+              <TapirButton
+                variant="primary"
+                text="Neue E-Mail erstellen"
+                icon={PlusCircleIcon}
+              />
+            </Link>
+          </span>
         </Card.Header>
         <Card.Body style={{ padding: 0 }}>
           {loading ? (
