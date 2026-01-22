@@ -261,7 +261,8 @@ class MailCategory(BaseModel):
 
 class ExternalRecipient(BaseModel):
     secret_key = models.UUIDField(default=uuid.uuid4)
-    mail_address = models.EmailField()
+    email = models.EmailField()
+    first_name = models.CharField(max_length=100)
 
 
 class ExternalRecipientConfirmation(BaseModel):

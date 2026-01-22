@@ -3328,11 +3328,15 @@ components:
         nb_recipients:
           type: integer
           readOnly: true
+        registration_form_link:
+          type: string
+          readOnly: true
       required:
       - available_for_external_recipients
       - mode
       - name
       - nb_recipients
+      - registration_form_link
     MailCategoryRequest:
       type: object
       properties:

@@ -5,7 +5,11 @@ from django.views.generic.base import TemplateView
 from rest_framework import routers
 
 from tapir_mail import views
-from tapir_mail.views import RegisterToMailCategoryView, ConfirmationMailSentView
+from tapir_mail.views import (
+    RegisterToMailCategoryView,
+    ConfirmationMailSentView,
+    ConfirmRegistrationToMailCategoryView,
+)
 
 router = routers.DefaultRouter()
 router.register("email_template", views.EmailTemplateViewSet, basename="email_template")
@@ -44,10 +48,8 @@ urlpatterns = [
         name="confirmation_mail_sent",
     ),
     path(
-        "external/confirm<uuid:secret>",
-        TemplateView.as_view(
-            template_name="tapir_mail/confirmation_registration_complete.html"
-        ),
+        "external/confirm/<uuid:secret>",
+        ConfirmRegistrationToMailCategoryView.as_view(),
         name="user_confirms_registration",
     ),
     path(

@@ -888,7 +888,7 @@ class RegisterToMailCategoryView(FormView):
         first_name = form.cleaned_data["first_name"]
 
         (external_recipient, _) = ExternalRecipient.objects.get_or_create(
-            mail_address=email_address
+            email=email_address, defaults={"first_name": first_name}
         )
         (external_recipient_confirmation, _) = (
             ExternalRecipientConfirmation.objects.get_or_create(
@@ -922,3 +922,29 @@ class ConfirmationMailSentView(TemplateView):
 
 class ConfirmRegistrationToMailCategoryView(TemplateView):
     template_name = "tapir_mail/confirmation_registration_complete.html"
+
+    def get_external_recipient_confirmation(self):
+        return get_object_or_404(
+            ExternalRecipientConfirmation, confirmation_secret=self.kwargs["secret"]
+        )
+
+    def get(self, request, *args, **kwargs):
+        external_recipient_confirmation = self.get_external_recipient_confirmation()
+        external_recipient_confirmation.confirmed_at = datetime.datetime.now()
+        external_recipient_confirmation.save()
+        StaticSegmentRecipient.objects.get_or_create(
+            segment=external_recipient_confirmation.mail_category.static_segment,
+            email=external_recipient_confirmation.external_recipient.email,
+            defaults={
+                "first_name": external_recipient_confirmation.external_recipient.first_name
+            },
+        )
+
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["mail_category_name"] = (
+            self.get_external_recipient_confirmation().mail_category.name
+        )
+        return context_data

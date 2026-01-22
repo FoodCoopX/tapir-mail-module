@@ -105,6 +105,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                   <th>Modus</th>
                   <th>Für Externe sichtbar</th>
                   <th>Anzahl an Empfänger*innen</th>
+                  <th>URL zu Intergration in externe Seiten</th>
                   <th>Aktionen</th>
                 </tr>
               </thead>
@@ -122,6 +123,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                       {category.availableForExternalRecipients ? "Ja" : "Nein"}
                     </td>
                     <td>{category.nbRecipients}</td>
+                    <td>{category.registrationFormLink}</td>
                     <td>
                       <div className={"d-flex flex-row gap-2"}>
                         <TapirButton

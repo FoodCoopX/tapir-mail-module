@@ -1,5 +1,6 @@
 import datetime
 
+from django.urls import reverse
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -302,9 +303,14 @@ class MailCategorySerializer(serializers.ModelSerializer):
             "mode",
             "available_for_external_recipients",
             "nb_recipients",
+            "registration_form_link",
         ]
 
     nb_recipients = serializers.SerializerMethodField()
+    registration_form_link = serializers.SerializerMethodField()
 
     def get_nb_recipients(self, obj: MailCategory) -> int:
         return obj.static_segment.recipients.count()
+
+    def get_registration_form_link(self, obj: MailCategory) -> str:
+        return reverse("category_registration_external_form", args=[obj.id])
