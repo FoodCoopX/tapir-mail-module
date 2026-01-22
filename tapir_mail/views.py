@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, QuerySet
 from django.shortcuts import get_object_or_404
@@ -19,7 +20,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from tapir_mail.config import TransactionalTriggerKeys
-from tapir_mail.forms import RegisterToMailCategoryForm
+from tapir_mail.forms import RegisterToMailCategoryForm, ExternalRecipientManagementForm
 from tapir_mail.models import (
     EmailConfiguration,
     EmailConfigurationDispatch,
@@ -53,6 +54,7 @@ from tapir_mail.serializers import (
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
+from tapir_mail.service.external_recipient_manager import ExternalRecipientManager
 from tapir_mail.service.segment import (
     filter_registry,
     resolve_segments,
@@ -915,7 +917,9 @@ class RegisterToMailCategoryView(FormView):
     def get_category(self):
         if self.category is None:
             self.category = get_object_or_404(
-                MailCategory, id=self.kwargs["category_id"]
+                MailCategory,
+                id=self.kwargs["category_id"],
+                available_for_external_recipients=True,
             )
 
         return self.category
@@ -930,7 +934,7 @@ class RegisterToMailCategoryView(FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"category_id": self.kwargs["category_id"]})
+        kwargs.update({"category": self.get_category()})
         return kwargs
 
     def form_valid(self, form):
@@ -999,3 +1003,60 @@ class ConfirmRegistrationToMailCategoryView(TemplateView):
             self.get_external_recipient_confirmation().mail_category.name
         )
         return context_data
+
+
+class ExternalRecipientManagementView(FormView):
+    form_class = ExternalRecipientManagementForm
+    template_name = "tapir_mail/management.html"
+
+    def __init__(self):
+        super().__init__()
+        self.external_recipient = None
+
+    def get_external_recipient(self):
+        if self.external_recipient is None:
+            self.external_recipient = ExternalRecipient.objects.get(
+                secret_key=self.kwargs.get("recipient_secret")
+            )
+
+        return self.external_recipient
+
+    def get_form_kwargs(self):
+        form_kwargs = super().get_form_kwargs()
+        form_kwargs.update({"external_recipient": self.get_external_recipient()})
+        return form_kwargs
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["first_name"] = self.get_external_recipient().first_name
+        return context_data
+
+    def form_valid(self, form):
+        messages.success(self.request, "Änderungen gespreichert")
+
+        external_recipient = self.get_external_recipient()
+        external_recipient.first_name = form.cleaned_data["first_name"]
+        external_recipient.save()
+
+        for mail_category in MailCategory.objects.all():
+            enabled = form.cleaned_data.get(
+                ExternalRecipientManagementForm.build_field_key_for_category(
+                    mail_category
+                ),
+                False,
+            )
+            if enabled:
+                ExternalRecipientManager.register_external_recipient_to_category(
+                    mail_category=mail_category, external_recipient=external_recipient
+                )
+            else:
+                ExternalRecipientManager.remove_external_recipient_from_category(
+                    mail_category=mail_category, external_recipient=external_recipient
+                )
+
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "external_recipient_manager", args=[self.kwargs.get("recipient_secret")]
+        )

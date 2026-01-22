@@ -258,11 +258,17 @@ class MailCategory(BaseModel):
     available_for_external_recipients = models.BooleanField()
     static_segment = models.OneToOneField(StaticSegment, on_delete=models.PROTECT)
 
+    def __str__(self):
+        return f"{self.name} - Mode:{self.mode} - External:{self.available_for_external_recipients}"
+
 
 class ExternalRecipient(BaseModel):
     secret_key = models.UUIDField(default=uuid.uuid4)
     email = models.EmailField()
     first_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.first_name} - {self.email}"
 
 
 class ExternalRecipientConfirmation(BaseModel):

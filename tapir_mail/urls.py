@@ -9,6 +9,7 @@ from tapir_mail.views import (
     RegisterToMailCategoryView,
     ConfirmationMailSentView,
     ConfirmRegistrationToMailCategoryView,
+    ExternalRecipientManagementView,
 )
 
 router = routers.DefaultRouter()
@@ -58,6 +59,11 @@ urlpatterns = [
             template_name="tapir_mail/confirmation_registration_complete.html"
         ),
         name="confirmation_registration_complete",
+    ),
+    path(
+        "external/manage/<uuid:recipient_secret>",
+        ExternalRecipientManagementView.as_view(),
+        name="external_recipient_manager",
     ),
     re_path(
         r"^(?!(api|config\.js|static)/).*$",

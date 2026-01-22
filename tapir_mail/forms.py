@@ -2,7 +2,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.forms import Form
 
-from tapir_mail.models import MailCategory
+from tapir_mail.models import MailCategory, ExternalRecipient
+from tapir_mail.service.external_recipient_manager import ExternalRecipientManager
 
 
 class RegisterToMailCategoryForm(Form):
@@ -10,16 +11,43 @@ class RegisterToMailCategoryForm(Form):
     first_name = forms.CharField(required=True)
 
     def __init__(self, *args, **kwargs):
-        self.category = MailCategory.objects.get(id=kwargs.pop("category_id"))
+        self.category: MailCategory = kwargs.pop("category")
         super().__init__(*args, **kwargs)
 
-    def clean_email(
-        self,
-    ):
-        if self.category.static_segment.recipients.filter(
-            email=self.cleaned_data["email"]
-        ).exists():
+    def clean_email(self):
+        if ExternalRecipientManager.is_email_address_registered_to_category(
+            mail_category=self.category, email=self.cleaned_data["email"]
+        ):
             raise ValidationError(
                 "Diese Mail-Adresse ist schon für dieser Newsletter eingetragen"
             )
         return self.cleaned_data["email"]
+
+
+class ExternalRecipientManagementForm(Form):
+    first_name = forms.CharField()
+
+    def __init__(self, *args, **kwargs):
+        self.external_recipient: ExternalRecipient = kwargs.pop("external_recipient")
+
+        super().__init__(*args, **kwargs)
+
+        self.fields["first_name"].initial = self.external_recipient.first_name
+
+        for mail_category in MailCategory.objects.filter(
+            available_for_external_recipients=True
+        ).order_by("name"):
+            is_registered = (
+                ExternalRecipientManager.is_email_address_registered_to_category(
+                    mail_category=mail_category, email=self.external_recipient.email
+                )
+            )
+            self.fields[self.build_field_key_for_category(mail_category)] = (
+                forms.BooleanField(
+                    label=mail_category.name, initial=is_registered, required=False
+                )
+            )
+
+    @staticmethod
+    def build_field_key_for_category(mail_category: MailCategory):
+        return "category_" + mail_category.id
