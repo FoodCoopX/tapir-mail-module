@@ -6,6 +6,7 @@ import Loading from "./../loading";
 import { MailCategory, MailCategoryApi } from "../../api_client";
 import TapirButton from "../TapirButton";
 import {
+  DocumentDuplicateIcon,
   PencilIcon,
   PlusCircleIcon,
   TrashIcon,
@@ -24,7 +25,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
   open,
   onClose,
 }) => {
-  const [mailCategories, setMailCategory] = useState<MailCategory[]>([]);
+  const [mailCategories, setMailCategories] = useState<MailCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [categorySelectedForDeletion, setCategorySelectedForDeletion] =
     useState<MailCategory>();
@@ -47,7 +48,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
 
     mailCategoryApi
       .mailCategoryList()
-      .then(setMailCategory)
+      .then(setMailCategories)
       .catch((error) => {
         console.error(error);
         showAlert("Fehler beim Laden der Mail-Kategorien", "danger");
@@ -123,14 +124,28 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                       {category.availableForExternalRecipients ? "Ja" : "Nein"}
                     </td>
                     <td>{category.nbRecipients}</td>
-                    <td>{category.registrationFormLink}</td>
+                    <td>
+                      <a href={category.registrationFormLink}>
+                        {category.registrationFormLink}
+                      </a>
+                    </td>
                     <td>
                       <div className={"d-flex flex-row gap-2"}>
                         <TapirButton
                           variant={"outline-primary"}
+                          icon={DocumentDuplicateIcon}
+                          size={"sm"}
+                          onClick={() =>
+                            navigator.clipboard.writeText(
+                              category.registrationFormLink,
+                            )
+                          }
+                        />
+                        <TapirButton
+                          variant={"outline-primary"}
                           icon={PencilIcon}
                           size={"sm"}
-                          onClick={(event) => {
+                          onClick={() => {
                             setCategorySelectedForEdition(category);
                           }}
                         />
@@ -138,7 +153,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                           variant={"outline-danger"}
                           icon={TrashIcon}
                           size={"sm"}
-                          onClick={(event) => {
+                          onClick={() => {
                             setCategorySelectedForDeletion(category);
                           }}
                         />

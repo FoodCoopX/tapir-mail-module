@@ -983,16 +983,15 @@ class ConfirmRegistrationToMailCategoryView(TemplateView):
             ExternalRecipientConfirmation, confirmation_secret=self.kwargs["secret"]
         )
 
+    @transaction.atomic
     def get(self, request, *args, **kwargs):
         external_recipient_confirmation = self.get_external_recipient_confirmation()
         external_recipient_confirmation.confirmed_at = datetime.datetime.now()
         external_recipient_confirmation.save()
-        StaticSegmentRecipient.objects.get_or_create(
-            segment=external_recipient_confirmation.mail_category.static_segment,
-            email=external_recipient_confirmation.external_recipient.email,
-            defaults={
-                "first_name": external_recipient_confirmation.external_recipient.first_name
-            },
+
+        ExternalRecipientManager.register_external_recipient_to_category(
+            mail_category=external_recipient_confirmation.mail_category,
+            external_recipient=external_recipient_confirmation.external_recipient,
         )
 
         return super().get(request, *args, **kwargs)

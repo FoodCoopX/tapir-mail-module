@@ -1,5 +1,6 @@
 import datetime
 
+from django.conf import settings
 from django.urls import reverse
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -313,4 +314,6 @@ class MailCategorySerializer(serializers.ModelSerializer):
         return obj.static_segment.recipients.count()
 
     def get_registration_form_link(self, obj: MailCategory) -> str:
-        return reverse("category_registration_external_form", args=[obj.id])
+        return settings.SITE_URL + reverse(
+            "category_registration_external_form", args=[obj.id]
+        )
