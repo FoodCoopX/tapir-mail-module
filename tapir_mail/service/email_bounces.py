@@ -16,7 +16,7 @@ class EmailBounces:
     @classmethod
     def check_for_bounces(cls):
         mail_client = IMAP4_SSL(settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP)
-        (return_code, _) = mail_client.login(
+        return_code, _ = mail_client.login(
             settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
         )
         if return_code != "OK":
@@ -25,7 +25,7 @@ class EmailBounces:
         try:
             mail_client.select(readonly=settings.DEBUG)
 
-            (return_code, messages_id_blocks) = mail_client.search(None, "(UNSEEN)")
+            return_code, messages_id_blocks = mail_client.search(None, "(UNSEEN)")
             if return_code != "OK":
                 raise Exception(
                     f"Imap server search failed, return code : {return_code}"

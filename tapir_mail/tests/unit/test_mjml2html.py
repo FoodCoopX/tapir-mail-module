@@ -4,8 +4,7 @@ from tapir_mail.tests.test_utils import TapirUnitTest
 
 class TestMjml2Html(TapirUnitTest):
     def test_mjml2html_hasCustomFontsInHtml(self):
-        html = mjml2html(
-            """<mjml>
+        html = mjml2html("""<mjml>
   <mj-head>
     <mj-font name="Montserrat" href="http://test/Montserrat.css" />
     <mj-font name="Bitter" href="http://test/Bitter.css" />
@@ -30,8 +29,7 @@ class TestMjml2Html(TapirUnitTest):
         </mj-column>
       </mj-section>
     </mj-wrapper>
-  </mj-body></mjml>"""
-        )
+  </mj-body></mjml>""")
 
         self.assertIn("@import url(http://test/Montserrat.css)", html)
         self.assertIn(

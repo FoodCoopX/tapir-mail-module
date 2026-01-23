@@ -8,7 +8,6 @@ from tapir_mail.service.segment import (
 from tapir_mail.service.token import register_tokens
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser, DummyPickupLocation
 
-
 # Folgende Grundmengen sollen in einem ersten Schritt angelegt werden und vom Standort-Admin auswählbar sein:
 
 # 1. Alle Tapir-Nutzer der Organisation (Grundmenge)

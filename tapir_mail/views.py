@@ -18,7 +18,6 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from tapir_mail.config import TransactionalTriggerKeys
 from tapir_mail.forms import RegisterToMailCategoryForm, ExternalRecipientManagementForm
 from tapir_mail.models import (
@@ -942,10 +941,10 @@ class RegisterToMailCategoryView(FormView):
         email_address = form.cleaned_data["email"]
         first_name = form.cleaned_data["first_name"]
 
-        (external_recipient, _) = ExternalRecipient.objects.get_or_create(
+        external_recipient, _ = ExternalRecipient.objects.get_or_create(
             email=email_address, defaults={"first_name": first_name}
         )
-        (external_recipient_confirmation, _) = (
+        external_recipient_confirmation, _ = (
             ExternalRecipientConfirmation.objects.get_or_create(
                 external_recipient=external_recipient, mail_category=self.get_category()
             )
