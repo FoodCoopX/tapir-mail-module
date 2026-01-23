@@ -18,6 +18,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from tapir_mail.config import TransactionalTriggerKeys
 from tapir_mail.forms import RegisterToMailCategoryForm, ExternalRecipientManagementForm
 from tapir_mail.models import (

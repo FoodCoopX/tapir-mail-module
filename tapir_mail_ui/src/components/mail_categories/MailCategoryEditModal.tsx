@@ -22,9 +22,7 @@ const MailCategoryEditModal: React.FC<MailCategoryEditModalProps> = ({
   const mailCategoryApi = useApi(MailCategoryApi);
   const showAlert = useAlert();
   const [categoryName, setCategoryName] = useState("");
-  const [categoryMode, setCategoryMode] = useState<ModeEnum>(
-    ModeEnum.OptionalDefaultOn,
-  );
+  const [categoryMode, setCategoryMode] = useState<ModeEnum>(ModeEnum.On);
   const [externalsEnabled, setExternalsEnabled] = useState(false);
   const nameRef = useRef<HTMLInputElement | null>(null);
 

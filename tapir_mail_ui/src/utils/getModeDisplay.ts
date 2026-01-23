@@ -3,12 +3,6 @@ import { ModeEnum } from "../api_client";
 export function getModeDisplay(mode: ModeEnum, longVersion: boolean) {
   let result;
   switch (mode) {
-    case "always_on":
-      result = "Pflicht";
-      if (longVersion) {
-        result += " (Mitglieder können sich nicht austragen)";
-      }
-      return result;
     case "optional_default_off":
       result = "Optional, Standard: aus";
       if (longVersion) {

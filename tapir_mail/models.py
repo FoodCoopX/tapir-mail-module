@@ -247,7 +247,6 @@ class StaticSegmentRecipient(BaseModel):
 
 
 class MailCategoryMode(models.TextChoices):
-    ALWAYS_ON = "always_on", _("Pflicht")
     OPTIONAL_DEFAULT_ON = "optional_default_on", _("Optional (Standard: ON)")
     OPTIONAL_DEFAULT_OFF = "optional_default_off", _("Optional (Standard: OFF)")
 

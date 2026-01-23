@@ -102,7 +102,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
               <thead>
                 <tr>
                   <th>Kategorie-Name</th>
-                  <th>Modus</th>
+                  <th>Modus für Mitglieder</th>
                   <th>Für Externe sichtbar</th>
                   <th>Anzahl an Empfänger*innen</th>
                   <th>URL zu Intergration in externe Seiten</th>
@@ -112,7 +112,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
               <tbody>
                 {mailCategories.length === 0 && (
                   <tr>
-                    <td colSpan={5}>Noch keine Kategorien</td>
+                    <td colSpan={6}>Noch keine Kategorien</td>
                   </tr>
                 )}
                 {mailCategories.map((category: MailCategory) => (
