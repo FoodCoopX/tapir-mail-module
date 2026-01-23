@@ -51,6 +51,6 @@ class TapirMailConfig(AppConfig):
 
     @classmethod
     def get_default_mail_content(cls, key: str) -> str:
-        file_path = Path(__file__).parent / f"tapir_mail/email_drafts/{key}.mjml"
+        file_path = Path(__file__).parent / f"email_drafts/{key}.mjml"
         with open(file_path, "r") as file:
             return file.read()
