@@ -125,22 +125,26 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                     </td>
                     <td>{category.nbRecipients}</td>
                     <td>
-                      <a href={category.registrationFormLink}>
-                        {category.registrationFormLink}
-                      </a>
+                      {category.availableForExternalRecipients && (
+                        <a href={category.registrationFormLink}>
+                          {category.registrationFormLink}
+                        </a>
+                      )}
                     </td>
                     <td>
                       <div className={"d-flex flex-row gap-2"}>
-                        <TapirButton
-                          variant={"outline-primary"}
-                          icon={DocumentDuplicateIcon}
-                          size={"sm"}
-                          onClick={() =>
-                            navigator.clipboard.writeText(
-                              category.registrationFormLink,
-                            )
-                          }
-                        />
+                        {category.availableForExternalRecipients && (
+                          <TapirButton
+                            variant={"outline-primary"}
+                            icon={DocumentDuplicateIcon}
+                            size={"sm"}
+                            onClick={() =>
+                              navigator.clipboard.writeText(
+                                category.registrationFormLink,
+                              )
+                            }
+                          />
+                        )}
                         <TapirButton
                           variant={"outline-primary"}
                           icon={PencilIcon}
