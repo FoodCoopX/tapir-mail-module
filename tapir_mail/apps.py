@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable
 
 from django.apps import AppConfig
@@ -50,5 +51,6 @@ class TapirMailConfig(AppConfig):
 
     @classmethod
     def get_default_mail_content(cls, key: str) -> str:
-        with open(f"tapir_mail/email_drafts/{key}.mjml", "r") as file:
+        file_path = Path(__file__).parent / f"tapir_mail/email_drafts/{key}.mjml"
+        with open(file_path, "r") as file:
             return file.read()
