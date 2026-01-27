@@ -21,7 +21,6 @@ class TestEmailConfigurationVersionSendTestEmail(TapirIntegrationTest):
         self.assertEqual(0, len(mail.outbox))
 
     def test_validRequest_emailIsSent(self):
-        recipients = ["test@test.com", "foo@bar.net"]
         subject = "TEST SUBJECT"
         EmailConfigurationVersionFactory.create(subject=subject)
         response = self._send_request(
@@ -29,11 +28,12 @@ class TestEmailConfigurationVersionSendTestEmail(TapirIntegrationTest):
             {"recipients": ["test@test.com", "foo@bar.net"]},
         )
         self.assertEqual(200, response.status_code)
-        self.assertEqual(1, len(mail.outbox))
+        self.assertEqual(2, len(mail.outbox))
         sent_mail = mail.outbox[0]
         self.assertIn("This is a dummy email!", sent_mail.body)
-        self.assertEqual(recipients, sent_mail.to)
+        self.assertEqual(["test@test.com"], sent_mail.to)
         self.assertEqual(subject, sent_mail.subject)
+        self.assertEqual(["foo@bar.net"], mail.outbox[1].to)
 
     def _send_request(
         self, email_configuration_version_id: str, post_data: dict | None

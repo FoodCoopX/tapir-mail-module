@@ -1,9 +1,8 @@
 from types import SimpleNamespace
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, call
 
 from django.http import Http404
 from rest_framework.response import Response
-
 from tapir_mail.models import EmailConfigurationVersion
 from tapir_mail.tests.test_utils import TapirUnitTest
 from tapir_mail.views import EmailConfigurationVersionViewSet
@@ -24,7 +23,7 @@ class TestEmailConfigurationVersion(TapirUnitTest):
 
     def test_sendTestMail_invalidRecipient_returns400Response(self):
         for recipients in [
-            None,  # no recipients
+            [],  # no recipients
             [["test@test.de", 1]],  # invalid recipient
         ]:
             with self.subTest(recipients=recipients):
@@ -42,7 +41,7 @@ class TestEmailConfigurationVersion(TapirUnitTest):
                 mock_get_object_or_404.assert_called_once_with(
                     EmailConfigurationVersion, id=email_configuration_version_id
                 )
-                mock_request.data.get.assert_called_once_with("recipients", None)
+                mock_request.data.get.assert_called_once_with("recipients", [])
                 self.assertIsInstance(response, Response)
                 self.assertEqual(400, response.status_code)
 
@@ -70,11 +69,22 @@ class TestEmailConfigurationVersion(TapirUnitTest):
         mock_get_object_or_404.assert_called_once_with(
             EmailConfigurationVersion, id=email_configuration_version_id
         )
-        mock_request.data.get.assert_called_once_with("recipients", None)
+        mock_request.data.get.assert_called_once_with("recipients", [])
         self.assertIsInstance(response, Response)
         self.assertEqual(200, response.status_code)
-        mock_prepare_mail.assert_called_once_with(
-            mjml=email_configuration_version.content,
-            subject=email_configuration_version.subject,
-            recipients=recipients,
+        self.assertEqual(2, mock_prepare_mail.call_count)
+        mock_prepare_mail.assert_has_calls(
+            [
+                call(
+                    mjml=email_configuration_version.content,
+                    subject=email_configuration_version.subject,
+                    recipients=["test@test.de"],
+                ),
+                call(
+                    mjml=email_configuration_version.content,
+                    subject=email_configuration_version.subject,
+                    recipients=["test2@mail.de"],
+                ),
+            ],
+            any_order=True,
         )
