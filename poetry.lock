@@ -17,18 +17,18 @@ vine = ">=5.0.0,<6.0.0"
 
 [[package]]
 name = "asgiref"
-version = "3.8.1"
+version = "3.11.0"
 description = "ASGI specs, helper code, and adapters"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main", "dev"]
 files = [
-    {file = "asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"},
-    {file = "asgiref-3.8.1.tar.gz", hash = "sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590"},
+    {file = "asgiref-3.11.0-py3-none-any.whl", hash = "sha256:1db9021efadb0d9512ce8ffaf72fcef601c7b73a8807a1bb2ef143dc6b14846d"},
+    {file = "asgiref-3.11.0.tar.gz", hash = "sha256:13acff32519542a1736223fb79a715acdebe24286d98e8b164a73085f40da2c4"},
 ]
 
 [package.extras]
-tests = ["mypy (>=0.800)", "pytest", "pytest-asyncio"]
+tests = ["mypy (>=1.14.0)", "pytest", "pytest-asyncio"]
 
 [[package]]
 name = "asttokens"
@@ -441,24 +441,24 @@ files = [
 
 [[package]]
 name = "django"
-version = "5.2"
+version = "6.0.1"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 optional = false
-python-versions = ">=3.10"
+python-versions = ">=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "Django-5.2-py3-none-any.whl", hash = "sha256:91ceed4e3a6db5aedced65e3c8f963118ea9ba753fc620831c77074e620e7d83"},
-    {file = "Django-5.2.tar.gz", hash = "sha256:1a47f7a7a3d43ce64570d350e008d2949abe8c7e21737b351b6a1611277c6d89"},
+    {file = "django-6.0.1-py3-none-any.whl", hash = "sha256:a92a4ff14f664a896f9849009cb8afaca7abe0d6fc53325f3d1895a15253433d"},
+    {file = "django-6.0.1.tar.gz", hash = "sha256:ed76a7af4da21551573b3d9dfc1f53e20dd2e6c7d70a3adc93eedb6338130a5f"},
 ]
 
 [package.dependencies]
-asgiref = ">=3.8.1"
-sqlparse = ">=0.3.1"
+asgiref = ">=3.9.1"
+sqlparse = ">=0.5.0"
 tzdata = {version = "*", markers = "sys_platform == \"win32\""}
 
 [package.extras]
-argon2 = ["argon2-cffi (>=19.1.0)"]
-bcrypt = ["bcrypt"]
+argon2 = ["argon2-cffi (>=23.1.0)"]
+bcrypt = ["bcrypt (>=4.1.1)"]
 
 [[package]]
 name = "django-cors-headers"
@@ -478,20 +478,20 @@ django = ">=4.2"
 
 [[package]]
 name = "django-drf-filepond"
-version = "0.5.0"
+version = "0.5.2"
 description = "Filepond server app for Django REST Framework"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "django-drf-filepond-0.5.0.tar.gz", hash = "sha256:360abcbcfdc016398435679dcc768b0c2d6b29a92db46fe3430ad31176251a13"},
-    {file = "django_drf_filepond-0.5.0-py2.py3-none-any.whl", hash = "sha256:55d64c3272c716f0811f2e67877cc005b8927e96bb34ba7f7105202d6bd5a647"},
+    {file = "django_drf_filepond-0.5.2-py2.py3-none-any.whl", hash = "sha256:d877d04df75760b0167d3bb2ef48f165e7466c2cdaac7d3ffcfd59599ccd16e6"},
+    {file = "django_drf_filepond-0.5.2.tar.gz", hash = "sha256:77ed4ddd79dd9d5f5037ee0f54ed6b15ab256db3fc83a4f553a62cd38e5bba11"},
 ]
 
 [package.dependencies]
-Django = {version = ">=2.2.25", markers = "python_version >= \"3.6\""}
+Django = {version = ">=5.2.8", markers = "python_version >= \"3.10\""}
 django-storages = {version = ">=1.9.1", markers = "python_version >= \"3.5\""}
-djangorestframework = {version = ">=3.11.2", markers = "python_version >= \"3.5\""}
+djangorestframework = {version = ">=3.15.2", markers = "python_version >= \"3.8\""}
 requests = ">=2.20.1"
 shortuuid = {version = ">=0.5.0", markers = "python_version >= \"3.5\""}
 six = ">=1.14.0"
@@ -588,14 +588,14 @@ sftp = ["paramiko (>=1.15)"]
 
 [[package]]
 name = "django-upgrade"
-version = "1.24.0"
+version = "1.29.1"
 description = "Automatically upgrade your Django project code."
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
-    {file = "django_upgrade-1.24.0-py3-none-any.whl", hash = "sha256:198572f31130cd80b4f30c568aa331351176cccf1455741e45ebca272812271d"},
-    {file = "django_upgrade-1.24.0.tar.gz", hash = "sha256:d761d517f87338291ac73890e15b09775532c5cea8cf794f56ad159da9d63d9b"},
+    {file = "django_upgrade-1.29.1-py3-none-any.whl", hash = "sha256:39a4d71365189ce8a5ccab534b2d1f0ed69c71bea7f1ef4c46041918d5247e64"},
+    {file = "django_upgrade-1.29.1.tar.gz", hash = "sha256:8c53b6bcd326a638a5dc908a707f26d71593bad5789b33775c90a8dc8a76afd5"},
 ]
 
 [package.dependencies]
@@ -1660,7 +1660,7 @@ version = "6.1.0"
 description = "A wrapper around the stdlib `tokenize` which roundtrips."
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "tokenize_rt-6.1.0-py2.py3-none-any.whl", hash = "sha256:d706141cdec4aa5f358945abe36b911b8cbdc844545da99e811250c0cee9b6fc"},
     {file = "tokenize_rt-6.1.0.tar.gz", hash = "sha256:e8ee836616c0877ab7c7b54776d2fefcc3bde714449a206762425ae114b53c86"},
@@ -1788,14 +1788,14 @@ files = [
 
 [[package]]
 name = "whitenoise"
-version = "6.9.0"
+version = "6.11.0"
 description = "Radically simplified static file serving for WSGI applications"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "whitenoise-6.9.0-py3-none-any.whl", hash = "sha256:c8a489049b7ee9889617bb4c274a153f3d979e8f51d2efd0f5b403caf41c57df"},
-    {file = "whitenoise-6.9.0.tar.gz", hash = "sha256:8c4a7c9d384694990c26f3047e118c691557481d624f069b7f7752a2f735d609"},
+    {file = "whitenoise-6.11.0-py3-none-any.whl", hash = "sha256:b2aeb45950597236f53b5342b3121c5de69c8da0109362aee506ce88e022d258"},
+    {file = "whitenoise-6.11.0.tar.gz", hash = "sha256:0f5bfce6061ae6611cd9396a8231e088722e4fc67bc13a111be74c738d99375f"},
 ]
 
 [package.extras]
@@ -1859,4 +1859,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "292c18ecc747a11f010d3dd644d84aea13a090d883d24e6e6880560b210c1ebd"
+content-hash = "f1a1ecc77b822cbe5521b701bd2f55d98f3b15546ec2068f6c5f926e5a89a5c4"

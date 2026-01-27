@@ -3,3 +3,7 @@ repos:
     rev: 26.1.0
     hooks:
       - id: black
+  -   repo: https://github.com/adamchainz/django-upgrade
+      rev: "1.29.1"
+      hooks:
+        -   id: django-upgrade
