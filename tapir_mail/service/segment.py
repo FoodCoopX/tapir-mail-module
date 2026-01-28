@@ -162,14 +162,14 @@ def __resolve_segments_internal(
     combined = BASE_QUERYSET.none()
 
     # Combine segments using union
-    for segment in add_segments:
-        LOG.info(f"Adding segment {segment}")
-        combined = combined.union(segment_registry[segment]())
+    for segment_name in add_segments:
+        LOG.info(f"Adding segment {segment_name}")
+        combined = combined.union(segment_registry[segment_name]())
 
     # Subtract segments using difference
-    for segment in remove_segments:
-        LOG.info(f"Subtracting segment {segment}")
-        combined = combined.difference(segment_registry[segment]())
+    for segment_name in remove_segments:
+        LOG.info(f"Subtracting segment {segment_name}")
+        combined = combined.difference(segment_registry[segment_name]())
 
     # Apply complex filters
     if filter_list:
@@ -187,9 +187,9 @@ def __resolve_segments_internal(
 
     # Add static segments
     static_segments = StaticSegment.objects.filter(name__in=static_segments)
-    for segment in static_segments:
-        LOG.info(f"Adding static segment {segment.name}")
-        result.extend(segment.recipients.all())
+    for segment_name in static_segments:
+        LOG.info(f"Adding static segment {segment_name.name}")
+        result.extend(segment_name.recipients.all())
 
     recipients_subtractive = []
     for static_segment_subtractive in StaticSegment.objects.filter(
