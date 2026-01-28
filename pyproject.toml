@@ -13,13 +13,13 @@ include = [
 
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = "^3.14"
 django = "^6.0.1"
 django-environ = "^0.12.0"
 django-cors-headers = "^4.7.0"
 django-drf-filepond = "^0.5.2"
 djangorestframework = "^3.16.0"
-drf-spectacular = "^0.28.0"
+drf-spectacular = "^0.29.0"
 nanoid = "^2.0.0"
 celery = "^5.5.0"
 redis = "^5.2.1"
