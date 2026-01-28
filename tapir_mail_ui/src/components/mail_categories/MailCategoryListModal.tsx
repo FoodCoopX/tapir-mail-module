@@ -139,11 +139,12 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                             variant={"outline-primary"}
                             icon={DocumentDuplicateIcon}
                             size={"sm"}
-                            onClick={() =>
+                            onClick={() => {
                               navigator.clipboard.writeText(
                                 category.registrationFormLink,
-                              )
-                            }
+                              );
+                              showAlert("URL kopiert", "primary");
+                            }}
                           />
                         )}
                         <TapirButton
