@@ -3,7 +3,7 @@ import { Modal, Table } from "react-bootstrap";
 import { useApi } from "../../hooks/useApi";
 import { useAlert } from "../../contexts/alerts";
 import Loading from "./../loading";
-import { MailCategory, MailCategoryApi } from "../../api_client";
+import { MailCategory, MailCategoryApi, SegmentApi } from "../../api_client";
 import TapirButton from "../TapirButton";
 import {
   DocumentDuplicateIcon,
@@ -32,7 +32,9 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
   const [categorySelectedForEdition, setCategorySelectedForEdition] =
     useState<MailCategory>();
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [segmentNames, setSegmentNames] = useState<string[]>([]);
   const mailCategoryApi = useApi(MailCategoryApi);
+  const segmentApi = useApi(SegmentApi);
   const showAlert = useAlert();
 
   useEffect(() => {
@@ -46,9 +48,14 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
 
     setLoading(true);
 
-    mailCategoryApi
-      .mailCategoryList()
-      .then(setMailCategories)
+    Promise.all([
+      mailCategoryApi.mailCategoryList(),
+      segmentApi.segmentAvailableSegmentsRetrieve(),
+    ])
+      .then(([mailCategories, availableSegments]) => {
+        setMailCategories(mailCategories);
+        setSegmentNames(Object.keys(availableSegments.dynamicSegments));
+      })
       .catch((error) => {
         console.error(error);
         showAlert("Fehler beim Laden der Mail-Kategorien", "danger");
@@ -86,8 +93,9 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
           !categorySelectedForEdition
         }
         onHide={onClose}
-        size={"lg"}
-        fullscreen={"lg-down"}
+        size={"xl"}
+        fullscreen={"xl-down"}
+        centered={true}
       >
         <Modal.Header closeButton>
           <Modal.Title>Mail-Kategorien</Modal.Title>
@@ -107,6 +115,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                   <th>Modus für Mitglieder</th>
                   <th>Für Externe sichtbar</th>
                   <th>Anzahl an Empfänger*innen</th>
+                  <th>Basis-Segment</th>
                   <th>URL zu Intergration in externe Seiten</th>
                   <th>Aktionen</th>
                 </tr>
@@ -125,6 +134,11 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
                       {category.availableForExternalRecipients ? "Ja" : "Nein"}
                     </td>
                     <td>{category.nbRecipients}</td>
+                    <td>
+                      {category.dynamicSegmentName
+                        ? category.dynamicSegmentName
+                        : "Kein"}
+                    </td>
                     <td>
                       {category.availableForExternalRecipients && (
                         <a href={category.registrationFormLink}>
@@ -186,6 +200,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
           setCreateModalOpen(false);
           loadData();
         }}
+        segmentNames={segmentNames}
       />
       <ConfirmDeleteModal
         message={
@@ -206,6 +221,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
             loadData();
           }}
           category={categorySelectedForEdition}
+          segmentNames={segmentNames}
         />
       )}
     </>

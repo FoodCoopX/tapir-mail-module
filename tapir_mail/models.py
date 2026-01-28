@@ -7,8 +7,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from nanoid import generate
 
-from tapir_mail.service.segment import resolve_segments
-
 ID_LENGTH = 10
 
 
@@ -119,20 +117,8 @@ class EmailConfigurationDispatch(BaseModel):
     override_recipients = models.JSONField(null=True)
     additional_tokens = models.JSONField(null=True)
 
-    def get_recipient_list(self) -> list:
-        if self.is_sent:
-            return [dispatch.recipient for dispatch in self.emaildispatch_set.all()]
-
-        if self.email_configuration_version.segment_data is not None:
-            return resolve_segments(
-                **self.email_configuration_version.segment_data,
-                override_recipients=self.override_recipients,
-            )
-
-        return []
-
     def __str__(self):
-        return f"{self.email_configuration_version} - {self.get_recipient_list()} - {self.scheduled_time} - {self.is_sent}"
+        return f"{self.email_configuration_version} - {self.scheduled_time} - {self.is_sent}"
 
 
 def delete_unsent_dispatches_if_not_released(
@@ -249,6 +235,7 @@ class StaticSegmentRecipient(BaseModel):
 class MailCategoryMode(models.TextChoices):
     OPTIONAL_DEFAULT_ON = "optional_default_on", _("Optional (Standard: ON)")
     OPTIONAL_DEFAULT_OFF = "optional_default_off", _("Optional (Standard: OFF)")
+    ALWAYS_ON = "always_on", _("Pflicht")
 
 
 class MailCategory(BaseModel):
@@ -256,6 +243,7 @@ class MailCategory(BaseModel):
     mode = models.CharField(max_length=30, choices=MailCategoryMode)
     available_for_external_recipients = models.BooleanField()
     static_segment = models.OneToOneField(StaticSegment, on_delete=models.PROTECT)
+    dynamic_segment_name = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return f"{self.name} - Mode:{self.mode} - External:{self.available_for_external_recipients}"
@@ -275,3 +263,9 @@ class ExternalRecipientConfirmation(BaseModel):
     mail_category = models.ForeignKey(MailCategory, on_delete=models.CASCADE)
     confirmed_at = models.DateTimeField(null=True)
     confirmation_secret = models.UUIDField(default=uuid.uuid4)
+
+
+class InternalRecipientCategoryRegistration(BaseModel):
+    internal_recipient_id = models.CharField(max_length=ID_LENGTH)
+    mail_category = models.ForeignKey(MailCategory, on_delete=models.CASCADE)
+    is_registered = models.BooleanField()

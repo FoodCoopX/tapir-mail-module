@@ -45,6 +45,7 @@ const MissingTriggersModal: React.FC<MissingTriggersModalProps> = ({
       show={open}
       onHide={onHide}
       size={"lg"}
+      centered={true}
     >
       <Modal.Header closeButton>
         <Modal.Title>Fehlende Trigger</Modal.Title>

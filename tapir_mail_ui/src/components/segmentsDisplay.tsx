@@ -10,15 +10,24 @@ interface SegmentsDisplayProps {
     onSegmentToRemoveClicked: (segment: string) => void;
     onStaticSegmentToAddClicked: (segment: string) => void;
     onStaticSegmentToRemoveClicked: (segment: string) => void;
+    onMailCategoryIdClicked: (segment: string) => void;
   };
+  availableDynamicSegments: { [id: string]: string };
+  availableStaticSegments: { [id: string]: string };
+  availableMailCategories: { [id: string]: string };
 }
 
 const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
   segmentData,
   interactions,
+  availableDynamicSegments,
+  availableStaticSegments,
+  availableMailCategories,
 }) => {
   if (
-    segmentData.addSegments.length + segmentData.staticSegments.length ===
+    segmentData.addSegments.length +
+      segmentData.staticSegments.length +
+      (segmentData.mailCategoryIds ?? []).length ===
     0
   ) {
     return null;
@@ -30,40 +39,38 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
   return (
     <div style={{ marginBottom: "0.5em" }}>
       <h6 className="chained-badges">
-        {segmentData.addSegments.map((segment, idx) => (
-          <Fragment key={segment}>
+        {segmentData.addSegments.map((segmentId, idx) => (
+          <Fragment key={segmentId}>
             {idx > 0 && <OperatorBadge text="+" />}
             <Badge
               style={segmentStyle}
               onClick={() =>
                 interactions
-                  ? interactions.onSegmentToAddClicked(segment)
+                  ? interactions.onSegmentToAddClicked(segmentId)
                   : () => {}
               }
-              bg="success"
             >
-              {segment}
+              {availableDynamicSegments[segmentId]}
             </Badge>
           </Fragment>
         ))}
-        {segmentData.removeSegments.map((segment) => (
-          <Fragment key={segment}>
+        {segmentData.removeSegments.map((segmentId) => (
+          <Fragment key={segmentId}>
             <OperatorBadge text="-" />
             <Badge
               style={segmentStyle}
               onClick={() =>
                 interactions
-                  ? interactions.onSegmentToRemoveClicked(segment)
+                  ? interactions.onSegmentToRemoveClicked(segmentId)
                   : () => {}
               }
-              bg="danger"
             >
-              {segment}
+              {availableDynamicSegments[segmentId]}
             </Badge>
           </Fragment>
         ))}
-        {segmentData.staticSegments.map((segment, idx) => (
-          <Fragment key={segment}>
+        {segmentData.staticSegments.map((segmentId, idx) => (
+          <Fragment key={segmentId}>
             {(segmentData.addSegments.length > 0 || idx > 0) && (
               <OperatorBadge text="+" />
             )}
@@ -71,32 +78,48 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
               style={segmentStyle}
               onClick={() =>
                 interactions
-                  ? interactions.onStaticSegmentToAddClicked(segment)
+                  ? interactions.onStaticSegmentToAddClicked(segmentId)
                   : () => {}
               }
             >
-              {segment}
+              {availableStaticSegments[segmentId]}
             </Badge>
           </Fragment>
         ))}
-        {segmentData.staticSegmentsSubtractive &&
-          segmentData.staticSegmentsSubtractive.map((segment, idx) => (
-            <Fragment key={segment}>
-              {(segmentData.addSegments.length > 0 || idx > 0) && (
-                <OperatorBadge text="-" />
-              )}
-              <Badge
-                style={segmentStyle}
-                onClick={() =>
-                  interactions
-                    ? interactions.onStaticSegmentToRemoveClicked(segment)
-                    : () => {}
-                }
-              >
-                {segment}
-              </Badge>
-            </Fragment>
-          ))}
+        {segmentData.staticSegmentsSubtractive?.map((segmentId, idx) => (
+          <Fragment key={segmentId}>
+            {(segmentData.addSegments.length > 0 || idx > 0) && (
+              <OperatorBadge text="-" />
+            )}
+            <Badge
+              style={segmentStyle}
+              onClick={() =>
+                interactions
+                  ? interactions.onStaticSegmentToRemoveClicked(segmentId)
+                  : () => {}
+              }
+            >
+              {availableStaticSegments[segmentId]}
+            </Badge>
+          </Fragment>
+        ))}
+        {(segmentData.mailCategoryIds ?? []).map((mailCategoryId, idx) => (
+          <Fragment key={mailCategoryId}>
+            {(segmentData.addSegments.length > 0 || idx > 0) && (
+              <OperatorBadge text="+" />
+            )}
+            <Badge
+              style={segmentStyle}
+              onClick={() =>
+                interactions
+                  ? interactions.onMailCategoryIdClicked(mailCategoryId)
+                  : () => {}
+              }
+            >
+              {availableMailCategories[mailCategoryId]}
+            </Badge>
+          </Fragment>
+        ))}
       </h6>
     </div>
   );

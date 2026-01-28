@@ -12,12 +12,14 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import FormView, TemplateView
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from icecream import ic
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from tapir_mail.config import TransactionalTriggerKeys
 from tapir_mail.forms import RegisterToMailCategoryForm, ExternalRecipientManagementForm
 from tapir_mail.models import (
@@ -33,6 +35,7 @@ from tapir_mail.models import (
     ExternalRecipient,
     ExternalRecipientConfirmation,
 )
+from tapir_mail.registries import segment_registry, filter_registry
 from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
     EmailConfigurationDispatchSerializer,
@@ -50,14 +53,13 @@ from tapir_mail.serializers import (
     MissingTriggerSerializer,
     CreateMissingTriggerMailSerializer,
     MailCategorySerializer,
+    AvailableSegmentsResponseSerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
 from tapir_mail.service.external_recipient_manager import ExternalRecipientManager
 from tapir_mail.service.segment import (
-    filter_registry,
     resolve_segments,
-    segment_registry,
 )
 from tapir_mail.service.token import replace_tokens, token_registry
 from tapir_mail.service.tracking import track_email_opening
@@ -632,28 +634,37 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
 
     @extend_schema(
         responses={
-            200: {
-                "type": "object",
-                "properties": {
-                    "segments": {"type": "array", "items": {"type": "string"}},
-                    "staticSegments": {"type": "array", "items": {"type": "string"}},
-                },
-            }
+            200: AvailableSegmentsResponseSerializer,
         },
         description="Get a list of available segments.",
     )
     @action(detail=False, methods=["GET"])
     def available_segments(self, request):
-        static_segments = [
-            x["name"]
-            for x in StaticSegment.objects.filter(recipients__isnull=False)
-            .distinct()
-            .values("name")
-        ]
+        dynamic_segments = {
+            segment_name: f"Dynamisches Segment: {segment_name}"
+            for segment_name in segment_registry.keys()
+        }
 
-        available_segments = list(segment_registry.keys())
+        static_segments = {
+            segment.id: f"Statisches Segment: {segment.name}"
+            for segment in StaticSegment.objects.filter(
+                recipients__isnull=False, mailcategory__isnull=True
+            )
+        }
+
+        mail_categories = {
+            category.id: f"Kategorie: {category.name}"
+            for category in MailCategory.objects.all()
+        }
+
         return Response(
-            {"segments": available_segments, "staticSegments": static_segments}
+            AvailableSegmentsResponseSerializer(
+                {
+                    "dynamic_segments": dynamic_segments,
+                    "static_segments": static_segments,
+                    "mail_categories": mail_categories,
+                }
+            ).data
         )
 
     @extend_schema(
@@ -680,6 +691,7 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["POST"])
     def combine(self, request):
+        ic(request.data)
         try:
             combined = resolve_segments(**request.data)
             return Response(

@@ -30,6 +30,7 @@ const ConfirmModal: React.FC<ConfirmDeleteModalProps> = ({
     <Modal
       show={open}
       onHide={onCancel}
+      centered={true}
     >
       <Modal.Header closeButton>
         <Modal.Title>{title}</Modal.Title>

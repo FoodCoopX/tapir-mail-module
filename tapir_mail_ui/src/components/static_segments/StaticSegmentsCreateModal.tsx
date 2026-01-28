@@ -42,6 +42,7 @@ const StaticSegmentsCreateModal: React.FC<StaticSegmentsCreateModalProps> = ({
     <Modal
       show={open}
       onHide={onClose}
+      centered={true}
     >
       <Modal.Header closeButton>
         <Modal.Title>Statische Segment erzeugen</Modal.Title>

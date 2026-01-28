@@ -17,5 +17,7 @@ export function getModeDisplay(mode: ModeEnum, longVersion: boolean) {
           "  (Mitglieder müssen sich manuell austragen um die Mails nicht zu bekommen)";
       }
       return result;
+    case "always_on":
+      return "Pflicht";
   }
 }

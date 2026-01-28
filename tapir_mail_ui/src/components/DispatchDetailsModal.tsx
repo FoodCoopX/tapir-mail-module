@@ -94,7 +94,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
   function retryConfigDispatch() {
     emailConfigDispatchApi
       .emailConfigurationDispatchRetryallCreate({
-        id: configDispatch.id!,
+        id: configDispatch.id,
         emailConfigurationDispatchRequest: configDispatch,
       })
       .then(() => {
@@ -130,6 +130,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
       show={open}
       onHide={onClose}
       size="xl"
+      centered={true}
     >
       <Modal.Header closeButton>
         <Modal.Title>
@@ -238,7 +239,9 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
                       {(dispatch.dispatchStatus === DispatchStatusEnum.Error ||
                         dispatch.dispatchStatus ===
                           DispatchStatusEnum.Bounced) &&
-                        (!dispatch.nextRetry ? (
+                        (dispatch.nextRetry ? (
+                          <span>Dies ist schon erneut versendet worden.</span>
+                        ) : (
                           <TapirTooltip
                             id={"resend-" + dispatch.id}
                             text="Erneut senden"
@@ -250,13 +253,12 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
                               onClick={() => retrySingleDispatch(dispatch)}
                             />
                           </TapirTooltip>
-                        ) : (
-                          <span>Dies ist schon erneut versendet worden.</span>
                         ))}
                     </td>
                   </tr>
                   {dispatch.previousRetries.map((retry: EmailDispatch) => (
                     <tr
+                      key={retry.id}
                       style={
                         index % 2
                           ? undefined

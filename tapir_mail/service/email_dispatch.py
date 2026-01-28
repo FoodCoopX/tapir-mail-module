@@ -8,6 +8,9 @@ from django.utils import timezone
 
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import prepare_email
+from tapir_mail.service.email_configuration_dispatch_recipient_list_provider import (
+    EmailConfigurationDispatchRecipientListProvider,
+)
 from tapir_mail.service.token import (
     find_tokens,
     replace_tokens,
@@ -85,7 +88,9 @@ class ResolveAndCreateEmailDispatches:
                 f"Segment data is required to send an email! EmailConfigurationDispatch#{config_dispatch.id}"
             )
 
-        recipients = config_dispatch.get_recipient_list()
+        recipients = EmailConfigurationDispatchRecipientListProvider.get_recipient_list(
+            config_dispatch
+        )
         if not recipients:
             raise ValueError(
                 f"No recipients found for EmailConfigurationDispatch#{config_dispatch.id}!"

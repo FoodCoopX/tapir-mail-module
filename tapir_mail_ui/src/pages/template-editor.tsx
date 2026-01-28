@@ -18,7 +18,7 @@ const TemplateEditor = () => {
 
   const [id, setId] = useState(templateId);
   const [name, setName] = useState("");
-  const [content, setContent] = useState<any | undefined>(EMPTY_PAGE);
+  const [content, setContent] = useState<any>(EMPTY_PAGE);
   const [showSaveGateModal, setShowSaveGateModal] = useState(false);
   const [loading, setLoading] = useState(Boolean(id));
 
@@ -42,10 +42,10 @@ const TemplateEditor = () => {
   }, [id]);
 
   const handleBack = (values: IEmailTemplate) => {
-    if (values.content !== content) {
-      setShowSaveGateModal(true);
-    } else {
+    if (values.content === content) {
       navigate("/");
+    } else {
+      setShowSaveGateModal(true);
     }
   };
 
@@ -56,19 +56,7 @@ const TemplateEditor = () => {
         content: jsonToMjml(values.content),
       },
     };
-    if (!templateId) {
-      api
-        .emailTemplateCreate(props)
-        .then((data) => {
-          showAlert("Dein Vorlage wurde gespeichert!", "success");
-          if (data.id) {
-            navigate("/editor/" + data.id);
-          }
-        })
-        .catch((err) => {
-          showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, "danger");
-        });
-    } else {
+    if (templateId) {
       api
         .emailTemplateUpdate({
           id: templateId,
@@ -77,6 +65,18 @@ const TemplateEditor = () => {
         .then((data) => {
           showAlert("Deine Änderungen wurden gespeichert!", "success");
           setContent(values.content);
+        })
+        .catch((err) => {
+          showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, "danger");
+        });
+    } else {
+      api
+        .emailTemplateCreate(props)
+        .then((data) => {
+          showAlert("Dein Vorlage wurde gespeichert!", "success");
+          if (data.id) {
+            navigate("/editor/" + data.id);
+          }
         })
         .catch((err) => {
           showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, "danger");
@@ -90,6 +90,7 @@ const TemplateEditor = () => {
       <Modal
         show={showSaveGateModal}
         onHide={handleCloseModal}
+        centered={true}
       >
         <Modal.Header closeButton>
           <Modal.Title>Achtung!</Modal.Title>

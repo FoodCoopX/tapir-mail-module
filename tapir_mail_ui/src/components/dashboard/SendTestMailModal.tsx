@@ -33,7 +33,7 @@ const SendTestMailModal = ({
 
   useEffect(() => {
     segmentApi.segmentAvailableSegmentsRetrieve().then(({ staticSegments }) => {
-      setStaticSegments(staticSegments || []);
+      setStaticSegments(Object.values(staticSegments) || []);
     });
   }, []);
 
@@ -41,7 +41,7 @@ const SendTestMailModal = ({
     onClose();
     versionApi
       .emailConfigurationVersionSendTestEmail({
-        id: emailConfigurationVersion.id!!,
+        id: emailConfigurationVersion.id!,
         recipientRequest: { recipients: recipients },
       })
       .then(() => {
@@ -64,12 +64,13 @@ const SendTestMailModal = ({
           addSegments: [],
           removeSegments: [],
           filterList: [],
+          mailCategoryIds: [],
         },
       })
       .then((data) => {
         if (!data.recipients) throw new Error("No recipients returned");
 
-        const newEmails = data.recipients!!.map((r) => r.email!!);
+        const newEmails = data.recipients.map((r) => r.email!);
         if (recipients) {
           newEmails.push(...recipients);
         }
@@ -92,6 +93,7 @@ const SendTestMailModal = ({
       show={Boolean(open)}
       onHide={onClose}
       dialogClassName="preview-modal"
+      centered={true}
     >
       <Modal.Header closeButton>
         <Modal.Title>Testmail senden</Modal.Title>

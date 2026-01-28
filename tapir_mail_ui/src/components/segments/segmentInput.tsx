@@ -24,10 +24,15 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   const segmentApi = useApi(SegmentApi);
   const showAlert = useAlert();
 
-  const [availableSegments, setAvailableSegments] = useState<string[]>([]);
-  const [availableStaticSegments, setAvailableStaticSegments] = useState<
-    string[]
-  >([]);
+  const [availableDynamicSegments, setAvailableDynamicSegments] = useState<{
+    [id: string]: string;
+  }>({});
+  const [availableStaticSegments, setAvailableStaticSegments] = useState<{
+    [id: string]: string;
+  }>({});
+  const [availableMailCategories, setAvailableMailCategories] = useState<{
+    [id: string]: string;
+  }>({});
   const [availableFilters, setAvailableFilters] = useState<string[]>([]);
 
   const [selectedSegment, setSelectedSegment] = useState<string>("");
@@ -39,6 +44,9 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   >([]);
   const [segmentsToRemove, setSegmentsToRemove] = useState<string[]>([]);
   const [complexFilter, setComplexFilter] = useState<FilterElement[]>([]);
+  const [selectedMailCategoryIds, setSelectedMailCategoryIds] = useState<
+    string[]
+  >([]);
 
   const [resultCount, setResultCount] = useState<number>(0);
   const [resultRecipients, setResultRecipients] = useState<any[]>([]);
@@ -52,6 +60,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
       staticSegmentsSubtractive: staticSegmentsToRemove,
       removeSegments: segmentsToRemove,
       filterList: isFilterValid ? complexFilter.map((c) => c.value) : [],
+      mailCategoryIds: selectedMailCategoryIds,
     });
   }, [
     segmentsToAdd,
@@ -60,14 +69,16 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     staticSegmentsToRemove,
     complexFilter,
     isFilterValid,
+    selectedMailCategoryIds,
   ]);
 
   useEffect(() => {
     segmentApi
       .segmentAvailableSegmentsRetrieve()
-      .then(({ segments, staticSegments }) => {
-        setAvailableSegments(segments!!);
-        setAvailableStaticSegments(staticSegments!!);
+      .then((response) => {
+        setAvailableDynamicSegments(response.dynamicSegments);
+        setAvailableStaticSegments(response.staticSegments);
+        setAvailableMailCategories(response.mailCategories);
 
         if (initialData) {
           initialData.addSegments && setSegmentsToAdd(initialData.addSegments);
@@ -84,6 +95,8 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
                 elementType: guessElementType(f),
               })),
             );
+          initialData.mailCategoryIds &&
+            setSelectedMailCategoryIds(initialData.mailCategoryIds);
         }
       })
       .catch((err) => {
@@ -103,7 +116,10 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   useEffect(() => {
     if (
       !isFilterValid ||
-      segmentsToAdd.length + staticSegmentsToAdd.length < 1
+      segmentsToAdd.length +
+        staticSegmentsToAdd.length +
+        selectedMailCategoryIds.length <
+        1
     ) {
       setResultCount(0);
       setResultRecipients([]);
@@ -119,11 +135,12 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
           staticSegmentsSubtractive: staticSegmentsToRemove,
           removeSegments: segmentsToRemove,
           filterList: filters,
+          mailCategoryIds: selectedMailCategoryIds,
         },
       })
       .then(({ count, recipients }) => {
-        setResultCount(count!!);
-        setResultRecipients(recipients!!.map((recipient) => recipient.name));
+        setResultCount(count!);
+        setResultRecipients(recipients!.map((recipient) => recipient.name));
       })
       .catch((error) => {
         console.error(error);
@@ -136,12 +153,15 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     segmentsToRemove,
     complexFilter,
     isFilterValid,
+    selectedMailCategoryIds,
   ]);
 
   const handleAddSegment = () => {
     if (selectedSegment === "") return;
-    if (availableStaticSegments.includes(selectedSegment)) {
+    if (Object.keys(availableStaticSegments).includes(selectedSegment)) {
       setStaticSegmentsToAdd((prev) => [...prev, selectedSegment]);
+    } else if (Object.keys(availableMailCategories).includes(selectedSegment)) {
+      setSelectedMailCategoryIds((previous) => [...previous, selectedSegment]);
     } else {
       setSegmentsToAdd((prev) => [...prev, selectedSegment]);
     }
@@ -151,7 +171,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   const handleRemoveSegment = () => {
     if (selectedSegment === "") return;
 
-    if (availableStaticSegments.includes(selectedSegment)) {
+    if (Object.keys(availableStaticSegments).includes(selectedSegment)) {
       setStaticSegmentsToRemove((prev) => [...prev, selectedSegment]);
     } else {
       setSegmentsToRemove((prev) => [...prev, selectedSegment]);
@@ -160,13 +180,54 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     setSelectedSegment("");
   };
 
-  const segmentOptions = availableSegments.filter(
-    (s) => !segmentsToAdd.includes(s) && !segmentsToRemove.includes(s),
-  );
+  function getDynamicSegmentOptions() {
+    const segmentOptions = Object.entries(availableDynamicSegments).filter(
+      ([segmentId, _]) =>
+        !segmentsToAdd.includes(segmentId) &&
+        !segmentsToRemove.includes(segmentId),
+    );
 
-  const staticSegmentOptions = availableStaticSegments.filter(
-    (s) => !segmentsToAdd.includes(s),
-  );
+    return segmentOptions.map(([segmentId, segmentName]) => (
+      <option
+        key={segmentId}
+        value={segmentId}
+      >
+        {segmentName}
+      </option>
+    ));
+  }
+
+  function getStaticSegmentOptions() {
+    const staticSegmentOptions = Object.entries(availableStaticSegments).filter(
+      ([segmentId, _]) =>
+        !staticSegmentsToAdd.includes(segmentId) &&
+        !staticSegmentsToRemove.includes(segmentId),
+    );
+
+    return staticSegmentOptions.map(([segmentId, segmentName]) => (
+      <option
+        key={segmentId}
+        value={segmentId}
+      >
+        {segmentName}
+      </option>
+    ));
+  }
+
+  function getMailCategoryOptions() {
+    const options = Object.entries(availableMailCategories).filter(
+      ([categoryId, _]) => !selectedMailCategoryIds.includes(categoryId),
+    );
+
+    return options.map(([categoryId, categoryName]) => (
+      <option
+        key={categoryId}
+        value={categoryId}
+      >
+        {categoryName}
+      </option>
+    ));
+  }
 
   const handleFilterChange = (filter: FilterElement[], isValid: boolean) => {
     setComplexFilter(filter);
@@ -175,7 +236,9 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
 
   const plusSegmentButtonDisabled = !selectedSegment || selectedSegment === "";
   const minusSegmentButtonDisabled =
-    plusSegmentButtonDisabled || segmentsToAdd.length === 0;
+    plusSegmentButtonDisabled ||
+    segmentsToAdd.length === 0 ||
+    Object.keys(availableMailCategories).includes(selectedSegment);
 
   function onSegmentToAddClicked(segment: string) {
     const newSegmentsToAdd = segmentsToAdd.filter((s) => s !== segment);
@@ -198,6 +261,12 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     setStaticSegmentsToRemove(staticSegmentsToAdd.filter((s) => s !== segment));
   }
 
+  function onMailCategoryIdClicked(mailCategoryId: string) {
+    setSelectedMailCategoryIds(
+      selectedMailCategoryIds.filter((id) => id !== mailCategoryId),
+    );
+  }
+
   return (
     <div>
       <Form.Label>Segmente</Form.Label>
@@ -208,13 +277,18 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
           staticSegments: staticSegmentsToAdd,
           staticSegmentsSubtractive: staticSegmentsToRemove,
           filterList: [],
+          mailCategoryIds: selectedMailCategoryIds,
         }}
         interactions={{
           onSegmentToAddClicked: onSegmentToAddClicked,
           onSegmentToRemoveClicked: onSegmentToRemoveClicked,
           onStaticSegmentToAddClicked: onStaticSegmentToAddClicked,
           onStaticSegmentToRemoveClicked: onStaticSegmentToRemoveClicked,
+          onMailCategoryIdClicked: onMailCategoryIdClicked,
         }}
+        availableDynamicSegments={availableDynamicSegments}
+        availableStaticSegments={availableStaticSegments}
+        availableMailCategories={availableMailCategories}
       />
       <div style={{ display: "flex" }}>
         <Form.Select
@@ -227,17 +301,9 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
           >
             Segment auswählen
           </option>
-          {segmentOptions.map((segment) => (
-            <option key={segment}>{segment}</option>
-          ))}
-          {staticSegmentOptions.map((segment) => (
-            <option
-              style={{ color: "blue" }}
-              key={segment}
-            >
-              {segment}
-            </option>
-          ))}
+          {getDynamicSegmentOptions()}
+          {getStaticSegmentOptions()}
+          {getMailCategoryOptions()}
         </Form.Select>
         <PlusCircleIcon
           style={{
@@ -258,14 +324,16 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
         />
       </div>
 
-      {(segmentsToAdd.length > 0 || staticSegmentsToAdd.length > 0) && (
+      {(segmentsToAdd.length > 0 ||
+        staticSegmentsToAdd.length > 0 ||
+        selectedMailCategoryIds.length > 0) && (
         <>
           <Accordion style={{ marginTop: "0.5em" }}>
             <Accordion.Item eventKey="0">
               <AccordionToggleCompact eventKey="0">
                 Erweiterte Filter&nbsp;&nbsp;
-                {complexFilter.length > 0 ? (
-                  isFilterValid ? (
+                {complexFilter.length > 0 &&
+                  (isFilterValid ? (
                     <CheckBadgeIcon
                       style={{
                         float: "right",
@@ -283,8 +351,8 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
                       }}
                       width={20}
                     />
-                  )
-                ) : (
+                  ))}
+                {complexFilter.length === 0 && (
                   <span
                     style={{ width: 20, float: "right", marginRight: "1em" }}
                   >

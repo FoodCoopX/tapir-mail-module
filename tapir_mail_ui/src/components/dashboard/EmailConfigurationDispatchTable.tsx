@@ -167,6 +167,9 @@ const EmailConfigurationDispatchTable: React.FC<
                                 emailConfigurationDispatch
                                   .emailConfigurationVersion.segmentData
                               }
+                              availableDynamicSegments={{}}
+                              availableStaticSegments={{}}
+                              availableMailCategories={{}}
                             />
                             <FilterDisplay
                               filter={emailConfigurationDispatch.emailConfigurationVersion.segmentData.filterList.map(

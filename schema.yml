@@ -2241,6 +2241,7 @@ paths:
           - hi
           - hr
           - hsb
+          - ht
           - hu
           - hy
           - ia
@@ -2359,16 +2360,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  segments:
-                    type: array
-                    items:
-                      type: string
-                  staticSegments:
-                    type: array
-                    items:
-                      type: string
+                $ref: '#/components/schemas/AvailableSegmentsResponse'
           description: ''
   /api/segment/combine/:
     post:
@@ -2770,6 +2762,25 @@ paths:
           description: ''
 components:
   schemas:
+    AvailableSegmentsResponse:
+      type: object
+      properties:
+        dynamic_segments:
+          type: object
+          additionalProperties:
+            type: string
+        static_segments:
+          type: object
+          additionalProperties:
+            type: string
+        mail_categories:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - dynamic_segments
+      - mail_categories
+      - static_segments
     BounceTypeEnum:
       enum:
       - soft
@@ -3377,6 +3388,9 @@ components:
         registration_form_link:
           type: string
           readOnly: true
+        dynamic_segment_name:
+          type: string
+          maxLength: 100
       required:
       - available_for_external_recipients
       - mode
@@ -3398,6 +3412,9 @@ components:
           $ref: '#/components/schemas/ModeEnum'
         available_for_external_recipients:
           type: boolean
+        dynamic_segment_name:
+          type: string
+          maxLength: 100
       required:
       - available_for_external_recipients
       - mode
@@ -3419,10 +3436,12 @@ components:
       enum:
       - optional_default_on
       - optional_default_off
+      - always_on
       type: string
       description: |-
         * `optional_default_on` - Optional (Standard: ON)
         * `optional_default_off` - Optional (Standard: OFF)
+        * `always_on` - Pflicht
     NameEnum:
       enum:
       - Monday
@@ -3716,6 +3735,9 @@ components:
           $ref: '#/components/schemas/ModeEnum'
         available_for_external_recipients:
           type: boolean
+        dynamic_segment_name:
+          type: string
+          maxLength: 100
     PatchedStaticSegmentRecipientRequest:
       type: object
       properties:
@@ -3834,6 +3856,10 @@ components:
           type: array
           items:
             type: string
+        mail_category_ids:
+          type: array
+          items:
+            type: string
       required:
       - add_segments
       - filter_list
@@ -3865,6 +3891,11 @@ components:
             type: string
             minLength: 1
         filter_list:
+          type: array
+          items:
+            type: string
+            minLength: 1
+        mail_category_ids:
           type: array
           items:
             type: string

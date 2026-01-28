@@ -81,6 +81,7 @@ const DispatchErrorDetailsModal: React.FC<DispatchErrorDetailsModalProps> = ({
     <Modal
       show={open}
       onHide={onClose}
+      centered={true}
     >
       <Modal.Header closeButton>
         <Modal.Title>Versand Fehler Details</Modal.Title>
@@ -108,7 +109,7 @@ const DispatchErrorDetailsModal: React.FC<DispatchErrorDetailsModalProps> = ({
             </thead>
             <tbody>
               {emailDispatches.map((dispatch: EmailDispatch) => (
-                <tr>
+                <tr key={dispatch.id}>
                   <td>{formatDate(dispatch.sentTime)}</td>
                   <td>{renderDetails(dispatch)}</td>
                 </tr>

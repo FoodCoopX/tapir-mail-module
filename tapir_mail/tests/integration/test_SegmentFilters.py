@@ -1,6 +1,6 @@
+from tapir_mail.registries import filter_registry
 from tapir_mail.service.segment import (
     _apply_complex_filters,
-    filter_registry,
     register_filter,
 )
 from tapir_mail.tests.test_utils import TapirIntegrationTest

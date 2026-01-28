@@ -88,6 +88,7 @@ const SegmentDetailsModal: React.FC<SegmentDetailsModalProps> = ({
       <Modal
         show={open && !createRecipientModalOpen && !recipientToDelete}
         onHide={onClose}
+        centered={true}
       >
         <Modal.Header closeButton>
           <Modal.Title>Segment details: {segment.name}</Modal.Title>
@@ -106,7 +107,7 @@ const SegmentDetailsModal: React.FC<SegmentDetailsModalProps> = ({
               </tr>
             </thead>
             <tbody>
-              {(recipients ? recipients : segment.recipients).map(
+              {(recipients || segment.recipients).map(
                 (recipient: StaticSegmentRecipient) => (
                   <tr key={recipient.id}>
                     <td>

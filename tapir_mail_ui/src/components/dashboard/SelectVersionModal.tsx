@@ -82,13 +82,13 @@ const SelectVersionModal = ({
 
   useEffect(() => {
     if (!selectedVersion) return;
-    setHtmlContent(mjmlToHtml(selectedVersion!!.content ?? ""));
+    setHtmlContent(mjmlToHtml(selectedVersion.content ?? ""));
   }, [selectedVersion]);
 
   const fetchVersions = () =>
     configApi
       .emailConfigurationVersionsList({
-        id: emailConfiguration!!.id!!,
+        id: emailConfiguration.id!,
         limit: 100,
       })
       .then((data) => {
@@ -197,6 +197,7 @@ const SelectVersionModal = ({
         }
         onHide={onClose}
         dialogClassName="preview-modal"
+        centered={true}
       >
         <Modal.Header closeButton>
           <Modal.Title>

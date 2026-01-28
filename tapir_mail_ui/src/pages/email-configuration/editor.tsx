@@ -43,8 +43,8 @@ const stringToStatus = (status: string): StatusEnum => {
 
 const EmailConfigurationEditor = () => {
   const params = useParams();
-  const [currentId, setId] = useState<string | undefined>(params.id);
-  const [loading, setLoading] = useState<Boolean>(Boolean(params.id));
+  const [currentId, setCurrentId] = useState<string | undefined>(params.id);
+  const [loading, setLoading] = useState<boolean>(Boolean(params.id));
   const [mailingName, setMailingName] = useState("");
   const [subject, setSubject] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] =
@@ -57,7 +57,7 @@ const EmailConfigurationEditor = () => {
   const [segmentData, setSegmentData] = useState<SegmentData | undefined>(
     undefined,
   );
-  const [content, setContent] = useState<any | undefined>(undefined);
+  const [content, setContent] = useState<any>(undefined);
   const [status, setStatus] = useState<StatusEnum>(StatusEnum.Draft);
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
@@ -154,8 +154,8 @@ const EmailConfigurationEditor = () => {
   }, [currentId]);
 
   const changeId = (id: string) => {
-    setId(id);
-    window.history.replaceState(
+    setCurrentId(id);
+    globalThis.window.history.replaceState(
       null,
       "",
       Paths.emailConfigurationEdit.replace(":id", id),
@@ -194,7 +194,7 @@ const EmailConfigurationEditor = () => {
           // update current draft version
           emailConfigurationVersionApi
             .emailConfigurationVersionUpdate({
-              id: currentId!!,
+              id: currentId,
               bundledEmailConfigurationRequest: props,
             })
             .then((data) => {
@@ -442,6 +442,7 @@ const EmailConfigurationEditor = () => {
       <Modal
         show={releaseModalOpen}
         onHide={() => setReleaseModalOpen(false)}
+        centered={true}
       >
         <Modal.Header closeButton>
           <Modal.Title>Veröffentlichen</Modal.Title>

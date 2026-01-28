@@ -77,6 +77,7 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
       <Modal
         show={open && !selectedRecipient}
         onHide={onClose}
+        centered={true}
       >
         <Modal.Header closeButton>
           <Modal.Title>E-Mail-Adressen mit Fehler</Modal.Title>
@@ -117,6 +118,7 @@ const DispatchesWithErrorsModal: React.FC<DispatchesWithErrorsModalProps> = ({
               <tbody>
                 {groupedDispatches.map((group) => (
                   <tr
+                    key={group.recipient}
                     onClick={() => {
                       setSelectedRecipient(group.recipient);
                     }}

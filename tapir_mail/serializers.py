@@ -16,7 +16,7 @@ from tapir_mail.models import (
     StaticSegmentRecipient,
     MailCategory,
 )
-from tapir_mail.service.segment import filter_registry, segment_registry
+from tapir_mail.registries import segment_registry, filter_registry
 from tapir_mail.service.triggers import Trigger, trigger_registry
 
 
@@ -110,6 +110,9 @@ class SegmentDataSerializer(serializers.Serializer):
     )
     remove_segments = serializers.ListField(child=serializers.CharField())
     filter_list = serializers.ListField(child=serializers.CharField())
+    mail_category_ids = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
 
     def validate_add_segments(self, add_segments):
         return self.validate_segments(add_segments)
@@ -117,7 +120,8 @@ class SegmentDataSerializer(serializers.Serializer):
     def validate_remove_segments(self, remove_segments):
         return self.validate_segments(remove_segments)
 
-    def validate_segments(self, segments):
+    @staticmethod
+    def validate_segments(segments):
         invalid_segments = [
             segment for segment in segments if segment not in segment_registry.keys()
         ]
@@ -127,7 +131,8 @@ class SegmentDataSerializer(serializers.Serializer):
             )
         return segments
 
-    def validate_filter_list(self, filter_list):
+    @staticmethod
+    def validate_filter_list(filter_list):
         invalid_filters = [
             f
             for f in filter_list
@@ -146,7 +151,8 @@ class SegmentDataSerializer(serializers.Serializer):
     def validate_static_segments_subtractive(self, static_segments):
         return self.validate_static_segments_general(static_segments)
 
-    def validate_static_segments_general(self, static_segments):
+    @staticmethod
+    def validate_static_segments_general(static_segments):
         existing_segment_names = StaticSegment.objects.values_list("name", flat=True)
         invalid_segments = [
             segment
@@ -158,6 +164,20 @@ class SegmentDataSerializer(serializers.Serializer):
                 f"The following static segments are invalid: {invalid_segments}"
             )
         return static_segments
+
+    @staticmethod
+    def validate_email_category_ids(mail_category_ids: list[str]):
+        valid_ids = set(MailCategory.objects.values_list("id", flat=True))
+        invalid_ids = {
+            category_id
+            for category_id in mail_category_ids
+            if category_id not in valid_ids
+        }
+        if len(invalid_ids) > 0:
+            raise serializers.ValidationError(
+                f"The following mail category ids are invalid: {mail_category_ids}"
+            )
+        return mail_category_ids
 
 
 class EmailConfigurationVersionSerializer(
@@ -305,6 +325,7 @@ class MailCategorySerializer(serializers.ModelSerializer):
             "available_for_external_recipients",
             "nb_recipients",
             "registration_form_link",
+            "dynamic_segment_name",
         ]
 
     nb_recipients = serializers.SerializerMethodField()
@@ -317,3 +338,9 @@ class MailCategorySerializer(serializers.ModelSerializer):
         return settings.SITE_URL + reverse(
             "category_registration_external_form", args=[obj.id]
         )
+
+
+class AvailableSegmentsResponseSerializer(serializers.Serializer):
+    dynamic_segments = serializers.DictField(child=serializers.CharField())
+    static_segments = serializers.DictField(child=serializers.CharField())
+    mail_categories = serializers.DictField(child=serializers.CharField())

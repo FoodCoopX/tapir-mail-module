@@ -77,6 +77,7 @@ const CreateRecipientModal: React.FC<CreateRecipientModalProps> = ({
     <Modal
       show={open}
       onHide={onClose}
+      centered={true}
     >
       <Modal.Header closeButton>
         <Modal.Title>Empfänger zu {segment.name} hinzufügen</Modal.Title>

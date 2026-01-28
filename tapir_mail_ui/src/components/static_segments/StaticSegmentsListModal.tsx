@@ -74,6 +74,7 @@ const StaticSegmentsListModal: React.FC<StaticSegmentsListModalProps> = ({
         show={open && !createModalOpen && !selectedSegment && !segmentToDelete}
         onHide={onClose}
         size={"lg"}
+        centered={true}
       >
         <Modal.Header closeButton>
           <Modal.Title>Statische Segmente</Modal.Title>
