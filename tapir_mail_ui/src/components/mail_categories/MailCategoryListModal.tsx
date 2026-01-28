@@ -87,6 +87,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
         }
         onHide={onClose}
         size={"lg"}
+        fullscreen={"lg-down"}
       >
         <Modal.Header closeButton>
           <Modal.Title>Mail-Kategorien</Modal.Title>

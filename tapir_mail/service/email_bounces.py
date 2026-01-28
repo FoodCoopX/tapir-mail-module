@@ -85,7 +85,7 @@ class EmailBounces:
         mail_client.store(message_id, "+FLAGS", "(SEEN)")
 
     @staticmethod
-    def get_return_path_from_headers(message: Message, headers: [str]):
+    def get_return_path_from_headers(message: Message, headers: list[str]):
         for header in headers:
             dispatch_id = _get_dispatch_id_from_email_return_path(
                 message.get(header, None)
