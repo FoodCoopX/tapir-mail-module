@@ -1,9 +1,15 @@
-from tapir_mail.models import StaticSegment, StaticSegmentRecipient
+from tapir_mail.models import (
+    StaticSegment,
+    StaticSegmentRecipient,
+    MailCategory,
+    MailCategoryMode,
+)
 from tapir_mail.service.segment import (
     resolve_segments,
     register_filter,
     register_segment,
 )
+from tapir_mail.tests.factories import StaticSegmentRecipientFactory
 from tapir_mail.tests.test_utils import TapirIntegrationTest
 from tapir_mail.triggers.transactional_trigger import TransactionalTriggerData
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
@@ -159,3 +165,23 @@ class TestSegments(TapirIntegrationTest):
             ),
             result[0],
         )
+
+    def test_resolveSegments_mailCategory_returnsCorrectList(self):
+        static_segment = StaticSegment.objects.create(
+            name="Mail-Kategorie:test_category"
+        )
+        static_recipient = StaticSegmentRecipientFactory.create(segment=static_segment)
+
+        mail_category = MailCategory.objects.create(
+            name="test_category",
+            static_segment=static_segment,
+            mode=MailCategoryMode.ALWAYS_ON,
+            dynamic_segment_name=self.SEGMENT_COOP_MEMBERS,
+            available_for_external_recipients=True,
+        )
+
+        result = resolve_segments(mail_category_ids_additive=[mail_category.id])
+        self.assertEqual(3, len(result))
+        self.assertIn(static_recipient, result)
+        for user in DummyTapirUser.objects.filter(has_coop_shares=True):
+            self.assertIn(user, result)

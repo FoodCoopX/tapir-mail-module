@@ -20,7 +20,7 @@ class DummyPickupLocationFactory(factory.django.DjangoModelFactory):
     )
 
 
-class DummyTapirUserFactory(factory.django.DjangoModelFactory):
+class DummyTapirUserFactory(factory.django.DjangoModelFactory[DummyTapirUser]):
     class Meta:
         model = DummyTapirUser
 

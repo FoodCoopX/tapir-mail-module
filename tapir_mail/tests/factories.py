@@ -9,6 +9,8 @@ from tapir_mail.models import (
     EmailTemplate,
     StaticSegment,
     StaticSegmentRecipient,
+    MailCategory,
+    MailCategoryMode,
 )
 
 
@@ -98,3 +100,14 @@ class StaticSegmentRecipientFactory(
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
     email = factory.Faker("email")
+
+
+class MailCategoryFactory(factory.django.DjangoModelFactory[MailCategory]):
+    class Meta:
+        model = MailCategory
+
+    name = factory.Faker("bs")
+    mode = MailCategoryMode.OPTIONAL_DEFAULT_OFF
+    available_for_external_recipients = True
+    static_segment = factory.SubFactory(StaticSegmentFactory)
+    dynamic_segment_name = ""
