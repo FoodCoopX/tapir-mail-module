@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-apt-get install libxml2-dev libxslt-dev
+sudo apt-get install libxml2-dev libxslt-dev
 
 npm install -g mjml@4.15.2
 npm install -g @openapitools/openapi-generator-cli@2.7.0
