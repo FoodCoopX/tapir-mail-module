@@ -8,8 +8,8 @@ from django.utils import timezone
 
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import prepare_email
-from tapir_mail.service.email_configuration_dispatch_recipient_list_provider import (
-    EmailConfigurationDispatchRecipientListProvider,
+from tapir_mail.service.recipient_list_provider import (
+    RecipientListProvider,
 )
 from tapir_mail.service.token import (
     find_tokens,
@@ -44,13 +44,11 @@ class ResolveAndCreateEmailDispatches:
             return
 
         try:
-            config_dispatches: [
-                EmailConfigurationDispatch
-            ] = cls._get_email_configuration_dispatches_that_should_be_sent().order_by(
-                "scheduled_time"
-            )[
-                :10
-            ]
+            config_dispatches = (
+                cls._get_email_configuration_dispatches_that_should_be_sent().order_by(
+                    "scheduled_time"
+                )[:10]
+            )
             if not config_dispatches:
                 return
 
@@ -83,13 +81,10 @@ class ResolveAndCreateEmailDispatches:
     @staticmethod
     @transaction.atomic
     def _create_email_dispatches(config_dispatch: EmailConfigurationDispatch):
-        if not config_dispatch.email_configuration_version.segment_data:
-            raise ValueError(
-                f"Segment data is required to send an email! EmailConfigurationDispatch#{config_dispatch.id}"
+        recipients = (
+            RecipientListProvider.get_recipient_list_from_email_configuration_dispatch(
+                config_dispatch
             )
-
-        recipients = EmailConfigurationDispatchRecipientListProvider.get_recipient_list(
-            config_dispatch
         )
         if not recipients:
             raise ValueError(

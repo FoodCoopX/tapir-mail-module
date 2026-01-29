@@ -56,10 +56,11 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
             "release_status": "Test status",
             "triggers": [trigger],
             "segment_data": {
-                "add_segments": [],
-                "static_segments": [],
-                "static_segments_subtractive": [],
-                "remove_segments": [],
+                "dynamic_segment_names_additive": [],
+                "dynamic_segment_names_subtractive": [],
+                "static_segment_ids_additive": [],
+                "static_segment_ids_subtractive": [],
+                "mail_category_ids_additive": [],
                 "filter_list": [],
             },
         }
@@ -72,16 +73,12 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
         self.assertEqual(self.VERSION_SUBJECT, version.subject)
         self.assertEqual("Test status", version.status)
         self.assertEqual([trigger], version.triggers)
-        self.assertEqual(
-            {
-                "add_segments": [],
-                "static_segments": [],
-                "static_segments_subtractive": [],
-                "remove_segments": [],
-                "filter_list": [],
-            },
-            version.segment_data,
-        )
+        self.assertEqual([], version.dynamic_segments_additive)
+        self.assertEqual([], version.dynamic_segments_subtractive)
+        self.assertEqual(0, version.static_segments_additive.count())
+        self.assertEqual(0, version.static_segments_subtractive.count())
+        self.assertEqual(0, version.mail_categories_additive.count())
+        self.assertEqual([], version.filter_list)
         self.assertEqual({"id": version.id}, json.loads(response.content))
 
     def test_creatingDraftVersion_triggerNotExecuted(self):

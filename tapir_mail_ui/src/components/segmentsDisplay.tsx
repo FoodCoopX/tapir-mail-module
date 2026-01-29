@@ -25,12 +25,14 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
   availableMailCategories,
 }) => {
   if (
-    segmentData.addSegments.length +
-      segmentData.staticSegments.length +
-      (segmentData.mailCategoryIds ?? []).length ===
+    segmentData.dynamicSegmentNamesAdditive.length +
+      segmentData.staticSegmentIdsAdditive.length +
+      segmentData.mailCategoryIdsAdditive.length ===
     0
   ) {
     return null;
+  } else {
+    console.log(segmentData);
   }
   const segmentStyle: React.CSSProperties = interactions
     ? { cursor: "pointer" }
@@ -39,7 +41,7 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
   return (
     <div style={{ marginBottom: "0.5em" }}>
       <h6 className="chained-badges">
-        {segmentData.addSegments.map((segmentId, idx) => (
+        {segmentData.dynamicSegmentNamesAdditive.map((segmentId, idx) => (
           <Fragment key={segmentId}>
             {idx > 0 && <OperatorBadge text="+" />}
             <Badge
@@ -54,7 +56,7 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
             </Badge>
           </Fragment>
         ))}
-        {segmentData.removeSegments.map((segmentId) => (
+        {segmentData.dynamicSegmentNamesSubtractive.map((segmentId) => (
           <Fragment key={segmentId}>
             <OperatorBadge text="-" />
             <Badge
@@ -69,9 +71,9 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
             </Badge>
           </Fragment>
         ))}
-        {segmentData.staticSegments.map((segmentId, idx) => (
+        {segmentData.staticSegmentIdsAdditive.map((segmentId, idx) => (
           <Fragment key={segmentId}>
-            {(segmentData.addSegments.length > 0 || idx > 0) && (
+            {(segmentData.staticSegmentIdsAdditive.length > 0 || idx > 0) && (
               <OperatorBadge text="+" />
             )}
             <Badge
@@ -86,11 +88,10 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
             </Badge>
           </Fragment>
         ))}
-        {segmentData.staticSegmentsSubtractive?.map((segmentId, idx) => (
+        {segmentData.staticSegmentIdsSubtractive?.map((segmentId, idx) => (
           <Fragment key={segmentId}>
-            {(segmentData.addSegments.length > 0 || idx > 0) && (
-              <OperatorBadge text="-" />
-            )}
+            {(segmentData.staticSegmentIdsSubtractive.length > 0 ||
+              idx > 0) && <OperatorBadge text="-" />}
             <Badge
               style={segmentStyle}
               onClick={() =>
@@ -103,11 +104,10 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
             </Badge>
           </Fragment>
         ))}
-        {(segmentData.mailCategoryIds ?? []).map((mailCategoryId, idx) => (
+        {segmentData.mailCategoryIdsAdditive.map((mailCategoryId, idx) => (
           <Fragment key={mailCategoryId}>
-            {(segmentData.addSegments.length > 0 || idx > 0) && (
-              <OperatorBadge text="+" />
-            )}
+            {(segmentData.dynamicSegmentNamesAdditive.length > 0 ||
+              idx > 0) && <OperatorBadge text="+" />}
             <Badge
               style={segmentStyle}
               onClick={() =>

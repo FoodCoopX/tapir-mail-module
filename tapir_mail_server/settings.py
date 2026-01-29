@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "django_filters",
 ]
 DEPENDENCIES_APPS = [
@@ -137,14 +138,10 @@ elif EMAIL_ENV == "prod":
     EMAIL_AUTO_BCC = env.str("EMAIL_AUTO_BCC", default=None)
 
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": env.db(
+        "DATABASE_CONNECTION", default="postgresql://tapir:tapir@db:5432/tapir"
+    ),
 }
 
 
@@ -255,13 +252,3 @@ CACHES = {
         },
     }
 }
-
-# STATIC_SEGMENTS = {
-#    "Tapir Mail Team": [
-#        {
-#            "email": "tapirmailtest@example.com",
-#            "first_name": "John",
-#            "last_name": "Doe",
-#        },
-#    ]
-# }

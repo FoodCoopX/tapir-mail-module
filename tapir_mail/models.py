@@ -1,8 +1,9 @@
 import uuid
 from functools import partial
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
-from django.db.models import Q
+from django.db.models import Q, ManyToManyField
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from nanoid import generate
@@ -65,6 +66,27 @@ RELEASE_STATUS_CHOICES = [
 ]
 
 
+class StaticSegment(BaseModel):
+    name = models.CharField(max_length=255, unique=True)
+
+
+class MailCategoryMode(models.TextChoices):
+    OPTIONAL_DEFAULT_ON = "optional_default_on", _("Optional (Standard: ON)")
+    OPTIONAL_DEFAULT_OFF = "optional_default_off", _("Optional (Standard: OFF)")
+    ALWAYS_ON = "always_on", _("Pflicht")
+
+
+class MailCategory(BaseModel):
+    name = models.CharField(max_length=255, unique=True)
+    mode = models.CharField(max_length=30, choices=MailCategoryMode)
+    available_for_external_recipients = models.BooleanField()
+    static_segment = models.OneToOneField(StaticSegment, on_delete=models.PROTECT)
+    dynamic_segment_name = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return f"{self.name} - Mode:{self.mode} - External:{self.available_for_external_recipients}"
+
+
 class EmailConfigurationVersion(BaseModel):
     """
     This represents the configuration for an email that will be sent to a user or segment.
@@ -82,8 +104,21 @@ class EmailConfigurationVersion(BaseModel):
     )
     # See TriggerSerializationMixin for the expected content of this field
     triggers = models.JSONField(null=True, blank=True)
-    # See SegmentDataSerializer for the expected content of this field
-    segment_data = models.JSONField(null=True, blank=True)
+
+    dynamic_segments_additive = ArrayField(
+        base_field=models.CharField(max_length=100), default=list
+    )
+    dynamic_segments_subtractive = ArrayField(
+        base_field=models.CharField(max_length=100), default=list
+    )
+    static_segments_additive = ManyToManyField(
+        StaticSegment, related_name="versions_with_additive"
+    )
+    static_segments_subtractive = ManyToManyField(
+        StaticSegment, related_name="versions_with_subtractive"
+    )
+    filter_list = ArrayField(base_field=models.CharField(max_length=100), default=list)
+    mail_categories_additive = ManyToManyField(MailCategory)
 
     @transaction.atomic
     def release(self):
@@ -215,10 +250,6 @@ class EmailDispatch(BaseModel):
         return self.DispatchStatus.UNKNOWN
 
 
-class StaticSegment(BaseModel):
-    name = models.CharField(max_length=255, unique=True)
-
-
 class StaticSegmentRecipient(BaseModel):
     segment = models.ForeignKey(
         StaticSegment, related_name="recipients", on_delete=models.CASCADE
@@ -230,23 +261,6 @@ class StaticSegmentRecipient(BaseModel):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} <{self.email}>"
-
-
-class MailCategoryMode(models.TextChoices):
-    OPTIONAL_DEFAULT_ON = "optional_default_on", _("Optional (Standard: ON)")
-    OPTIONAL_DEFAULT_OFF = "optional_default_off", _("Optional (Standard: OFF)")
-    ALWAYS_ON = "always_on", _("Pflicht")
-
-
-class MailCategory(BaseModel):
-    name = models.CharField(max_length=255, unique=True)
-    mode = models.CharField(max_length=30, choices=MailCategoryMode)
-    available_for_external_recipients = models.BooleanField()
-    static_segment = models.OneToOneField(StaticSegment, on_delete=models.PROTECT)
-    dynamic_segment_name = models.CharField(max_length=100, blank=True)
-
-    def __str__(self):
-        return f"{self.name} - Mode:{self.mode} - External:{self.available_for_external_recipients}"
 
 
 class ExternalRecipient(BaseModel):

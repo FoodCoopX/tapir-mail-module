@@ -8,11 +8,12 @@ from tapir_mail.tests.test_utils import TapirUnitTest
 
 
 class SegmentDataSerializerTest(TapirUnitTest):
-    @patch.object(SegmentDataSerializer, "validate_add_segments")
-    @patch.object(SegmentDataSerializer, "validate_remove_segments")
+    @patch.object(SegmentDataSerializer, "validate_dynamic_segment_names_additive")
+    @patch.object(SegmentDataSerializer, "validate_dynamic_segment_names_subtractive")
     @patch.object(SegmentDataSerializer, "validate_filter_list")
-    @patch.object(SegmentDataSerializer, "validate_static_segments")
-    @patch.object(SegmentDataSerializer, "validate_static_segments_subtractive")
+    @patch.object(SegmentDataSerializer, "validate_static_segment_ids_additive")
+    @patch.object(SegmentDataSerializer, "validate_static_segment_ids_subtractive")
+    @patch.object(SegmentDataSerializer, "validate_mail_category_ids_additive")
     def test_isValid_default_callsAllFieldValidationFunctions(self, *mocks):
         SegmentDataSerializer(data={}).is_valid()
 
@@ -25,7 +26,7 @@ class SegmentDataSerializerTest(TapirUnitTest):
     ):
         add_segments = Mock()
 
-        SegmentDataSerializer().validate_add_segments(add_segments)
+        SegmentDataSerializer().validate_dynamic_segment_names_additive(add_segments)
 
         mock_validate_segments.assert_called_once_with(add_segments)
 
@@ -35,7 +36,7 @@ class SegmentDataSerializerTest(TapirUnitTest):
     ):
         add_segments = Mock()
 
-        SegmentDataSerializer().validate_remove_segments(add_segments)
+        SegmentDataSerializer().validate_dynamic_segment_names_subtractive(add_segments)
 
         mock_validate_segments.assert_called_once_with(add_segments)
 
@@ -65,13 +66,13 @@ class SegmentDataSerializerTest(TapirUnitTest):
         with self.assertRaises(serializers.ValidationError):
             SegmentDataSerializer().validate_filter_list(["an_invalid_filter"])
 
-    @patch.object(SegmentDataSerializer, "validate_static_segments")
+    @patch.object(SegmentDataSerializer, "validate_static_segments_general")
     def test_validateStaticSegments_default_callsValidateSegmentsGeneral(
         self, mock_validate_static_segments_general: Mock
     ):
         segments_additive = Mock()
 
-        SegmentDataSerializer().validate_static_segments(segments_additive)
+        SegmentDataSerializer().validate_static_segment_ids_additive(segments_additive)
 
         mock_validate_static_segments_general.assert_called_once_with(segments_additive)
 
@@ -81,7 +82,7 @@ class SegmentDataSerializerTest(TapirUnitTest):
     ):
         segments_subtractive = Mock()
 
-        SegmentDataSerializer().validate_static_segments_subtractive(
+        SegmentDataSerializer().validate_static_segment_ids_subtractive(
             segments_subtractive
         )
 

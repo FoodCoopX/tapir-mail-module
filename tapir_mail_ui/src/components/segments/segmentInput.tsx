@@ -55,12 +55,12 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
 
   useEffect(() => {
     onChange({
-      addSegments: segmentsToAdd,
-      staticSegments: staticSegmentsToAdd,
-      staticSegmentsSubtractive: staticSegmentsToRemove,
-      removeSegments: segmentsToRemove,
+      dynamicSegmentNamesAdditive: segmentsToAdd,
+      dynamicSegmentNamesSubtractive: segmentsToRemove,
+      staticSegmentIdsAdditive: staticSegmentsToAdd,
+      staticSegmentIdsSubtractive: staticSegmentsToRemove,
       filterList: isFilterValid ? complexFilter.map((c) => c.value) : [],
-      mailCategoryIds: selectedMailCategoryIds,
+      mailCategoryIdsAdditive: selectedMailCategoryIds,
     });
   }, [
     segmentsToAdd,
@@ -81,13 +81,14 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
         setAvailableMailCategories(response.mailCategories);
 
         if (initialData) {
-          initialData.addSegments && setSegmentsToAdd(initialData.addSegments);
-          initialData.staticSegments &&
-            setStaticSegmentsToAdd(initialData.staticSegments);
-          initialData.staticSegmentsSubtractive &&
-            setStaticSegmentsToRemove(initialData.staticSegmentsSubtractive);
-          initialData.removeSegments &&
-            setSegmentsToRemove(initialData.removeSegments);
+          setSegmentsToAdd(initialData.dynamicSegmentNamesAdditive);
+          setSegmentsToRemove(initialData.dynamicSegmentNamesSubtractive);
+          setStaticSegmentsToAdd(initialData.staticSegmentIdsAdditive);
+          setStaticSegmentsToRemove(
+            initialData.staticSegmentIdsSubtractive ?? [],
+          );
+          setSelectedMailCategoryIds(initialData.mailCategoryIdsAdditive ?? []);
+
           initialData.filterList &&
             setComplexFilter(
               initialData.filterList.map((f: string) => ({
@@ -95,8 +96,6 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
                 elementType: guessElementType(f),
               })),
             );
-          initialData.mailCategoryIds &&
-            setSelectedMailCategoryIds(initialData.mailCategoryIds);
         }
       })
       .catch((err) => {
@@ -130,12 +129,12 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     segmentApi
       .segmentCombineCreate({
         segmentDataRequest: {
-          addSegments: segmentsToAdd,
-          staticSegments: staticSegmentsToAdd,
-          staticSegmentsSubtractive: staticSegmentsToRemove,
-          removeSegments: segmentsToRemove,
+          dynamicSegmentNamesAdditive: segmentsToAdd,
+          dynamicSegmentNamesSubtractive: segmentsToRemove,
+          staticSegmentIdsAdditive: staticSegmentsToAdd,
+          staticSegmentIdsSubtractive: staticSegmentsToRemove,
           filterList: filters,
-          mailCategoryIds: selectedMailCategoryIds,
+          mailCategoryIdsAdditive: selectedMailCategoryIds,
         },
       })
       .then(({ count, recipients }) => {
@@ -272,12 +271,12 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
       <Form.Label>Segmente</Form.Label>
       <SegmentsDisplay
         segmentData={{
-          addSegments: segmentsToAdd,
-          removeSegments: segmentsToRemove,
-          staticSegments: staticSegmentsToAdd,
-          staticSegmentsSubtractive: staticSegmentsToRemove,
+          dynamicSegmentNamesAdditive: segmentsToAdd,
+          dynamicSegmentNamesSubtractive: segmentsToRemove,
+          staticSegmentIdsAdditive: staticSegmentsToAdd,
+          staticSegmentIdsSubtractive: staticSegmentsToRemove,
+          mailCategoryIdsAdditive: selectedMailCategoryIds,
           filterList: [],
-          mailCategoryIds: selectedMailCategoryIds,
         }}
         interactions={{
           onSegmentToAddClicked: onSegmentToAddClicked,

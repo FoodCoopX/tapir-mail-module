@@ -112,8 +112,9 @@ class SendEmailBatchTest(TapirIntegrationTest):
 
         self.assertEqual(len(mail.outbox), 10)
 
-        for index, email in enumerate(mail.outbox):
-            self.assertIn(f"old{index}@example.com", email.to[0])
+        actual_recipients = {email.to[0] for email in mail.outbox}
+        expected_recipients = {f"old{index}@example.com" for index in range(10)}
+        self.assertEqual(expected_recipients, actual_recipients)
 
         self.assertEqual(
             set(EmailDispatch.objects.filter(sent_time__isnull=True)),
@@ -203,11 +204,11 @@ class SendEmailBatchTest(TapirIntegrationTest):
             error_message="Error",
             sent_time=self.NOW,
         )
-        non_error_dispatch = TestUtils.create_email_dispatches(
+        TestUtils.create_email_dispatches(
             1,
             config_dispatch=self.config_dispatch,
             sent_time=self.NOW,
-        )[0]
+        )
 
         # Retry one of the error dispatches to create a retry dispatch
         RetryEmailDispatch.retry(error_dispatches[0])

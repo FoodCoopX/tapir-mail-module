@@ -165,6 +165,7 @@ const EmailConfigurationEditor = () => {
   const saveVersion = (content: IPage, newStatus: StatusEnum = status) => {
     return new Promise<void>((resolve, reject) => {
       const cleanTriggers = triggers.filter((t) => t.triggerId);
+
       const props = {
         description: "TODO",
         subject: subject,
@@ -304,8 +305,10 @@ const EmailConfigurationEditor = () => {
   const saveButtonDisabled = !mailingName;
   const segmentChoosen =
     (segmentData &&
-      ((segmentData.addSegments?.length || 0) > 0 ||
-        (segmentData.staticSegments?.length || 0) > 0)) ||
+      segmentData.dynamicSegmentNamesAdditive.length +
+        segmentData.staticSegmentIdsAdditive.length +
+        segmentData.mailCategoryIdsAdditive.length >
+        0) ||
     (currentId !== undefined && content !== loadedContent);
   const releaseButtonDisabled =
     saveButtonDisabled || !subject || !segmentChoosen || missingTrigger;

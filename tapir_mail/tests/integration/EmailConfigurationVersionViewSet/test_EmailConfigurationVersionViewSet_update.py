@@ -27,30 +27,16 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
 
         register_segment(self.TEST_SEGMENT, test_segment)
 
-        segment_data_before = {
-            "add_segments": [self.TEST_SEGMENT],
-            "static_segments": [],
-            "static_segments_subtractive": [],
-            "remove_segments": [],
-            "filter_list": [],
-        }
-        version: EmailConfigurationVersion = EmailConfigurationVersionFactory.create(
+        version = EmailConfigurationVersionFactory.create(
             email_configuration__name="Name before",
             email_configuration__description="Description before",
             content="Content before",
             subject="Subject before",
             status="Status before",
-            segment_data=segment_data_before,
+            dynamic_segments_additive=[self.TEST_SEGMENT],
             triggers=None,
         )
 
-        segment_data_after = {
-            "add_segments": [],
-            "static_segments": [],
-            "static_segments_subtractive": [],
-            "remove_segments": [self.TEST_SEGMENT],
-            "filter_list": [],
-        }
         trigger = build_time_trigger_dict()
         put_data = {
             "name": "Name after",
@@ -59,7 +45,14 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
             "subject": "Subject after",
             "release_status": "Status after",
             "triggers": [trigger],
-            "segment_data": segment_data_after,
+            "segment_data": {
+                "dynamic_segment_names_additive": [],
+                "dynamic_segment_names_subtractive": [self.TEST_SEGMENT],
+                "static_segment_ids_additive": [],
+                "static_segment_ids_subtractive": [],
+                "mail_category_ids_additive": [],
+                "filter_list": [],
+            },
         }
         response = self._send_request(version.id, put_data)
 
@@ -71,10 +64,8 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         self.assertEqual("Subject after", version.subject)
         self.assertEqual("Status after", version.status)
         self.assertEqual([trigger], version.triggers)
-        self.assertEqual(
-            segment_data_after,
-            version.segment_data,
-        )
+        self.assertEqual([], version.dynamic_segments_additive)
+        self.assertEqual([self.TEST_SEGMENT], version.dynamic_segments_subtractive)
 
     def test_creatingReleaseVersion_olderReleaseGetsArchived(self):
         older_release: EmailConfigurationVersion = (

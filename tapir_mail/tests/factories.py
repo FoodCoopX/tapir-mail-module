@@ -12,7 +12,7 @@ from tapir_mail.models import (
 )
 
 
-class EmailTemplateFactory(factory.django.DjangoModelFactory):
+class EmailTemplateFactory(factory.django.DjangoModelFactory[EmailTemplate]):
     class Meta:
         model = EmailTemplate
 
@@ -24,7 +24,7 @@ class EmailTemplateFactory(factory.django.DjangoModelFactory):
     )
 
 
-class EmailConfigurationFactory(factory.django.DjangoModelFactory):
+class EmailConfigurationFactory(factory.django.DjangoModelFactory[EmailConfiguration]):
     class Meta:
         model = EmailConfiguration
 
@@ -35,7 +35,9 @@ class EmailConfigurationFactory(factory.django.DjangoModelFactory):
     description = factory.Faker("sentence")
 
 
-class EmailConfigurationVersionFactory(factory.django.DjangoModelFactory):
+class EmailConfigurationVersionFactory(
+    factory.django.DjangoModelFactory[EmailConfigurationVersion]
+):
     class Meta:
         model = EmailConfigurationVersion
 
@@ -49,10 +51,11 @@ class EmailConfigurationVersionFactory(factory.django.DjangoModelFactory):
     status = factory.Faker(
         "random_element", elements=[choice[0] for choice in RELEASE_STATUS_CHOICES]
     )
-    segment_data = {"static_segments": ["test"]}
 
 
-class EmailConfigurationDispatchFactory(factory.django.DjangoModelFactory):
+class EmailConfigurationDispatchFactory(
+    factory.django.DjangoModelFactory[EmailConfigurationDispatch]
+):
     class Meta:
         model = EmailConfigurationDispatch
 
@@ -65,7 +68,7 @@ class EmailConfigurationDispatchFactory(factory.django.DjangoModelFactory):
     is_sent = factory.Faker("pybool")
 
 
-class EmailDispatchFactory(factory.django.DjangoModelFactory):
+class EmailDispatchFactory(factory.django.DjangoModelFactory[EmailDispatch]):
     class Meta:
         model = EmailDispatch
 
@@ -78,14 +81,16 @@ class EmailDispatchFactory(factory.django.DjangoModelFactory):
     )
 
 
-class StaticSegmentFactory(factory.django.DjangoModelFactory):
+class StaticSegmentFactory(factory.django.DjangoModelFactory[StaticSegment]):
     class Meta:
         model = StaticSegment
 
     name = factory.Faker("bs")
 
 
-class StaticSegmentRecipientFactory(factory.django.DjangoModelFactory):
+class StaticSegmentRecipientFactory(
+    factory.django.DjangoModelFactory[StaticSegmentRecipient]
+):
     class Meta:
         model = StaticSegmentRecipient
 

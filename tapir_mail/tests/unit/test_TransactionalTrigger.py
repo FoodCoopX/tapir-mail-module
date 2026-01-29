@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
-from icecream import ic
 
 from tapir_mail.models import (
     EmailConfigurationVersion,
@@ -42,7 +41,6 @@ class TransactionalTriggerTest(TapirUnitTest):
         )
 
     def test_fireAction_unregisteredKey_exceptionRaised(self):
-        ic(TransactionalTrigger.transactional_trigger_registry)
         with self.assertRaises(ValueError):
             TransactionalTrigger.fire_action(
                 TransactionalTriggerData(

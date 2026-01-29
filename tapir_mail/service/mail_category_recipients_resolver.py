@@ -1,5 +1,3 @@
-from icecream import ic
-
 from tapir_mail.exceptions import TapirMailException
 from tapir_mail.models import (
     MailCategory,
@@ -17,7 +15,7 @@ class MailCategoryRecipientResolver:
             internal_recipients = cls.get_internal_segment(
                 mail_category=mail_category,
             )
-        ic(internal_recipients)
+
         return list(internal_recipients) + list(
             mail_category.static_segment.recipients.all()
         )

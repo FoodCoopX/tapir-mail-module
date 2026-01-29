@@ -103,33 +103,42 @@ class EmailConfigurationSerializer(serializers.ModelSerializer):
 
 
 class SegmentDataSerializer(serializers.Serializer):
-    add_segments = serializers.ListField(child=serializers.CharField())
-    static_segments = serializers.ListField(child=serializers.CharField())  # additive
-    static_segments_subtractive = serializers.ListField(
-        child=serializers.CharField(), allow_null=True
+    dynamic_segment_names_additive = serializers.ListField(
+        child=serializers.CharField()
     )
-    remove_segments = serializers.ListField(child=serializers.CharField())
+    dynamic_segment_names_subtractive = serializers.ListField(
+        child=serializers.CharField()
+    )
+    static_segment_ids_additive = serializers.ListField(child=serializers.CharField())
+    static_segment_ids_subtractive = serializers.ListField(
+        child=serializers.CharField()
+    )
+    mail_category_ids_additive = serializers.ListField(child=serializers.CharField())
+
     filter_list = serializers.ListField(child=serializers.CharField())
-    mail_category_ids = serializers.ListField(
-        child=serializers.CharField(), required=False
-    )
 
-    def validate_add_segments(self, add_segments):
-        return self.validate_segments(add_segments)
+    def validate_dynamic_segment_names_additive(
+        self, dynamic_segment_names_additive: list[str]
+    ):
+        return self.validate_segments(dynamic_segment_names_additive)
 
-    def validate_remove_segments(self, remove_segments):
-        return self.validate_segments(remove_segments)
+    def validate_dynamic_segment_names_subtractive(
+        self, dynamic_segment_names_subtractive: list[str]
+    ):
+        return self.validate_segments(dynamic_segment_names_subtractive)
 
     @staticmethod
-    def validate_segments(segments):
-        invalid_segments = [
-            segment for segment in segments if segment not in segment_registry.keys()
+    def validate_segments(segment_names: list[str]):
+        invalid_segment_names = [
+            segment_name
+            for segment_name in segment_names
+            if segment_name not in segment_registry.keys()
         ]
-        if invalid_segments:
+        if invalid_segment_names:
             raise serializers.ValidationError(
-                f"The following segments are invalid: {invalid_segments}"
+                f"The following segment names are not registered: {invalid_segment_names}"
             )
-        return segments
+        return segment_names
 
     @staticmethod
     def validate_filter_list(filter_list):
@@ -145,28 +154,32 @@ class SegmentDataSerializer(serializers.Serializer):
             )
         return filter_list
 
-    def validate_static_segments(self, static_segments):
-        return self.validate_static_segments_general(static_segments)
+    def validate_static_segment_ids_additive(
+        self, static_segment_ids_additive: list[str]
+    ):
+        return self.validate_static_segments_general(static_segment_ids_additive)
 
-    def validate_static_segments_subtractive(self, static_segments):
-        return self.validate_static_segments_general(static_segments)
+    def validate_static_segment_ids_subtractive(
+        self, static_segment_ids_subtractive: list[str]
+    ):
+        return self.validate_static_segments_general(static_segment_ids_subtractive)
 
     @staticmethod
-    def validate_static_segments_general(static_segments):
-        existing_segment_names = StaticSegment.objects.values_list("name", flat=True)
-        invalid_segments = [
-            segment
-            for segment in static_segments
-            if segment not in existing_segment_names
+    def validate_static_segments_general(static_segment_ids):
+        existing_segment_ids = set(StaticSegment.objects.values_list("id", flat=True))
+        invalid_segment_ids = [
+            segment_id
+            for segment_id in static_segment_ids
+            if segment_id not in existing_segment_ids
         ]
-        if invalid_segments:
+        if invalid_segment_ids:
             raise serializers.ValidationError(
-                f"The following static segments are invalid: {invalid_segments}"
+                f"The following static segment ids don't exist: {invalid_segment_ids}"
             )
-        return static_segments
+        return static_segment_ids
 
     @staticmethod
-    def validate_email_category_ids(mail_category_ids: list[str]):
+    def validate_mail_category_ids_additive(mail_category_ids: list[str]):
         valid_ids = set(MailCategory.objects.values_list("id", flat=True))
         invalid_ids = {
             category_id
@@ -184,7 +197,6 @@ class EmailConfigurationVersionSerializer(
     TriggersSerializationMixin, serializers.ModelSerializer
 ):
     email_configuration = EmailConfigurationSerializer()
-    segment_data = SegmentDataSerializer()
     can_be_deleted = serializers.SerializerMethodField()
 
     class Meta:

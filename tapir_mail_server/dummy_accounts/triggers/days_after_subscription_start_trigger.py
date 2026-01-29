@@ -10,7 +10,7 @@ from tapir_mail.models import (
     ReleaseStatus,
     EmailConfigurationDispatch,
 )
-from tapir_mail.service.segment import resolve_segments
+from tapir_mail.service.recipient_list_provider import RecipientListProvider
 from tapir_mail.service.triggers import Trigger
 from tapir_mail_server.dummy_accounts.models import DummySubscription
 
@@ -37,7 +37,11 @@ class DaysAfterSubscriptionStartTrigger(Trigger[DaysTriggerData]):
         email_configuration_version: EmailConfigurationVersion,
         trigger_data: DaysTriggerData,
     ):
-        for recipient in resolve_segments(**email_configuration_version.segment_data):
+        for (
+            recipient
+        ) in RecipientListProvider.get_recipient_list_from_email_configuration_version(
+            version=email_configuration_version, override_recipients=None
+        ):
             if not hasattr(recipient, "dummysubscription_set"):
                 LOG.warning(
                     f"Recipient can't receive trigger because of a missing attribute."
@@ -66,7 +70,12 @@ class DaysAfterSubscriptionStartTrigger(Trigger[DaysTriggerData]):
     def create_dispatch_if_relevant(
         version: EmailConfigurationVersion, subscription: DummySubscription
     ):
-        if subscription.user not in resolve_segments(**version.segment_data):
+        if (
+            subscription.user
+            not in RecipientListProvider.get_recipient_list_from_email_configuration_version(
+                version=version, override_recipients=None
+            )
+        ):
             return
 
         scheduled_time = subscription.start_date + datetime.timedelta(

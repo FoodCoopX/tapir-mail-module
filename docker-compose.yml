@@ -13,6 +13,7 @@ services:
       DEBUG: 1
     depends_on:
       - redis
+      - db
 
   react:
     build:
@@ -59,3 +60,12 @@ services:
       - "5555:5555"
     depends_on:
       - redis
+
+  db:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=tapir
+      - POSTGRES_PASSWORD=tapir
+      - POSTGRES_USER=tapir
+    ports:
+      - '5432:5432'

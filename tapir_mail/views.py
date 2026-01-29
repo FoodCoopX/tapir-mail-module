@@ -12,7 +12,6 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import FormView, TemplateView
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
-from icecream import ic
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -249,13 +248,35 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 old_released_version.archive()
 
         # Create EmailConfigurationVersion
+        segment_data = serializer.validated_data.get("segment_data", {})
         new_version = EmailConfigurationVersion.objects.create(
             email_configuration=email_configuration,
             content=serializer.validated_data["content"],
             subject=serializer.validated_data.get("subject", None),
             status=release_status,
             triggers=serializer.validated_data.get("triggers", None),
-            segment_data=serializer.validated_data.get("segment_data", None),
+            dynamic_segments_additive=segment_data.get(
+                "dynamic_segment_names_additive", []
+            ),
+            dynamic_segments_subtractive=segment_data.get(
+                "dynamic_segment_names_subtractive", []
+            ),
+            filter_list=segment_data.get("filter_list", []),
+        )
+        new_version.static_segments_additive.set(
+            StaticSegment.objects.filter(
+                id__in=segment_data.get("static_segment_ids_additive", [])
+            )
+        )
+        new_version.static_segments_subtractive.set(
+            StaticSegment.objects.filter(
+                id__in=segment_data.get("static_segment_ids_subtractive", [])
+            )
+        )
+        new_version.mail_categories_additive.set(
+            MailCategory.objects.filter(
+                id__in=segment_data.get("mail_category_ids_additive", [])
+            )
         )
 
         Trigger.on_email_configuration_version_save(new_version)
@@ -273,7 +294,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             "content": updated_version.content,
             "subject": updated_version.subject,
             "release_status": updated_version.status,
-            "segment_data": updated_version.segment_data,
             "triggers": updated_version.triggers,
         }
         serializer = BundledEmailConfigurationSerializer(
@@ -303,8 +323,29 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         updated_version.subject = serializer.validated_data.get("subject", None)
         updated_version.status = release_status
         updated_version.triggers = serializer.validated_data.get("triggers", None)
-        updated_version.segment_data = serializer.validated_data.get(
-            "segment_data", None
+
+        segment_data = serializer.validated_data.get("segment_data", {})
+        updated_version.dynamic_segments_additive = segment_data.get(
+            "dynamic_segment_names_additive", []
+        )
+        updated_version.dynamic_segments_subtractive = segment_data.get(
+            "dynamic_segment_names_subtractive", []
+        )
+        updated_version.filter_list = segment_data.get("filter_list", [])
+        updated_version.static_segments_additive.set(
+            StaticSegment.objects.filter(
+                id__in=segment_data.get("static_segment_ids_additive", [])
+            )
+        )
+        updated_version.static_segments_subtractive.set(
+            StaticSegment.objects.filter(
+                id__in=segment_data.get("static_segment_ids_subtractive", [])
+            )
+        )
+        updated_version.mail_categories_additive.set(
+            MailCategory.objects.filter(
+                id__in=segment_data.get("mail_category_ids_additive", [])
+            )
         )
         updated_version.save()
 
@@ -326,7 +367,20 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 "subject": version.subject,
                 "updated_at": version.updated_at,
                 "release_status": version.status,
-                "segment_data": version.segment_data,
+                "segment_data": {
+                    "dynamic_segment_names_additive": version.dynamic_segments_additive,
+                    "dynamic_segment_names_subtractive": version.dynamic_segments_subtractive,
+                    "static_segment_ids_additive": version.static_segments_additive.values_list(
+                        "id", flat=True
+                    ),
+                    "static_segment_ids_subtractive": version.static_segments_subtractive.values_list(
+                        "id", flat=True
+                    ),
+                    "mail_category_ids_additive": version.mail_categories_additive.values_list(
+                        "id", flat=True
+                    ),
+                    "filter_list": version.filter_list,
+                },
                 "triggers": version.triggers,
             }
         )
@@ -691,9 +745,23 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["POST"])
     def combine(self, request):
-        ic(request.data)
+        serializer = SegmentDataSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
         try:
-            combined = resolve_segments(**request.data)
+            combined = resolve_segments(
+                add_segments=data["dynamic_segment_names_additive"],
+                remove_segments=data["dynamic_segment_names_subtractive"],
+                static_segments=StaticSegment.objects.filter(
+                    id__in=data["static_segment_ids_additive"]
+                ).values_list("name"),
+                static_segments_subtractive=StaticSegment.objects.filter(
+                    id__in=data["static_segment_ids_subtractive"]
+                ).values_list("name"),
+                mail_category_ids=data["mail_category_ids_additive"],
+                filter_list=data["filter_list"],
+            )
             return Response(
                 {
                     "count": len(combined),

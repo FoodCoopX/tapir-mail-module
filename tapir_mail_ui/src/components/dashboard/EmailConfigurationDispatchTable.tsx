@@ -4,6 +4,7 @@ import {
   EmailConfigurationDispatch,
   EmailConfigurationDispatchApi,
   EmailConfigurationVersion,
+  SegmentApi,
 } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
@@ -18,6 +19,7 @@ import SelectVersionModal from "./SelectVersionModal";
 import DispatchDetailsModal from "../DispatchDetailsModal";
 import { EmailConfigurationDispatchStats } from "./EmailConfigurationDispatchStats";
 import TapirTooltip from "../TapirTooltip";
+import { buildSegmentDataFromVersion } from "../../utils/buildSegmentDataFromVersion";
 
 interface EmailConfigurationVersionStatusTableProps {
   cardTitle: string;
@@ -28,6 +30,7 @@ const EmailConfigurationDispatchTable: React.FC<
   EmailConfigurationVersionStatusTableProps
 > = ({ cardTitle, content }) => {
   const api = useApi(EmailConfigurationDispatchApi);
+  const segmentApi = useApi(SegmentApi);
   const showAlert = useAlert();
 
   const [emailConfigurationDispatches, setEmailConfigurationDispatches] =
@@ -43,6 +46,29 @@ const EmailConfigurationDispatchTable: React.FC<
     emailConfigurationDispatchForStats,
     setEmailConfigurationDispatchForStats,
   ] = useState<EmailConfigurationDispatch>();
+  const [availableDynamicSegments, setAvailableDynamicSegments] = useState<{
+    [id: string]: string;
+  }>({});
+  const [availableStaticSegments, setAvailableStaticSegments] = useState<{
+    [id: string]: string;
+  }>({});
+  const [availableMailCategories, setAvailableMailCategories] = useState<{
+    [id: string]: string;
+  }>({});
+
+  useEffect(() => {
+    segmentApi
+      .segmentAvailableSegmentsRetrieve()
+      .then((response) => {
+        setAvailableDynamicSegments(response.dynamicSegments);
+        setAvailableStaticSegments(response.staticSegments);
+        setAvailableMailCategories(response.mailCategories);
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert("Fehler beim Laden der Segment-Daten", "danger");
+      });
+  }, []);
 
   const fetchEmailConfigurationDispatch = () => {
     let call;
@@ -163,23 +189,25 @@ const EmailConfigurationDispatchTable: React.FC<
                         ) : (
                           <>
                             <SegmentsDisplay
-                              segmentData={
-                                emailConfigurationDispatch
-                                  .emailConfigurationVersion.segmentData
+                              segmentData={buildSegmentDataFromVersion(
+                                emailConfigurationDispatch.emailConfigurationVersion,
+                              )}
+                              availableDynamicSegments={
+                                availableDynamicSegments
                               }
-                              availableDynamicSegments={{}}
-                              availableStaticSegments={{}}
-                              availableMailCategories={{}}
+                              availableStaticSegments={availableStaticSegments}
+                              availableMailCategories={availableMailCategories}
                             />
                             <FilterDisplay
-                              filter={emailConfigurationDispatch.emailConfigurationVersion.segmentData.filterList.map(
-                                (filter) => {
-                                  return {
-                                    value: filter,
-                                    elementType: guessElementType(filter),
-                                  };
-                                },
-                              )}
+                              filter={(
+                                emailConfigurationDispatch
+                                  .emailConfigurationVersion.filterList ?? []
+                              ).map((filter) => {
+                                return {
+                                  value: filter,
+                                  elementType: guessElementType(filter),
+                                };
+                              })}
                             />
                           </>
                         )}

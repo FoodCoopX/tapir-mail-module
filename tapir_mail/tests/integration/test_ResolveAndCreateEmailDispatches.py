@@ -3,12 +3,14 @@ from unittest.mock import patch
 
 from dateutil.relativedelta import relativedelta
 from django.core.cache import cache
+
 from tapir_mail.models import (
     EmailConfigurationDispatch,
     EmailDispatch,
     ReleaseStatus,
 )
 from tapir_mail.service.email_dispatch import ResolveAndCreateEmailDispatches
+from tapir_mail.service.recipient_list_provider import RecipientListProvider
 from tapir_mail.tests.factories import (
     EmailConfigurationVersionFactory,
     StaticSegmentFactory,
@@ -19,7 +21,6 @@ from tapir_mail.tests.test_utils import TapirIntegrationTest, mock_timezone_now
 
 class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
     NOW = datetime(2023, 9, 10, 12, 30, tzinfo=timezone.utc)
-    TEST_SEGMENT_DATA = {"static_segments": ["Test Segment"]}
     RECIPIENT_COUNT = 10
 
     def setUp(self):
@@ -29,7 +30,8 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
         )
 
         self.segment = StaticSegmentFactory.create(name="Test Segment")
-        for i in range(self.RECIPIENT_COUNT):
+
+        for _ in range(self.RECIPIENT_COUNT):
             StaticSegmentRecipientFactory.create(
                 segment=self.segment,
             )
@@ -43,8 +45,7 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
 
     def test_resolveAndCreate_normalCase_createsDispatches(self):
         self.create_email_config_dispatch(scheduled_time=self.NOW)
-        self.email_config_version.segment_data = self.TEST_SEGMENT_DATA
-        self.email_config_version.save()
+        self.email_config_version.static_segments_additive.set([self.segment])
         ResolveAndCreateEmailDispatches.resolve_and_create()
         self.assertEqual(EmailDispatch.objects.count(), self.RECIPIENT_COUNT)
 
@@ -109,8 +110,7 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
         mock_log_error.assert_not_called()
 
     def test_resolveAndCreate_moreThan10Dispatches_only10Processed(self):
-        self.email_config_version.segment_data = self.TEST_SEGMENT_DATA
-        self.email_config_version.save()
+        self.email_config_version.static_segments_additive.set([self.segment])
         for _ in range(15):
             self.create_email_config_dispatch(scheduled_time=self.NOW)
         ResolveAndCreateEmailDispatches.resolve_and_create()
@@ -140,11 +140,15 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
         self.assertEqual(retry_count, 1)
         self.assertEqual(EmailDispatch.objects.count(), 0)
 
-    @patch("tapir_mail.models.EmailConfigurationDispatch.get_recipient_list")
+    @patch.object(
+        RecipientListProvider, "get_recipient_list_from_email_configuration_dispatch"
+    )
     def test_resolveAndCreate_failResolveSegments_retryIncrementedOnFailure(
-        self, mock_resolve_recipients
+        self, mock_get_recipient_list_from_email_configuration_dispatch
     ):
-        mock_resolve_recipients.side_effect = Exception("Test failure")
+        mock_get_recipient_list_from_email_configuration_dispatch.side_effect = (
+            Exception("Test failure")
+        )
         config_dispatch = self.create_email_config_dispatch(scheduled_time=self.NOW)
 
         ResolveAndCreateEmailDispatches.resolve_and_create()
@@ -175,8 +179,7 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
     def test_resolveAndCreate_failAndThenSucceed_resetOnSuccess(self):
         config_dispatch = self.create_email_config_dispatch(scheduled_time=self.NOW)
         cache_key = f"dispatch_retry_count_{config_dispatch.id}"
-        self.email_config_version.segment_data = self.TEST_SEGMENT_DATA
-        self.email_config_version.save()
+        self.email_config_version.static_segments_additive.set([self.segment])
 
         # First, simulate a failure
         with patch(

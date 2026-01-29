@@ -139,7 +139,12 @@ def resolve_segments(
     if mail_category_ids is None:
         mail_category_ids = []
 
-    if not add_segments and not static_segments and not mail_category_ids:
+    if (
+        not add_segments
+        and not static_segments
+        and not mail_category_ids
+        and not override_recipients
+    ):
         raise ValueError("At least one segment should be added.")
 
     try:

@@ -59,12 +59,12 @@ const SendTestMailModal = ({
     segmentApi
       .segmentCombineCreate({
         segmentDataRequest: {
-          staticSegments: [selectedSegment],
-          staticSegmentsSubtractive: [],
-          addSegments: [],
-          removeSegments: [],
+          staticSegmentIdsAdditive: [selectedSegment],
+          staticSegmentIdsSubtractive: [],
+          dynamicSegmentNamesAdditive: [],
+          dynamicSegmentNamesSubtractive: [],
           filterList: [],
-          mailCategoryIds: [],
+          mailCategoryIdsAdditive: [],
         },
       })
       .then((data) => {

@@ -9,7 +9,7 @@ from tapir_mail.models import (
     ReleaseStatus,
     EmailConfigurationDispatch,
 )
-from tapir_mail.service.segment import resolve_segments
+from tapir_mail.service.recipient_list_provider import RecipientListProvider
 from tapir_mail.service.triggers import Trigger
 from tapir_mail_server.dummy_accounts.models import DummyPickupLocation, DummyTapirUser
 from tapir_mail_server.dummy_accounts.triggers.days_after_subscription_start_trigger import (
@@ -43,7 +43,11 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
         email_configuration_version: EmailConfigurationVersion,
         trigger_data: DaysTriggerData,
     ):
-        for recipient in resolve_segments(**email_configuration_version.segment_data):
+        for (
+            recipient
+        ) in RecipientListProvider.get_recipient_list_from_email_configuration_version(
+            version=email_configuration_version, override_recipients=None
+        ):
             cls._delete_unsent_config_dispatch(
                 version=email_configuration_version, recipient=recipient
             )
@@ -69,7 +73,11 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
             ]:
                 continue
 
-            for recipient in resolve_segments(**version.segment_data):
+            for (
+                recipient
+            ) in RecipientListProvider.get_recipient_list_from_email_configuration_version(
+                version=version, override_recipients=None
+            ):
                 cls._delete_unsent_config_dispatch(version=version, recipient=recipient)
                 if (
                     not hasattr(recipient, "pickup_location")
@@ -90,7 +98,12 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
             ]:
                 continue
 
-            if recipient not in resolve_segments(**version.segment_data):
+            if (
+                recipient
+                not in RecipientListProvider.get_recipient_list_from_email_configuration_version(
+                    version=version, override_recipients=None
+                )
+            ):
                 continue
 
             cls._delete_unsent_config_dispatch(version=version, recipient=recipient)
