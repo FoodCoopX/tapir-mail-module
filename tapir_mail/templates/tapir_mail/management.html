@@ -1,27 +1,38 @@
+{% load static %}
+{% load django_bootstrap5 %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Tapir Newsletter-Verwaltung</title>
+  <link rel="stylesheet" href="{% static 'core/bootstrap-5.3.1-dist/css/bootstrap.min.css' %}">
 </head>
 <body>
-<div>
-  <p>Hallo {{ first_name }}. Hier kannst du dich für unsere verschiedene Newsletter an- oder -abmelden.</p>
-  <p>Wenn du dich von alle Newsletter abmeldest, löschen wir entschprechend alle deine Daten aus unsere Server.</p>
+
+
+
+<div class="card">
+  <div class="card-header"><h5>Abo-Verwaltung</h5></div>
+  <div class="card-body">
+    <div>
+      <p>Hallo {{ first_name }}. Hier kannst du dich für unsere verschiedene Newsletter an- oder -abmelden.</p>
+      <p>Wenn du dich von alle Newsletter abmeldest, löschen wir entschprechend alle deine Daten aus unsere Server.</p>
+    </div>
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      {% bootstrap_form form %}
+      <button type="submit" class="btn btn-primary">
+        Anmeldungen anpassen.
+      </button>
+    </form>
+  </div>
 </div>
-{% if messages %}
-  <ul class="messages">
-    {% for message in messages %}
-      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
-<form method="post">
-  {% csrf_token %}
-  {{ form }}
-  <button type="submit">
-    Anmeldungen anpassen.
-  </button>
-</form>
 </body>
 </html>

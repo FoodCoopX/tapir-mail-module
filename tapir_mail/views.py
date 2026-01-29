@@ -1007,7 +1007,10 @@ class RegisterToMailCategoryView(FormView):
         return context_data
 
     def get_success_url(self):
-        return reverse("confirmation_mail_sent")
+        return reverse(
+            "confirmation_mail_sent",
+            args=[self.get_category().id],
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1027,6 +1030,7 @@ class RegisterToMailCategoryView(FormView):
                 external_recipient=external_recipient, mail_category=self.get_category()
             )
         )
+        self.external_recipient_confirmation = external_recipient_confirmation
 
         TransactionalTrigger.fire_action(
             TransactionalTriggerData(
@@ -1050,6 +1054,13 @@ class RegisterToMailCategoryView(FormView):
 @method_decorator(xframe_options_exempt, name="get")
 class ConfirmationMailSentView(TemplateView):
     template_name = "tapir_mail/confirmation_mail_sent.html"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["category_name"] = get_object_or_404(
+            MailCategory, id=self.kwargs["category_id"]
+        ).name
+        return context_data
 
 
 class ConfirmRegistrationToMailCategoryView(TemplateView):
@@ -1114,6 +1125,7 @@ class ExternalRecipientManagementView(FormView):
         external_recipient.first_name = form.cleaned_data["first_name"]
         external_recipient.save()
 
+        at_least_one_enabled = False
         for mail_category in MailCategory.objects.all():
             enabled = form.cleaned_data.get(
                 ExternalRecipientManagementForm.build_field_key_for_category(
@@ -1122,13 +1134,18 @@ class ExternalRecipientManagementView(FormView):
                 False,
             )
             if enabled:
+                at_least_one_enabled = True
                 ExternalRecipientManager.register_external_recipient_to_category(
                     mail_category=mail_category, external_recipient=external_recipient
                 )
+
             else:
                 ExternalRecipientManager.remove_external_recipient_from_category(
                     mail_category=mail_category, external_recipient=external_recipient
                 )
+
+        if not at_least_one_enabled:
+            external_recipient.delete()
 
         return super().form_valid(form)
 

@@ -44,7 +44,7 @@ urlpatterns = [
         name="category_registration_external_form",
     ),
     path(
-        "external/confirmation_mail_sent",
+        "external/confirmation_mail_sent/<str:category_id>",
         ConfirmationMailSentView.as_view(),
         name="confirmation_mail_sent",
     ),

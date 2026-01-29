@@ -7,8 +7,8 @@ from tapir_mail.service.external_recipient_manager import ExternalRecipientManag
 
 
 class RegisterToMailCategoryForm(Form):
-    email = forms.EmailField(required=True)
-    first_name = forms.CharField(required=True)
+    email = forms.EmailField(required=True, label="E-Mail-Adresse")
+    first_name = forms.CharField(required=True, label="Vorname")
 
     def __init__(self, *args, **kwargs):
         self.category: MailCategory = kwargs.pop("category")

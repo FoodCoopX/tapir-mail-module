@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.postgres",
     "django_filters",
+    "django_bootstrap5",
 ]
 DEPENDENCIES_APPS = [
     "rest_framework",
