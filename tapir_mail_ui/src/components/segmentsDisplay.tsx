@@ -31,9 +31,8 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
     0
   ) {
     return null;
-  } else {
-    console.log(segmentData);
   }
+
   const segmentStyle: React.CSSProperties = interactions
     ? { cursor: "pointer" }
     : {};
