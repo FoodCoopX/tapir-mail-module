@@ -68,4 +68,4 @@ services:
       - POSTGRES_PASSWORD=tapir
       - POSTGRES_USER=tapir
     ports:
-      - '5432:5432'
+      - "5432:5432"
