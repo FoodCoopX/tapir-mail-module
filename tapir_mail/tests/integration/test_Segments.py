@@ -18,7 +18,6 @@ class TestSegments(TapirIntegrationTest):
     SEGMENT_COOP_MEMBERS = "Geno-Mitglieder"
     SEGMENT_NOT_COOP_MEMBERS = "Nicht Geno-Mitglied"
 
-    STATIC_SEGMENT = "Static1"
     STATIC_RECIPIENT_1 = "static1@example.com"
     STATIC_RECIPIENT_2 = "static2@example.com"
 
@@ -51,12 +50,12 @@ class TestSegments(TapirIntegrationTest):
         register_segment(cls.SEGMENT_NOT_COOP_MEMBERS, not_coop_members)
 
         # Create a static segment
-        static_segment = StaticSegment.objects.create(name=cls.STATIC_SEGMENT)
+        cls.static_segment = StaticSegment.objects.create(name="Static1")
         StaticSegmentRecipient.objects.create(
-            segment=static_segment, email=cls.STATIC_RECIPIENT_1
+            segment=cls.static_segment, email=cls.STATIC_RECIPIENT_1
         )
         StaticSegmentRecipient.objects.create(
-            segment=static_segment, email=cls.STATIC_RECIPIENT_2
+            segment=cls.static_segment, email=cls.STATIC_RECIPIENT_2
         )
 
         def has_coop_shares_filter(qs):
@@ -65,42 +64,44 @@ class TestSegments(TapirIntegrationTest):
         register_filter(cls.FILTER_HAS_COOP_SHARES, has_coop_shares_filter)
 
     def test_combineSegmentsWithFilters_addSegments_returnsCorrectList(self):
-        result = resolve_segments(add_segments=[self.SEGMENT_ALL_USERS])
-        self.assertSetEqual(set(r.id for r in result), {1, 2, 3, 4})
+        result = resolve_segments(
+            dynamic_segment_names_additive=[self.SEGMENT_ALL_USERS]
+        )
+        self.assertSetEqual({r.id for r in result}, {1, 2, 3, 4})
 
     def test_combineSegmentsWithFilters_addAndRemoveSegments_returnsCorrectList(self):
         result = resolve_segments(
-            add_segments=[self.SEGMENT_ALL_USERS],
-            remove_segments=[self.SEGMENT_NOT_COOP_MEMBERS],
+            dynamic_segment_names_additive=[self.SEGMENT_ALL_USERS],
+            dynamic_segment_names_subtractive=[self.SEGMENT_NOT_COOP_MEMBERS],
         )
-        self.assertSetEqual(set(r.id for r in result), {1, 3})
+        self.assertSetEqual({r.id for r in result}, {1, 3})
 
     def test_combineSegmentsWithFilters_addDynamicAndStaticSegments_returnsCorrectList(
         self,
     ):
         result = resolve_segments(
-            add_segments=[self.SEGMENT_NOT_COOP_MEMBERS],
-            static_segments=[self.STATIC_SEGMENT],
+            dynamic_segment_names_additive=[self.SEGMENT_NOT_COOP_MEMBERS],
+            static_segment_ids_additive=[self.static_segment.id],
         )
         self.assertSetEqual(
-            set(
+            {
                 r.email if isinstance(r, StaticSegmentRecipient) else r.id
                 for r in result
-            ),
+            },
             {2, 4, self.STATIC_RECIPIENT_1, self.STATIC_RECIPIENT_2},
         )
 
     def test_combineSegmentsWithFilters_addSegmentWithFilter_returnsCorrectList(self):
         result = resolve_segments(
-            add_segments=[self.SEGMENT_ALL_USERS],
+            dynamic_segment_names_additive=[self.SEGMENT_ALL_USERS],
             filter_list=[self.FILTER_HAS_COOP_SHARES],
         )
-        self.assertSetEqual(set(r.id for r in result), {1, 3})
+        self.assertSetEqual({r.id for r in result}, {1, 3})
 
     def test_combineSegmentsWithFilters_addStaticSegment_returnsCorrectList(self):
-        result = resolve_segments(static_segments=[self.STATIC_SEGMENT])
+        result = resolve_segments(static_segment_ids_additive=[self.static_segment.id])
         self.assertSetEqual(
-            set(r.email for r in result),
+            {r.email for r in result},
             {self.STATIC_RECIPIENT_1, self.STATIC_RECIPIENT_2},
         )
 
@@ -114,11 +115,11 @@ class TestSegments(TapirIntegrationTest):
         )
 
         result = resolve_segments(
-            add_segments=[self.SEGMENT_COOP_MEMBERS],
-            static_segments_subtractive=["subtractive"],
+            dynamic_segment_names_additive=[self.SEGMENT_COOP_MEMBERS],
+            static_segment_ids_subtractive=[subtractive_static_segment.id],
         )
         self.assertSetEqual(
-            set(r.email for r in result),
+            {r.email for r in result},
             {DummyTapirUser.objects.get(id=3).email},
         )
 
@@ -126,19 +127,19 @@ class TestSegments(TapirIntegrationTest):
         self,
     ):
         result = resolve_segments(
-            add_segments=[self.SEGMENT_ALL_USERS],
+            dynamic_segment_names_additive=[self.SEGMENT_ALL_USERS],
             override_recipients=[
                 {"recipient_id_in_base_queryset": 2},
                 {"recipient_id_in_base_queryset": 4},
             ],
         )
-        self.assertSetEqual(set(r.id for r in result), {2, 4})
+        self.assertSetEqual({r.id for r in result}, {2, 4})
 
     def test_resolveSegments_recipientsOutsideTheBaseQueryset_resultContainsFirstGivenRecipient(
         self,
     ):
         result = resolve_segments(
-            add_segments=[self.SEGMENT_ALL_USERS],
+            dynamic_segment_names_additive=[self.SEGMENT_ALL_USERS],
             override_recipients=[
                 {
                     "recipient_outside_of_base_queryset": {

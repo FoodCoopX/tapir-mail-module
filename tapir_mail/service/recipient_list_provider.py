@@ -24,15 +24,15 @@ class RecipientListProvider:
         version: EmailConfigurationVersion, override_recipients: list | None
     ) -> list:
         return resolve_segments(
-            add_segments=version.dynamic_segments_additive,
-            remove_segments=version.dynamic_segments_subtractive,
-            static_segments=version.static_segments_additive.values_list(
-                "name", flat=True
+            dynamic_segment_names_additive=version.dynamic_segments_additive,
+            dynamic_segment_names_subtractive=version.dynamic_segments_subtractive,
+            static_segment_ids_additive=version.static_segments_additive.values_list(
+                "id", flat=True
             ),
-            static_segments_subtractive=version.static_segments_subtractive.values_list(
-                "name", flat=True
+            static_segment_ids_subtractive=version.static_segments_subtractive.values_list(
+                "id", flat=True
             ),
-            mail_category_ids=version.mail_categories_additive.values_list(
+            mail_category_ids_additive=version.mail_categories_additive.values_list(
                 "id", flat=True
             ),
             filter_list=version.filter_list,

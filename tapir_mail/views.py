@@ -751,15 +751,13 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
 
         try:
             combined = resolve_segments(
-                add_segments=data["dynamic_segment_names_additive"],
-                remove_segments=data["dynamic_segment_names_subtractive"],
-                static_segments=StaticSegment.objects.filter(
-                    id__in=data["static_segment_ids_additive"]
-                ).values_list("name"),
-                static_segments_subtractive=StaticSegment.objects.filter(
-                    id__in=data["static_segment_ids_subtractive"]
-                ).values_list("name"),
-                mail_category_ids=data["mail_category_ids_additive"],
+                dynamic_segment_names_additive=data["dynamic_segment_names_additive"],
+                dynamic_segment_names_subtractive=data[
+                    "dynamic_segment_names_subtractive"
+                ],
+                static_segment_ids_additive=data["static_segment_ids_additive"],
+                static_segment_ids_subtractive=data["static_segment_ids_subtractive"],
+                mail_category_ids_additive=data["mail_category_ids_additive"],
                 filter_list=data["filter_list"],
             )
             return Response(

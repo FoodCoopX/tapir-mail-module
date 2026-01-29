@@ -118,116 +118,142 @@ def _precedence(operator):
 
 
 def resolve_segments(
-    add_segments=None,
-    static_segments=None,
-    static_segments_subtractive=None,
-    remove_segments=None,
+    dynamic_segment_names_additive=None,
+    static_segment_ids_additive=None,
+    static_segment_ids_subtractive=None,
+    dynamic_segment_names_subtractive=None,
     filter_list=None,
-    mail_category_ids=None,
+    mail_category_ids_additive=None,
     override_recipients: list = None,
 ) -> list:
     if filter_list is None:
         filter_list = []
-    if remove_segments is None:
-        remove_segments = []
-    if static_segments is None:
-        static_segments = []
-    if add_segments is None:
-        add_segments = []
-    if static_segments_subtractive is None:
-        static_segments_subtractive = []
-    if mail_category_ids is None:
-        mail_category_ids = []
+    if dynamic_segment_names_subtractive is None:
+        dynamic_segment_names_subtractive = []
+    if static_segment_ids_additive is None:
+        static_segment_ids_additive = []
+    if dynamic_segment_names_additive is None:
+        dynamic_segment_names_additive = []
+    if static_segment_ids_subtractive is None:
+        static_segment_ids_subtractive = []
+    if mail_category_ids_additive is None:
+        mail_category_ids_additive = []
 
     if (
-        not add_segments
-        and not static_segments
-        and not mail_category_ids
+        not dynamic_segment_names_additive
+        and not static_segment_ids_additive
+        and not mail_category_ids_additive
         and not override_recipients
     ):
         raise ValueError("At least one segment should be added.")
 
     try:
         return __resolve_segments_internal(
-            add_segment_names=add_segments,
-            static_segment_names=static_segments,
-            static_segment_subtractive_names=static_segments_subtractive,
-            remove_segment_names=remove_segments,
+            dynamic_segment_names_additive=dynamic_segment_names_additive,
+            dynamic_segment_names_subtractive=dynamic_segment_names_subtractive,
+            static_segment_ids_additive=static_segment_ids_additive,
+            static_segment_ids_subtractive=static_segment_ids_subtractive,
+            mail_category_ids_additive=mail_category_ids_additive,
             filter_list=filter_list,
             override_recipients=override_recipients,
-            mail_category_ids=mail_category_ids,
         )
     except Exception as e:
         LOG.error(
-            f"Error combining segments: {e}. addSegments: {add_segments}, removeSegments: {remove_segments}, filterList: {filter_list}, override_recipients: {override_recipients}"
+            f"Error combining segments: {e}. addSegments: {dynamic_segment_names_additive}, removeSegments: {dynamic_segment_names_subtractive}, filterList: {filter_list}, override_recipients: {override_recipients}, mail_categories: {mail_category_ids_additive}"
         )
         traceback.print_exc()
         raise e
 
 
 def __resolve_segments_internal(
-    add_segment_names: list[str],
-    static_segment_names: list[str],
-    static_segment_subtractive_names: list[str],
-    remove_segment_names: list[str],
-    filter_list: list,
-    mail_category_ids: list[str],
+    dynamic_segment_names_additive: list[str],
+    dynamic_segment_names_subtractive: list[str],
+    static_segment_ids_additive: list[str],
+    static_segment_ids_subtractive: list[str],
+    mail_category_ids_additive: list[str],
+    filter_list: list[str],
     override_recipients: list = None,
 ):
     combined = BASE_QUERYSET.none()
 
-    # Combine segments using union
-    for segment_name in add_segment_names:
-        LOG.info(f"Adding segment {segment_name}")
-        combined = combined.union(segment_registry[segment_name]())
+    combined = add_dynamic_segments(
+        queryset=combined, segment_names=dynamic_segment_names_additive
+    )
+    combined = remove_dynamic_segments(
+        queryset=combined, segment_names=dynamic_segment_names_subtractive
+    )
+    combined = apply_complex_filters(queryset=combined, filter_list=filter_list)
 
-    # Subtract segments using difference
-    for segment_name in remove_segment_names:
-        LOG.info(f"Subtracting segment {segment_name}")
-        combined = combined.difference(segment_registry[segment_name]())
-
-    # Apply complex filters
-    if filter_list:
-        LOG.info(f"Adding filters {filter_list}")
-        id_list = list(combined.values_list("id", flat=True))
-        combined = _apply_complex_filters(
-            BASE_QUERYSET.filter(id__in=id_list), filter_list
-        )
-
-    # Can't call distinct() right away because we called difference() before on combined
     ids = combined.values_list("id", flat=True)
     combined = BASE_QUERYSET.filter(id__in=ids).distinct()
 
     result = list(combined)
 
-    for mail_category_id in mail_category_ids:
-        mail_category = MailCategory.objects.get(id=mail_category_id)
-        result.extend(MailCategoryRecipientResolver.resolve_recipients(mail_category))
+    add_mail_categories(
+        recipient_list=result, mail_category_ids=mail_category_ids_additive
+    )
+    add_static_segments(recipient_list=result, segment_ids=static_segment_ids_additive)
 
-    # Add static segments
-    static_segment_names = StaticSegment.objects.filter(name__in=static_segment_names)
-    for segment_name in static_segment_names:
-        LOG.info(f"Adding static segment {segment_name.name}")
-        result.extend(segment_name.recipients.all())
-
-    recipients_subtractive = []
-    for static_segment_subtractive in StaticSegment.objects.filter(
-        name__in=static_segment_subtractive_names
-    ):
-        recipients_subtractive.extend(
-            static_segment_subtractive.recipients.values_list("email", flat=True)
-        )
-
-    result = [
-        recipient
-        for recipient in result
-        if recipient.email not in recipients_subtractive
-    ]
+    result = remove_static_segments(
+        recipient_list=result, segment_ids=static_segment_ids_subtractive
+    )
 
     if override_recipients:
         result = apply_recipient_override(result, override_recipients)
 
     return result
+
+
+def remove_static_segments(recipient_list: list, segment_ids: list[str]):
+    email_addresses_to_remove = set()
+    for static_segment_subtractive in StaticSegment.objects.filter(id__in=segment_ids):
+        email_addresses_to_remove.update(
+            static_segment_subtractive.recipients.values_list("email", flat=True)
+        )
+
+    return [
+        recipient
+        for recipient in recipient_list
+        if recipient.email not in email_addresses_to_remove
+    ]
+
+
+def add_static_segments(recipient_list: list, segment_ids: list[str]):
+    for segment in StaticSegment.objects.filter(id__in=segment_ids):
+        LOG.info(f"Adding static segment {segment.name}")
+        recipient_list.extend(segment.recipients.all())
+
+
+def add_mail_categories(recipient_list: list, mail_category_ids: list[str]):
+    for mail_category_id in mail_category_ids:
+        mail_category = MailCategory.objects.get(id=mail_category_id)
+        recipient_list.extend(
+            MailCategoryRecipientResolver.resolve_recipients(mail_category)
+        )
+
+
+def apply_complex_filters(queryset: QuerySet, filter_list: list[str]):
+    if not filter_list:
+        return queryset
+
+    LOG.info(f"Adding filters {filter_list}")
+    id_list = list(queryset.values_list("id", flat=True))
+    queryset = _apply_complex_filters(BASE_QUERYSET.filter(id__in=id_list), filter_list)
+    return queryset
+
+
+def add_dynamic_segments(queryset: QuerySet, segment_names: list[str]):
+    for segment_name in segment_names:
+        LOG.info(f"Adding segment {segment_name}")
+        queryset = queryset.union(segment_registry[segment_name]())
+    return queryset
+
+
+def remove_dynamic_segments(queryset: QuerySet, segment_names: list[str]):
+    for segment_name in segment_names:
+        LOG.info(f"Subtracting segment {segment_name}")
+        queryset = queryset.difference(segment_registry[segment_name]())
+    return queryset
 
 
 def apply_recipient_override(recipients: list, overrides: list[dict]) -> list:
