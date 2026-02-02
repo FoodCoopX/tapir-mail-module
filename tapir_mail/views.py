@@ -948,7 +948,7 @@ class CreateMissingTriggerMailView(APIView):
 
 
 class MailCategoryViewSet(viewsets.ModelViewSet):
-    queryset = MailCategory.objects.all()
+    queryset = MailCategory.objects.order_by("name")
     serializer_class = MailCategorySerializer
 
     @transaction.atomic

@@ -41,6 +41,7 @@ const MailCategoryEditModal: React.FC<MailCategoryEditModalProps> = ({
     setCategoryName(category.name);
     setCategoryMode(category.mode);
     setExternalsEnabled(category.availableForExternalRecipients);
+    setSegmentName(category.dynamicSegmentName ?? "");
   }, [category]);
 
   function onSaveClicked() {

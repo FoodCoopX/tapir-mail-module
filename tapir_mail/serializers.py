@@ -196,12 +196,12 @@ class SegmentDataSerializer(serializers.Serializer):
 class EmailConfigurationVersionSerializer(
     TriggersSerializationMixin, serializers.ModelSerializer
 ):
-    email_configuration = EmailConfigurationSerializer()
-    can_be_deleted = serializers.SerializerMethodField()
-
     class Meta:
         model = EmailConfigurationVersion
         fields = "__all__"
+
+    email_configuration = EmailConfigurationSerializer()
+    can_be_deleted = serializers.SerializerMethodField()
 
     @staticmethod
     def get_can_be_deleted(version: EmailConfigurationVersion) -> bool:
