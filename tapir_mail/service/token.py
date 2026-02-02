@@ -76,7 +76,7 @@ def find_tokens(mjml: str, token_type: str = TOKEN_TYPE_RECIPIENT) -> list[Any]:
     """
     pattern = re.compile(r"\{\{\s*(.*?)\s*\}\}")
     matches = pattern.findall(mjml)
-    unique_tokens = list(set(matches))
+    unique_tokens = set(matches)
 
     result_tokens = []
     for token in unique_tokens:
@@ -153,7 +153,7 @@ def replace_tokens(
                     mjml, f"{token_type}.{key}", value() if callable(value) else value
                 )
         elif token_type == TOKEN_TYPE_DYNAMIC:
-            for key, bla in tokens.items():
+            for key, _ in tokens.items():
                 mjml = _do_replace(
                     mjml,
                     f"{token_type}.{key}",

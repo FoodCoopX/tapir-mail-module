@@ -1,6 +1,6 @@
 import React, {
-  ReactNode,
   createContext,
+  ReactNode,
   useContext,
   useRef,
   useState,
@@ -38,7 +38,7 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
   const showAlert: ShowAlertFunction = (
     msg,
     variant = "primary",
-    duration = 2000,
+    duration = undefined,
   ) => {
     setTs(Date.now());
     setMessage(msg);
@@ -48,6 +48,8 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
+
+    duration ??= variant === "danger" ? 10000 : 2000;
 
     timeoutRef.current = setTimeout(() => {
       setShow(false);

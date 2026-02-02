@@ -269,9 +269,13 @@ const EmailConfigurationEditor = () => {
         showAlert("Email Konfiguration gespeichert!", "success");
         navigate(Paths.dashboard);
       })
-      .catch(() =>
-        showAlert("Beim Speichern ist ein Fehler aufgetreten.", "danger"),
-      );
+      .catch(async (error) => {
+        const message = await error.response.text();
+        showAlert(
+          "Beim Speichern ist ein Fehler aufgetreten: " + message,
+          "danger",
+        );
+      });
 
   const handleSegmentChange = (segmentData: SegmentData) => {
     setSegmentData(segmentData);

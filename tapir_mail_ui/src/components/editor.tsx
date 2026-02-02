@@ -107,12 +107,12 @@ const categories: ExtensionProps["categories"] = [
 ];
 
 export const createEmptyMjml = () => {
-  const baseUrl = new URL(env.REACT_APP_API_ROOT as string).origin;
+  const baseUrl = new URL(env.REACT_APP_API_ROOT).origin;
 
   return (
     "<mjml><mj-head>" +
     customFontList
-      .map((f) => `<mj-font name="${f.label}" href="${baseUrl + f.css!!}" />`)
+      .map((f) => `<mj-font name="${f.label}" href="${baseUrl + f.css}" />`)
       .join("") +
     "</mj-head><mj-body></mj-body></mjml>"
   );
@@ -153,14 +153,10 @@ const Editor: React.FC<EditorProps> = ({
         const uploadFormData = new FormData();
         uploadFormData.append("filepond", file);
         addCsrfToken(uploadFormData);
-        fetch(
-          (env.REACT_APP_API_ROOT as string) +
-            "/api/media_library/filepond/process/",
-          {
-            method: "POST",
-            body: uploadFormData,
-          },
-        ).then((uploadResponse) => {
+        fetch(env.REACT_APP_API_ROOT + "/api/media_library/filepond/process/", {
+          method: "POST",
+          body: uploadFormData,
+        }).then((uploadResponse) => {
           if (!uploadResponse.ok) {
             handleError(uploadResponse);
             return;
@@ -175,14 +171,10 @@ const Editor: React.FC<EditorProps> = ({
         const confirmFormData = new FormData();
         confirmFormData.append("filepond", uploadId);
         addCsrfToken(confirmFormData);
-        fetch(
-          (env.REACT_APP_API_ROOT as string) +
-            "/api/media_library/confirm_upload/",
-          {
-            method: "post",
-            body: confirmFormData,
-          },
-        ).then((confirmResponse) => {
+        fetch(env.REACT_APP_API_ROOT + "/api/media_library/confirm_upload/", {
+          method: "post",
+          body: confirmFormData,
+        }).then((confirmResponse) => {
           if (!confirmResponse.ok) {
             handleError(confirmResponse);
             return;
@@ -205,36 +197,34 @@ const Editor: React.FC<EditorProps> = ({
   };
 
   return (
-    <>
-      <div>
-        <EmailEditorProvider
-          dashed={false}
-          data={{ content: content }}
-          height={"calc(100vh)"}
-          onUploadImage={handleUploadImage}
-          autoComplete={false}
-          fontList={fontList} // don't include custom fonts here, they are already in the mjml
-          onSubmit={onSave}
-          enabledLogic={false} // conditional blocks and stuff, interesting but maybe complex at the beginning
-          mergeTags={mergeTags}
-          // interactiveStyle={hoverColor:'#000000', selectedCorlor:'#000000'} <--- style the editor with CI colors
-          // onAddCollection={(collection) => console.log(collection)}  <--- allows to save blocks to a collection for reuse
-          // onRemoveCollection={(collection) => console.log(collection)}  <--- allows to remove blocks from a collection
-        >
-          {({ values }, { submit }) => (
-            <CustomEmailEditor
-              onContentChange={onContentChange}
-              values={values}
-              templateName={templateName}
-              onTemplateNameChange={onTemplateNameChange}
-              onGoBack={onGoBack}
-              onSave={onSave}
-              content={content}
-            />
-          )}
-        </EmailEditorProvider>
-      </div>
-    </>
+    <div>
+      <EmailEditorProvider
+        dashed={false}
+        data={{ content: content }}
+        height={"calc(100vh)"}
+        onUploadImage={handleUploadImage}
+        autoComplete={false}
+        fontList={fontList} // don't include custom fonts here, they are already in the mjml
+        onSubmit={onSave}
+        enabledLogic={false} // conditional blocks and stuff, interesting but maybe complex at the beginning
+        mergeTags={mergeTags}
+        // interactiveStyle={hoverColor:'#000000', selectedCorlor:'#000000'} <--- style the editor with CI colors
+        // onAddCollection={(collection) => console.log(collection)}  <--- allows to save blocks to a collection for reuse
+        // onRemoveCollection={(collection) => console.log(collection)}  <--- allows to remove blocks from a collection
+      >
+        {({ values }, { submit }) => (
+          <CustomEmailEditor
+            onContentChange={onContentChange}
+            values={values}
+            templateName={templateName}
+            onTemplateNameChange={onTemplateNameChange}
+            onGoBack={onGoBack}
+            onSave={onSave}
+            content={content}
+          />
+        )}
+      </EmailEditorProvider>
+    </div>
   );
 };
 export default Editor;
@@ -269,70 +259,68 @@ const CustomEmailEditor: FC<CustomEmailEditorProps> = ({
 
   const saveDisabled = templateName.length === 0 || content === values.content;
   return (
-    <>
-      <StandardLayout
-        compact={!smallScene}
-        categories={categories}
-        // showSourceCode=true is needed to have a back button to see the block selection...
-        showSourceCode
-        jsonReadOnly
-        mjmlReadOnly
-      >
-        {onTemplateNameChange && (
-          <Form.Control
-            placeholder="Vorlage-Name"
-            aria-label="Vorlage-Name"
-            required
-            style={{ borderRadius: "0" }}
-            className={templateName ? "" : "is-invalid"}
-            disabled={!onTemplateNameChange}
-            onChange={
-              onTemplateNameChange
-                ? (e) => onTemplateNameChange(e.target.value)
-                : (e) => null
-            }
-            value={templateName}
-          />
-        )}
-        <EmailEditor />
-        {onTemplateNameChange && templateName.length === 0 && (
-          <Alert variant="warning">
-            <ExclamationTriangleIcon width={24} />
-            &nbsp;&nbsp;&nbsp;Bitte gib oben einen Namen für das Template ein!
-          </Alert>
-        )}
-        {(onGoBack || onSave) && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              margin: "1em",
-            }}
-          >
-            {onGoBack ? (
-              <Button
-                variant="secondary"
-                onClick={() => onGoBack(values)}
-              >
-                Zurück
-              </Button>
-            ) : (
-              <div />
-            )}
-            {onSave ? (
-              <Button
-                disabled={saveDisabled}
-                variant={saveDisabled ? "disabled" : "success"}
-                onClick={() => onSave(values)}
-              >
-                Template Speichern
-              </Button>
-            ) : (
-              <div />
-            )}
-          </div>
-        )}
-      </StandardLayout>
-    </>
+    <StandardLayout
+      compact={!smallScene}
+      categories={categories}
+      // showSourceCode=true is needed to have a back button to see the block selection...
+      showSourceCode
+      jsonReadOnly
+      mjmlReadOnly
+    >
+      {onTemplateNameChange && (
+        <Form.Control
+          placeholder="Vorlage-Name"
+          aria-label="Vorlage-Name"
+          required
+          style={{ borderRadius: "0" }}
+          className={templateName ? "" : "is-invalid"}
+          disabled={!onTemplateNameChange}
+          onChange={
+            onTemplateNameChange
+              ? (e) => onTemplateNameChange(e.target.value)
+              : (e) => null
+          }
+          value={templateName}
+        />
+      )}
+      <EmailEditor />
+      {onTemplateNameChange && templateName.length === 0 && (
+        <Alert variant="warning">
+          <ExclamationTriangleIcon width={24} />
+          &nbsp;&nbsp;&nbsp;Bitte gib oben einen Namen für das Template ein!
+        </Alert>
+      )}
+      {(onGoBack || onSave) && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            margin: "1em",
+          }}
+        >
+          {onGoBack ? (
+            <Button
+              variant="secondary"
+              onClick={() => onGoBack(values)}
+            >
+              Zurück
+            </Button>
+          ) : (
+            <div />
+          )}
+          {onSave ? (
+            <Button
+              disabled={saveDisabled}
+              variant={saveDisabled ? "disabled" : "success"}
+              onClick={() => onSave(values)}
+            >
+              Template Speichern
+            </Button>
+          ) : (
+            <div />
+          )}
+        </div>
+      )}
+    </StandardLayout>
   );
 };

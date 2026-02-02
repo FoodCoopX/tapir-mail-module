@@ -57,6 +57,7 @@ from tapir_mail.serializers import (
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
 from tapir_mail.service.external_recipient_manager import ExternalRecipientManager
+from tapir_mail.service.mail_content_validator import MailContentValidator
 from tapir_mail.service.segment import (
     resolve_segments,
 )
@@ -248,6 +249,10 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 old_released_version.archive()
 
         # Create EmailConfigurationVersion
+        MailContentValidator.validate_tokens(
+            mail_content=serializer.validated_data["content"],
+            trigger_datas=serializer.validated_data.get("triggers", []),
+        )
         segment_data = serializer.validated_data.get("segment_data", {})
         new_version = EmailConfigurationVersion.objects.create(
             email_configuration=email_configuration,
@@ -286,6 +291,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def update(self, request, pk=None, *args, **kwargs):
         updated_version: EmailConfigurationVersion = self.get_object()
+
         email_configuration = updated_version.email_configuration
 
         initial_data = {
@@ -319,6 +325,10 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 old_released_version.archive()
 
         # Update EmailConfigurationVersion
+        MailContentValidator.validate_tokens(
+            mail_content=serializer.validated_data["content"],
+            trigger_datas=serializer.validated_data.get("triggers", []),
+        )
         updated_version.content = serializer.validated_data["content"]
         updated_version.subject = serializer.validated_data.get("subject", None)
         updated_version.status = release_status
