@@ -11,6 +11,7 @@ from tapir_mail.models import (
 )
 from tapir_mail.service.email_dispatch import ResolveAndCreateEmailDispatches
 from tapir_mail.service.recipient_list_provider import RecipientListProvider
+from tapir_mail.service.token import register_tokens
 from tapir_mail.tests.factories import (
     EmailConfigurationVersionFactory,
     StaticSegmentFactory,
@@ -211,6 +212,10 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
     ):
         config_dispatch = self.create_email_config_dispatch(scheduled_time=self.NOW)
         self.email_config_version.content = "foo {{Empfänger.Vorname}} bar"
+        self.email_config_version.save()
+        register_tokens(
+            user_tokens={"Vorname": "first_name"}, dynamic_tokens={}, general_tokens={}
+        )
         static_recipient = StaticSegmentRecipientFactory.create(
             email="static@example.com", first_name="FN-static"
         )
