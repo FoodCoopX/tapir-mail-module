@@ -259,9 +259,13 @@ const EmailConfigurationEditor = () => {
         showAlert("Email Konfiguration veröffentlicht!", "success");
         navigate(Paths.dashboard);
       })
-      .catch(() =>
-        showAlert("Beim Veröffentlichen ist ein Fehler aufgetreten.", "danger"),
-      );
+      .catch(async (error) => {
+        const message = await error.response.text();
+        showAlert(
+          "Beim Veröffentlichen ist ein Fehler aufgetreten: " + message,
+          "danger",
+        );
+      });
 
   const handleSaveDraft = () =>
     saveVersion(content, "draft")
