@@ -228,7 +228,7 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
         setattr(
             dynamic_recipient_with_extras,
             "get_extra_recipient_addresses",
-            lambda: ["extra1@example.com", "extra2@example.com"],
+            lambda _: ["extra1@example.com", "extra2@example.com"],
         )
 
         mock_get_recipient_list_from_email_configuration_dispatch.return_value = [
