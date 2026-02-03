@@ -20,7 +20,6 @@ LOG = logging.getLogger(__name__)
 
 
 class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
-    # TODO simplify and fix to have a single delivery day.
     @staticmethod
     def get_next_weekday(target_weekday: int):
         today = timezone.now().date()
@@ -68,8 +67,9 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
         for version in EmailConfigurationVersion.objects.filter(
             status=ReleaseStatus.RELEASED
         ):
+            triggers = version.triggers or []
             if cls.get_id() not in [
-                trigger_data["trigger_id"] for trigger_data in version.triggers
+                trigger_data["trigger_id"] for trigger_data in triggers
             ]:
                 continue
 
@@ -93,8 +93,9 @@ class DaysBeforeDeliveryTrigger(Trigger[DaysTriggerData]):
         for version in EmailConfigurationVersion.objects.filter(
             status=ReleaseStatus.RELEASED
         ):
+            triggers = version.triggers or []
             if cls.get_id() not in [
-                trigger_data["trigger_id"] for trigger_data in version.triggers
+                trigger_data["trigger_id"] for trigger_data in triggers
             ]:
                 continue
 

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from dateutil.relativedelta import relativedelta
 from django.core.cache import cache
@@ -17,6 +17,7 @@ from tapir_mail.tests.factories import (
     StaticSegmentRecipientFactory,
 )
 from tapir_mail.tests.test_utils import TapirIntegrationTest, mock_timezone_now
+from tapir_mail_server.dummy_accounts.tests.factories import DummyTapirUserFactory
 
 
 class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
@@ -26,7 +27,7 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
     def setUp(self):
         mock_timezone_now(self, self.NOW)
         self.email_config_version = EmailConfigurationVersionFactory.create(
-            status=ReleaseStatus.RELEASED,
+            status=ReleaseStatus.RELEASED
         )
 
         self.segment = StaticSegmentFactory.create(name="Test Segment")
@@ -199,3 +200,71 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
         retry_count = cache.get(cache_key, None)
         self.assertIsNone(retry_count)
         self.assertEqual(EmailDispatch.objects.count(), self.RECIPIENT_COUNT)
+
+    @patch.object(
+        RecipientListProvider,
+        "get_recipient_list_from_email_configuration_dispatch",
+        autospec=True,
+    )
+    def test_createEmailDispatches_someRecipientsHaveExtraAddresses_createsADispatchForEachRecipientAndExtras(
+        self, mock_get_recipient_list_from_email_configuration_dispatch: Mock
+    ):
+        config_dispatch = self.create_email_config_dispatch(scheduled_time=self.NOW)
+        self.email_config_version.content = "foo {{Empfänger.Vorname}} bar"
+        static_recipient = StaticSegmentRecipientFactory.create(
+            email="static@example.com", first_name="FN-static"
+        )
+        dynamic_recipient_without_extra = DummyTapirUserFactory.create(
+            email="noextra@example.com", first_name="FN-noextra"
+        )
+        dynamic_recipient_with_extras = DummyTapirUserFactory.create(
+            email="withextra@example.com", first_name="FN-withextra"
+        )
+        setattr(
+            dynamic_recipient_with_extras,
+            "get_extra_recipient_addresses",
+            lambda: ["extra1@example.com", "extra2@example.com"],
+        )
+
+        mock_get_recipient_list_from_email_configuration_dispatch.return_value = [
+            static_recipient,
+            dynamic_recipient_without_extra,
+            dynamic_recipient_with_extras,
+        ]
+
+        ResolveAndCreateEmailDispatches._create_email_dispatches(config_dispatch)
+
+        self.assertEqual(5, EmailDispatch.objects.count())
+        actual_addresses = set(
+            EmailDispatch.objects.values_list("recipient", flat=True)
+        )
+        expected_addresses = {
+            "static@example.com",
+            "noextra@example.com",
+            "withextra@example.com",
+            "extra1@example.com",
+            "extra2@example.com",
+        }
+        self.assertEqual(expected_addresses, actual_addresses)
+
+        email_dispatches = {
+            key: EmailDispatch.objects.get(recipient=f"{key}@example.com")
+            for key in ["static", "noextra", "withextra", "extra1", "extra2"]
+        }
+        self.assertEqual(
+            email_dispatches["withextra"].recipient_tokens,
+            email_dispatches["extra1"].recipient_tokens,
+        )
+        self.assertEqual(
+            email_dispatches["withextra"].recipient_tokens,
+            email_dispatches["extra2"].recipient_tokens,
+        )
+        self.assertEqual(
+            "FN-withextra",
+            email_dispatches["extra1"].recipient_tokens["first_name"],
+            "The extra recipients should get the same mail with the same token values as the main recipient",
+        )
+        self.assertNotEqual(
+            email_dispatches["withextra"].recipient_tokens,
+            email_dispatches["noextra"].recipient_tokens,
+        )

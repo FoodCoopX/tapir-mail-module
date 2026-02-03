@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import cache as redis_cache
 from django.core.mail import get_connection
 from django.db import transaction
 from django.utils import timezone
@@ -34,7 +34,7 @@ class ResolveAndCreateEmailDispatches:
 
     @classmethod
     def resolve_and_create(cls):
-        lock = cache.lock(
+        lock = redis_cache.lock(
             "resolve_and_create_email_dispatches", timeout=60 * 3
         )  # 3 minutes
         if not lock.acquire(blocking=False):
@@ -56,10 +56,12 @@ class ResolveAndCreateEmailDispatches:
                 cache_key = f"dispatch_retry_count_{config_dispatch.id}"
                 try:
                     cls._create_email_dispatches(config_dispatch)
-                    cache.delete(cache_key)
+                    redis_cache.delete(cache_key)
                 except Exception as e:
-                    retry_count = cache.get(cache_key, 0) + 1
-                    cache.set(cache_key, retry_count, timeout=60 * 30)  # 30 minutes
+                    retry_count = redis_cache.get(cache_key, 0) + 1
+                    redis_cache.set(
+                        cache_key, retry_count, timeout=60 * 30
+                    )  # 30 minutes
 
                     if retry_count > cls.MAX_RETRIES:
                         LOG.error(
@@ -69,7 +71,7 @@ class ResolveAndCreateEmailDispatches:
                             ReleaseStatus.ERROR
                         )
                         config_dispatch.email_configuration_version.save()
-                        cache.delete(cache_key)
+                        redis_cache.delete(cache_key)
                     else:
                         LOG.error(
                             f"Error while creating email dispatches for EmailConfigurationDispatch#{config_dispatch.id}. Retrying... Error: {e}"
@@ -78,9 +80,9 @@ class ResolveAndCreateEmailDispatches:
         finally:
             lock.release()
 
-    @staticmethod
+    @classmethod
     @transaction.atomic
-    def _create_email_dispatches(config_dispatch: EmailConfigurationDispatch):
+    def _create_email_dispatches(cls, config_dispatch: EmailConfigurationDispatch):
         recipients = (
             RecipientListProvider.get_recipient_list_from_email_configuration_dispatch(
                 config_dispatch
@@ -102,28 +104,87 @@ class ResolveAndCreateEmailDispatches:
         )
         cache = {}
 
-        EmailDispatch.objects.bulk_create(
-            [
-                EmailDispatch(
-                    email_configuration_dispatch=config_dispatch,
-                    recipient=recipient.email,
-                    recipient_tokens=resolve_recipient_tokens(
-                        recipient_tokens, recipient
-                    )
-                    | resolve_dynamic_tokens(
-                        dynamic_tokens,
-                        recipient,
-                        cache,
-                    ),
-                    additional_tokens=config_dispatch.additional_tokens,
-                    created_at=config_dispatch.scheduled_time,
+        dispatches = []
+        for recipient in recipients:
+            dispatches.extend(
+                cls._build_email_dispatches_for_recipient(
+                    config_dispatch=config_dispatch,
+                    recipient=recipient,
+                    recipient_tokens=recipient_tokens,
+                    dynamic_tokens=dynamic_tokens,
+                    cache=cache,
                 )
-                for recipient in recipients
-            ]
-        )
+            )
+
+        EmailDispatch.objects.bulk_create(dispatches)
 
         config_dispatch.is_sent = True
         config_dispatch.save()
+
+    @classmethod
+    def _build_email_dispatches_for_recipient(
+        cls,
+        config_dispatch: EmailConfigurationDispatch,
+        recipient,
+        recipient_tokens,
+        dynamic_tokens,
+        cache: dict,
+    ):
+        dispatches = [
+            cls._build_email_dispatch(
+                config_dispatch=config_dispatch,
+                recipient=recipient,
+                recipient_tokens=recipient_tokens,
+                dynamic_tokens=dynamic_tokens,
+                cache=cache,
+                email=recipient.email,
+            )
+        ]
+
+        get_extra_recipient_addresses = getattr(
+            recipient, "get_extra_recipient_addresses", None
+        )
+        extra_addresses = (
+            []
+            if get_extra_recipient_addresses is None
+            else get_extra_recipient_addresses()
+        )
+
+        for extra_address in extra_addresses:
+            dispatches.append(
+                cls._build_email_dispatch(
+                    config_dispatch=config_dispatch,
+                    recipient=recipient,
+                    recipient_tokens=recipient_tokens,
+                    dynamic_tokens=dynamic_tokens,
+                    cache=cache,
+                    email=extra_address,
+                )
+            )
+
+        return dispatches
+
+    @staticmethod
+    def _build_email_dispatch(
+        config_dispatch: EmailConfigurationDispatch,
+        recipient,
+        recipient_tokens,
+        dynamic_tokens,
+        cache: dict,
+        email: str,
+    ):
+        return EmailDispatch(
+            email_configuration_dispatch=config_dispatch,
+            recipient=email,
+            recipient_tokens=resolve_recipient_tokens(recipient_tokens, recipient)
+            | resolve_dynamic_tokens(
+                dynamic_tokens,
+                recipient,
+                cache,
+            ),
+            additional_tokens=config_dispatch.additional_tokens,
+            created_at=config_dispatch.scheduled_time,
+        )
 
     @staticmethod
     def _get_email_configuration_dispatches_that_should_be_sent():
@@ -141,7 +202,7 @@ class SendEmailBatch:
 
     @classmethod
     def send_email_dispatches(cls, batch_size=None):
-        lock = cache.lock("send_email_task_lock", timeout=1800)
+        lock = redis_cache.lock("send_email_task_lock", timeout=1800)
         if not lock.acquire(blocking=False):
             LOG.error("Could not acquire lock for send_email_task_lock")
             return
