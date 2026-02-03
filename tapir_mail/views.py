@@ -945,13 +945,6 @@ class CreateMissingTriggerMailView(APIView):
                     "trigger_field_values": {"key": trigger_key},
                 }
             ],
-            segment_data={
-                "add_segments": [],
-                "static_segments": [],
-                "static_segments_subtractive": [],
-                "remove_segments": [],
-                "filter_list": [],
-            },
         )
 
         return Response("OK", status=status.HTTP_200_OK)
