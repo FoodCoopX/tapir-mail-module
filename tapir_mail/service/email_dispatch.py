@@ -147,7 +147,7 @@ class ResolveAndCreateEmailDispatches:
         extra_addresses = (
             []
             if get_extra_recipient_addresses is None
-            else get_extra_recipient_addresses()
+            else get_extra_recipient_addresses(cache)
         )
 
         for extra_address in extra_addresses:
