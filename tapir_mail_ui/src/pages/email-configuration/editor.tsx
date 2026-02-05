@@ -232,7 +232,6 @@ const EmailConfigurationEditor = () => {
 
   const onConfirmTemplateChange = () => {
     setShowTemplateConfirmModal(false);
-    setSelectedTemplateId(ID_NEW_TEMPLATE);
 
     if (selectedTemplateId === ID_NEW_TEMPLATE) {
       setLoadedContent(EMPTY_PAGE);
