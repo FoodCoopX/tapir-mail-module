@@ -2893,6 +2893,7 @@ components:
       - error
       - bounced
       - opened
+      - delivered
       - unknown
       - sending
       type: string
@@ -2900,6 +2901,7 @@ components:
         * `error` - Fehler beim Versand
         * `bounced` - Bounce
         * `opened` - Geöffnet
+        * `delivered` - Zugestellt
         * `unknown` - Nicht geöffnet
         * `sending` - Wird versendet
     DummyPickupLocation:
@@ -3036,10 +3038,14 @@ components:
         opened_count:
           type: integer
           readOnly: true
+        delivered_count:
+          type: integer
+          readOnly: true
         error_count:
           type: integer
           readOnly: true
       required:
+      - delivered_count
       - email_configuration_version
       - error_count
       - id
@@ -3250,6 +3256,18 @@ components:
           nullable: true
         bounce_type:
           $ref: '#/components/schemas/BounceTypeEnum'
+        smtp_response_code:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          nullable: true
+        smtp_response_message:
+          type: string
+          nullable: true
+        dsn_delivered_time:
+          type: string
+          format: date-time
+          nullable: true
         next_retry:
           type: string
           nullable: true
@@ -3295,6 +3313,18 @@ components:
           nullable: true
         bounce_type:
           $ref: '#/components/schemas/BounceTypeEnum'
+        smtp_response_code:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          nullable: true
+        smtp_response_message:
+          type: string
+          nullable: true
+        dsn_delivered_time:
+          type: string
+          format: date-time
+          nullable: true
         next_retry:
           type: string
           minLength: 1
@@ -3350,6 +3380,18 @@ components:
           nullable: true
         bounce_type:
           $ref: '#/components/schemas/BounceTypeEnum'
+        smtp_response_code:
+          type: integer
+          maximum: 32767
+          minimum: -32768
+          nullable: true
+        smtp_response_message:
+          type: string
+          nullable: true
+        dsn_delivered_time:
+          type: string
+          format: date-time
+          nullable: true
         next_retry:
           type: string
           nullable: true

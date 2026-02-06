@@ -212,7 +212,7 @@ class TestEmailBounces(TapirUnitTest):
         EmailBounces.process_message(mail_client, message_id)
 
         self.assertEqual(
-            f"Email could not be delivered, bounce message id : {message_uid}",
+            f"Email could not be delivered, bounce message id : {message_uid}, dsn_action: None",
             mock_dispatch.bounce_message,
         )
         self.assertEqual(

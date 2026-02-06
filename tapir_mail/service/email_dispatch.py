@@ -2,7 +2,8 @@ import logging
 
 from django.conf import settings
 from django.core.cache import cache as redis_cache
-from django.core.mail import get_connection
+from django.core.mail import get_connection, EmailMultiAlternatives
+from django.core.mail.backends.base import BaseEmailBackend
 from django.db import transaction
 from django.utils import timezone
 
@@ -241,20 +242,57 @@ class SendEmailBatch:
             )
             return
 
+        sent_emails = {}
         try:
             with get_connection() as connection:
-                connection.send_messages([e[0] for e in emails])
+                for email_message, email_dispatch in emails:
+                    success = cls.send_single_mail(
+                        email_message=email_message,
+                        email_dispatch=email_dispatch,
+                        connection=connection,
+                    )
+                    if success:
+                        sent_emails[email_message] = email_dispatch
         except Exception as e:
-            LOG.error(f"Error while sending batch emails: {e}")
-            with transaction.atomic():
-                for _, email_dispatch in emails:
-                    email_dispatch.error_message = str(e)
-                    email_dispatch.save()
-            raise
+            LOG.error(f"Error with SMTP connection: {e}")
+            dispatches_to_update = [
+                email_dispatch
+                for email_message, email_dispatch in emails
+                if email_message not in sent_emails.keys()
+            ]
+            for dispatch in dispatches_to_update:
+                dispatch.error_message = str(e)
+            EmailDispatch.objects.bulk_update(dispatches_to_update, "error_message")
 
-        LOG.info(f"Sent {len(emails)} emails in this batch")
+        LOG.info(f"Sent {len(sent_emails)} emails in this batch")
+        cls._post_send(sent_emails)
 
-        cls._post_send(emails)
+    @classmethod
+    def send_single_mail(
+        cls,
+        email_message: EmailMultiAlternatives,
+        email_dispatch: EmailDispatch,
+        connection: BaseEmailBackend,
+    ):
+        email_message.dsn_envid = email_dispatch.id
+        try:
+            connection.send_messages([email_message])
+
+            smtp_response = getattr(email_message, "smtp_response", None)
+            if smtp_response:
+                email_dispatch.smtp_response_code = smtp_response.code
+                email_dispatch.smtp_response_message = smtp_response.message
+
+            return True
+        except Exception as e:
+            LOG.error(f"Error while sending email to {email_dispatch.recipient}: {e}")
+            smtp_response = getattr(email_message, "smtp_response", None)
+            if smtp_response:
+                email_dispatch.smtp_response_code = smtp_response.code
+                email_dispatch.smtp_response_message = smtp_response.message
+            email_dispatch.error_message = str(e)
+            email_dispatch.save()
+            return False
 
     @classmethod
     def _prepare_emails(cls, email_dispatches):
@@ -289,7 +327,7 @@ class SendEmailBatch:
 
     @classmethod
     def _post_send(cls, emails):
-        for email, email_dispatch in emails:
+        for email, email_dispatch in emails.items():
             try:
                 with transaction.atomic():
                     for trigger_data in (

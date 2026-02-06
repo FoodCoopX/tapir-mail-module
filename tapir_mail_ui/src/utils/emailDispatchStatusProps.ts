@@ -4,4 +4,5 @@ export const EMAIL_DISPATCH_STATUS_PROPS = {
   bounced: { color: "danger", text: "Bounce" },
   unknown: { color: "warning", text: "Nicht geöffnet" },
   sending: { color: "info", text: "Wird versendet" },
+  delivered: { color: "primary", text: "Zugestellt" },
 };

@@ -239,6 +239,7 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     override_recipients = serializers.JSONField()
     sent_count = serializers.SerializerMethodField()
     opened_count = serializers.SerializerMethodField()
+    delivered_count = serializers.SerializerMethodField()
     error_count = serializers.SerializerMethodField()
 
     def get_sent_count(self, obj) -> int:
@@ -251,9 +252,18 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
             opened_time__isnull=False, next_retry__isnull=True
         ).count()
 
+    def get_delivered_count(self, obj) -> int:
+        return obj.emaildispatch_set.filter(
+            dsn_delivered_time__isnull=False,
+            next_retry__isnull=True,
+            opened_time__isnull=True,
+        ).count()
+
     def get_error_count(self, obj) -> int:
         return (
-            obj.emaildispatch_set.filter(next_retry__isnull=True)
+            obj.emaildispatch_set.filter(
+                next_retry__isnull=True, opened_time__isnull=False
+            )
             .with_error(True)
             .distinct()
             .count()

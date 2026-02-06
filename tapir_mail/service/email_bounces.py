@@ -4,6 +4,7 @@ from email.message import Message
 from imaplib import IMAP4_SSL, IMAP4
 
 from django.conf import settings
+from django.utils import timezone
 from flufl.bounce import all_failures
 
 from tapir_mail.models import EmailDispatch
@@ -60,7 +61,9 @@ class EmailBounces:
             ],
         )
         if not dispatch_id:
-            # this email is not a bounce
+            dispatch_id = cls._get_envid_from_dsn(message)
+
+        if not dispatch_id:
             LOG.debug(f"Email is not a bounce : {message.as_string()}")
             return
 
@@ -68,21 +71,88 @@ class EmailBounces:
             id=dispatch_id
         ).first()
         message_uid = message.get("Message-Id", None)
-        if email_dispatch:
-            email_dispatch.bounce_message = (
-                f"Email could not be delivered, bounce message id : {message_uid}"
-            )
-            email_dispatch.bounce_type = cls.determine_bounce_type(
-                message, email_dispatch.recipient
-            )
-            email_dispatch.save()
-        else:
+        if not email_dispatch:
             LOG.warning(
                 f"Received bounce mail but could not find the corresponding dispatch. "
                 f"Dispatch id: {dispatch_id}, message id: {message_uid}"
             )
+            mail_client.store(message_id, "+FLAGS", "(SEEN)")
+            return
+
+        cls.save_and_log_dsn_message(
+            message=message,
+            email_dispatch=email_dispatch,
+            dispatch_id=dispatch_id,
+            message_uid=message_uid,
+        )
 
         mail_client.store(message_id, "+FLAGS", "(SEEN)")
+
+    @classmethod
+    def save_and_log_dsn_message(
+        cls,
+        message: Message,
+        email_dispatch: EmailDispatch,
+        dispatch_id: str,
+        message_uid: str,
+    ):
+        dsn_action = cls._get_dsn_action(message)
+
+        if dsn_action in ("delivered", "relayed", "expanded"):
+            email_dispatch.dsn_delivered_time = timezone.now()
+            email_dispatch.save()
+        elif dsn_action == "delayed":
+            LOG.info(
+                f"DSN delay notification for dispatch {dispatch_id}, message id: {message_uid}"
+            )
+        else:
+            email_dispatch.bounce_message = f"Email could not be delivered, bounce message id : {message_uid}, dsn_action: {dsn_action}"
+            email_dispatch.bounce_type = cls.determine_bounce_type(
+                message, email_dispatch.recipient
+            )
+            email_dispatch.save()
+
+    @staticmethod
+    def _get_dsn_action(message: Message):
+        content_type = message.get_content_type()
+        if content_type != "multipart/report":
+            return None
+
+        for part in message.walk():
+            if part.get_content_type() != "message/delivery-status":
+                continue
+            payload = part.get_payload()
+            if isinstance(payload, list):
+                for dsn_part in payload:
+                    action = dsn_part.get("Action", None)
+                    if action:
+                        return action.strip().lower()
+            elif isinstance(payload, str):
+                for line in payload.splitlines():
+                    if line.lower().startswith("action:"):
+                        return line.split(":", 1)[1].strip().lower()
+
+        return None
+
+    @staticmethod
+    def _get_envid_from_dsn(message: Message):
+        content_type = message.get_content_type()
+        if content_type != "multipart/report":
+            return None
+
+        for part in message.walk():
+            if part.get_content_type() == "message/delivery-status":
+                payload = part.get_payload()
+                if isinstance(payload, list):
+                    for dsn_part in payload:
+                        envid = dsn_part.get("Original-Envelope-Id", None)
+                        if envid:
+                            return envid.strip()
+                elif isinstance(payload, str):
+                    for line in payload.splitlines():
+                        if line.lower().startswith("original-envelope-id:"):
+                            return line.split(":", 1)[1].strip()
+        return None
 
     @staticmethod
     def get_return_path_from_headers(message: Message, headers: list[str]):

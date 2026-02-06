@@ -188,6 +188,7 @@ class EmailDispatch(BaseModel):
         ERROR = "error", "Fehler beim Versand"
         BOUNCED = "bounced", "Bounce"
         OPENED = "opened", "Geöffnet"
+        DELIVERED = "delivered", "Zugestellt"
         UNKNOWN = "unknown", "Nicht geöffnet"
         SENDING = "sending", "Wird versendet"
 
@@ -217,6 +218,9 @@ class EmailDispatch(BaseModel):
         choices=BounceTypes.choices,
         default=BounceTypes.NOT_ANALYZED,
     )
+    smtp_response_code = models.SmallIntegerField(null=True, blank=True)
+    smtp_response_message = models.TextField(null=True, blank=True)
+    dsn_delivered_time = models.DateTimeField(null=True, blank=True)
     next_retry = models.OneToOneField(
         "self",
         on_delete=models.SET_NULL,
@@ -247,6 +251,8 @@ class EmailDispatch(BaseModel):
             return self.DispatchStatus.SENDING
         if self.opened_time:
             return self.DispatchStatus.OPENED
+        if self.dsn_delivered_time:
+            return self.DispatchStatus.DELIVERED
         return self.DispatchStatus.UNKNOWN
 
 

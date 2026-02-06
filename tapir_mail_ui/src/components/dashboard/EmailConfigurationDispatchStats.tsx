@@ -39,6 +39,13 @@ export const EmailConfigurationDispatchStats: React.FC<{
           key={3}
         />
         <ProgressBar
+          title={"Zugestellt: " + emailConfigurationDispatch.deliveredCount}
+          variant="primary"
+          now={emailConfigurationDispatch.deliveredCount * 100}
+          key={1}
+        />
+
+        <ProgressBar
           title={
             "Nicht geöffnet: " +
             (emailConfigurationDispatch.sentCount -

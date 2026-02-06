@@ -601,6 +601,8 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(
                 error_message__isnull=True, sent_time__isnull=True
             )
+        elif dispatch_status == EmailDispatch.DispatchStatus.DELIVERED:
+            queryset = queryset.filter(dsn_delivered_time__isnull=False)
         elif dispatch_status == EmailDispatch.DispatchStatus.UNKNOWN:
             queryset = queryset.filter(
                 opened_time__isnull=True,
