@@ -66,7 +66,7 @@ class ResolveAndCreateEmailDispatches:
 
                     if retry_count > cls.MAX_RETRIES:
                         LOG.error(
-                            f"Retried {cls.MAX_RETRIES} times. Giving up and setting EmailConfigurationVersion#{config_dispatch.email_configuration_version.id} to ERROR."
+                            f"Retried {cls.MAX_RETRIES} times. Giving up and setting EmailConfigurationVersion#{config_dispatch.email_configuration_version.id}-{config_dispatch.email_configuration_version.email_configuration.name} to ERROR."
                         )
                         config_dispatch.email_configuration_version.status = (
                             ReleaseStatus.ERROR
@@ -89,10 +89,6 @@ class ResolveAndCreateEmailDispatches:
                 config_dispatch
             )
         )
-        if not recipients:
-            raise ValueError(
-                f"No recipients found for EmailConfigurationDispatch#{config_dispatch.id}!"
-            )
 
         recipient_tokens = find_tokens(
             config_dispatch.email_configuration_version.content,
