@@ -84,6 +84,7 @@ const EmailConfigurationEditor = () => {
     if (selectedTemplateId !== ID_NEW_TEMPLATE) {
       setShowTemplateConfirmModal(true);
     }
+    console.log("selectedTemplateId " + selectedTemplateId);
   }, [selectedTemplateId]);
 
   const fetchTemplates = () =>
@@ -220,14 +221,6 @@ const EmailConfigurationEditor = () => {
           .catch(reject);
       }
     });
-  };
-
-  const handleEditorChange = (content: IPage) => {
-    if (selectedTemplateId !== ID_NEW_TEMPLATE) {
-      return;
-    }
-
-    setContent(content);
   };
 
   const onConfirmTemplateChange = () => {
@@ -445,7 +438,7 @@ const EmailConfigurationEditor = () => {
           <Editor
             content={loadedContent}
             mergeTags={combinedTokens}
-            onContentChange={(values) => handleEditorChange(values.content)}
+            onContentChange={(values) => setContent}
           />
         </div>
       </div>
