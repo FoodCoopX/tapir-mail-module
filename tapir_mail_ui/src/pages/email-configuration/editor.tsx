@@ -84,7 +84,6 @@ const EmailConfigurationEditor = () => {
     if (selectedTemplateId !== ID_NEW_TEMPLATE) {
       setShowTemplateConfirmModal(true);
     }
-    console.log("selectedTemplateId " + selectedTemplateId);
   }, [selectedTemplateId]);
 
   const fetchTemplates = () =>
@@ -438,7 +437,7 @@ const EmailConfigurationEditor = () => {
           <Editor
             content={loadedContent}
             mergeTags={combinedTokens}
-            onContentChange={(values) => setContent}
+            onContentChange={(values) => setContent(values.content)}
           />
         </div>
       </div>
