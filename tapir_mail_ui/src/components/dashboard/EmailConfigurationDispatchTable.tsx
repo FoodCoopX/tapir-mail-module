@@ -185,7 +185,9 @@ const EmailConfigurationDispatchTable: React.FC<
                       <td>
                         {hasRecipientOverride(emailConfigurationDispatch) ? (
                           <span className={"text-break"}>
-                            emailConfigurationDispatch.overrideRecipientsDisplay
+                            {
+                              emailConfigurationDispatch.overrideRecipientsDisplay
+                            }
                           </span>
                         ) : (
                           <>
