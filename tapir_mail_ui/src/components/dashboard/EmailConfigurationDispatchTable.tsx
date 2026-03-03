@@ -141,6 +141,7 @@ const EmailConfigurationDispatchTable: React.FC<
               striped
               hover
               style={{ margin: "0" }}
+              responsive
             >
               <thead>
                 <tr>
@@ -183,9 +184,9 @@ const EmailConfigurationDispatchTable: React.FC<
                       </td>
                       <td>
                         {hasRecipientOverride(emailConfigurationDispatch) ? (
-                          JSON.stringify(
-                            emailConfigurationDispatch.overrideRecipients,
-                          )
+                          <span className={"text-break"}>
+                            emailConfigurationDispatch.overrideRecipientsDisplay
+                          </span>
                         ) : (
                           <>
                             <SegmentsDisplay

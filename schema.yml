@@ -3032,6 +3032,10 @@ components:
           type: string
           format: date-time
         override_recipients: {}
+        override_recipients_display:
+          type: string
+          nullable: true
+          readOnly: true
         sent_count:
           type: integer
           readOnly: true
@@ -3051,6 +3055,7 @@ components:
       - id
       - opened_count
       - override_recipients
+      - override_recipients_display
       - scheduled_time
       - sent_count
     EmailConfigurationDispatchRequest:

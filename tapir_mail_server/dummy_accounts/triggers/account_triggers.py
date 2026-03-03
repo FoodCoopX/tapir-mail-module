@@ -12,7 +12,9 @@ class SimpleAccountTriggerData:
 class OnAccountCreatedTrigger(Trigger[SimpleAccountTriggerData]):
     @classmethod
     def get_recipients_override(
-        cls, version: EmailConfigurationVersion, data: SimpleAccountTriggerData
+        cls,
+        email_configuration_version: EmailConfigurationVersion,
+        data: SimpleAccountTriggerData,
     ):
         return [data.target_email]
 
@@ -28,7 +30,9 @@ class OnAccountCreatedTrigger(Trigger[SimpleAccountTriggerData]):
 class OnAccountUpdatedTrigger(Trigger[SimpleAccountTriggerData]):
     @classmethod
     def get_recipients_override(
-        cls, version: EmailConfigurationVersion, data: SimpleAccountTriggerData
+        cls,
+        email_configuration_version: EmailConfigurationVersion,
+        data: SimpleAccountTriggerData,
     ):
         return [data.target_email]
 

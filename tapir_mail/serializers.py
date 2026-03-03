@@ -17,6 +17,7 @@ from tapir_mail.models import (
     MailCategory,
 )
 from tapir_mail.registries import segment_registry, filter_registry
+from tapir_mail.service.segment import BASE_QUERYSET
 from tapir_mail.service.triggers import Trigger, trigger_registry
 
 
@@ -237,6 +238,7 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     email_configuration_version = EmailConfigurationVersionSerializer()
     scheduled_time = serializers.DateTimeField()
     override_recipients = serializers.JSONField()
+    override_recipients_display = serializers.SerializerMethodField()
     sent_count = serializers.SerializerMethodField()
     opened_count = serializers.SerializerMethodField()
     delivered_count = serializers.SerializerMethodField()
@@ -268,6 +270,46 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
             .distinct()
             .count()
         )
+
+    def get_override_recipients_display(
+        self, obj: EmailConfigurationDispatch
+    ) -> str | None:
+        if not obj.override_recipients:
+            return None
+
+        if not isinstance(obj.override_recipients, list):
+            return str(obj.override_recipients)
+
+        return ", ".join(
+            [
+                self.get_recipient_display(recipient)
+                for recipient in obj.override_recipients
+            ]
+        )
+
+    @staticmethod
+    def get_recipient_display(recipient: dict) -> str:
+        if not isinstance(recipient, dict):
+            return str(recipient)
+
+        recipient_id_in_base_queryset = recipient.get(
+            "recipient_id_in_base_queryset", None
+        )
+        if recipient_id_in_base_queryset is not None:
+            recipient = BASE_QUERYSET.filter(id=recipient_id_in_base_queryset).first()
+            if recipient is None:
+                return f"Recipient with ID {recipient_id_in_base_queryset}"
+            return f"{recipient.first_name} {recipient.last_name} {recipient.email}"
+
+        recipient_outside_of_base_queryset = recipient.get(
+            "recipient_outside_of_base_queryset", None
+        )
+        if recipient_outside_of_base_queryset is None or not isinstance(
+            recipient_outside_of_base_queryset, dict
+        ):
+            return str(recipient)
+
+        return f"{recipient_outside_of_base_queryset.get('first_name', "")} {recipient_outside_of_base_queryset.get('last_name', "")} {recipient_outside_of_base_queryset.get('email', "")}"
 
 
 class TriggerFieldDefinitionSerializer(serializers.Serializer):
