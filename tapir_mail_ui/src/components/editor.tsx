@@ -31,6 +31,10 @@ const customFontList = [
     name: "Bitter",
     css: "/static/fonts/Bitter.css",
   },
+  {
+    name: "DinNextLight",
+    css: "/static/fonts/DinNextLight.css",
+  },
 ].map(({ name, css }) => ({ value: name, label: name, css: css }));
 
 const fontList = [
