@@ -33,6 +33,8 @@ from tapir_mail.media_library.serializers import (
 
 LOG = logging.getLogger(__name__)
 
+CONTENT_TYPE_JSON = "application/json"
+
 
 class ConfirmUploadView(View):
     # Handle POST request
@@ -64,7 +66,7 @@ class ConfirmUploadView(View):
         # Return the list of uploads that were stored.
         return HttpResponse(
             json.dumps({"status": "OK", "uploads": stored_uploads}),
-            content_type="application/json",
+            content_type=CONTENT_TYPE_JSON,
         )
 
     # Handle request to delete a stored upload
@@ -86,12 +88,12 @@ class ConfirmUploadView(View):
         except Exception as e:
             return HttpResponseServerError(
                 json.dumps({"status": "ERROR", "errorMsg": str(e)}),
-                content_type="application/json",
+                content_type=CONTENT_TYPE_JSON,
             )
 
         return HttpResponse(
             json.dumps({"status": "OK", "deleted": upload_id}),
-            content_type="application/json",
+            content_type=CONTENT_TYPE_JSON,
         )
 
 
@@ -127,4 +129,4 @@ def get_file_view(request, upload_id: str):
     except StoredUpload.DoesNotExist as e:
         LOG.error(f"Trying to fetch file that doesn't exist: {upload_id}")
         raise e
-    return FileResponse(stored_upload.file, filename=stored_upload.file.name)
+    return FileResponse(stored_upload.file.open("rb"), filename=stored_upload.file.name)
