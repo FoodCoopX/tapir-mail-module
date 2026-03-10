@@ -56,7 +56,7 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
         must_check_has_default_content = callable(required) or required
         if must_check_has_default_content and default_content is None:
             raise ValueError(
-                "If the trigger is required, the default content must valid MJML content"
+                "If the trigger is required, the default content must be valid MJML content"
             )
 
     @classmethod
