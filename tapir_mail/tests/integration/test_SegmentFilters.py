@@ -1,8 +1,5 @@
-from tapir_mail.registries import filter_registry
-from tapir_mail.service.segment import (
-    _apply_complex_filters,
-    register_filter,
-)
+from tapir_mail.registries import mail_segment_filter_providers
+from tapir_mail.service.segment import _apply_complex_filters
 from tapir_mail.tests.test_utils import TapirIntegrationTest
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser, DummyPickupLocation
 from tapir_mail_server.dummy_accounts.tests.factories import (
@@ -56,6 +53,8 @@ class TestSegmentFilters(TapirIntegrationTest):
             has_coop_shares=True,
         )
 
+        filter_registry = {}
+
         def pickup_location_filter(location):
             return lambda qs: qs.filter(pickup_location__name=location)
 
@@ -66,7 +65,8 @@ class TestSegmentFilters(TapirIntegrationTest):
         def has_coop_shares_filter(qs):
             return qs.filter(has_coop_shares=True)
 
-        register_filter(self.FILTER_HAS_COOP_SHARES, has_coop_shares_filter)
+        filter_registry[self.FILTER_HAS_COOP_SHARES] = has_coop_shares_filter
+        mail_segment_filter_providers.add(lambda: filter_registry)
 
     def test_applyComplexFilter_singleFilter_returnsCorrectResult(self):
         filter_list = [

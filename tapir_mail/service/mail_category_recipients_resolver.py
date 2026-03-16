@@ -6,7 +6,7 @@ from tapir_mail.models import (
     MailCategoryMode,
     InternalRecipientCategoryRegistration,
 )
-from tapir_mail.registries import segment_registry
+from tapir_mail.registries import get_mail_segments
 
 
 class MailCategoryRecipientResolver:
@@ -25,7 +25,7 @@ class MailCategoryRecipientResolver:
         if mail_category.dynamic_segment_name == "":
             return []
 
-        segment = segment_registry[mail_category.dynamic_segment_name]()
+        segment = get_mail_segments()[mail_category.dynamic_segment_name]()
 
         if mail_category.mode == MailCategoryMode.ALWAYS_ON:
             return segment

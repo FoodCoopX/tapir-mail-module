@@ -16,7 +16,7 @@ from tapir_mail.models import (
     StaticSegmentRecipient,
     MailCategory,
 )
-from tapir_mail.registries import segment_registry, filter_registry
+from tapir_mail.registries import get_mail_segments, get_mail_segment_filters
 from tapir_mail.service.segment import BASE_QUERYSET
 from tapir_mail.service.triggers import Trigger, trigger_registry
 
@@ -133,7 +133,7 @@ class SegmentDataSerializer(serializers.Serializer):
         invalid_segment_names = [
             segment_name
             for segment_name in segment_names
-            if segment_name not in segment_registry.keys()
+            if segment_name not in get_mail_segments().keys()
         ]
         if invalid_segment_names:
             raise serializers.ValidationError(
@@ -146,7 +146,7 @@ class SegmentDataSerializer(serializers.Serializer):
         invalid_filters = [
             f
             for f in filter_list
-            if f not in filter_registry.keys()
+            if f not in get_mail_segment_filters().keys()
             and f not in ["AND", "OR", "NOT", "(", ")"]
         ]
         if invalid_filters:

@@ -7,7 +7,11 @@ from django.db.models import Q, QuerySet
 
 from tapir_mail.exceptions import TapirMailException
 from tapir_mail.models import StaticSegment, MailCategory
-from tapir_mail.registries import segment_registry, filter_registry
+from tapir_mail.registries import (
+    get_mail_segment_filters,
+    get_mail_segments,
+    MailSegmentRegistry,
+)
 from tapir_mail.service.mail_category_recipients_resolver import (
     MailCategoryRecipientResolver,
 )
@@ -28,21 +32,6 @@ def _check_base_queryset():
 def register_base_segment(queryset):
     global BASE_QUERYSET
     BASE_QUERYSET = queryset
-    segment_registry["Alle Benutzer"] = lambda: queryset.all()
-
-
-def register_segment(name, func):
-    _check_base_queryset()
-
-    LOG.info(f"Registering segment {name}")
-    segment_registry[name] = func
-
-
-def register_filter(name, func):
-    _check_base_queryset()
-
-    LOG.info(f"Registering filter {name}")
-    filter_registry[name] = func
 
 
 def _apply_top_operator(operator_stack, operand_stack):
@@ -98,7 +87,8 @@ def apply_filter(item, operand_stack: deque[Any], operator_stack: deque[Any], qu
             _apply_top_operator(operator_stack, operand_stack)
         operator_stack.append(item)
     else:
-        if item not in filter_registry:
+        filter_registry = get_mail_segment_filters()
+        if item not in filter_registry.keys():
             raise ValueError(f"Unknown filter or operand: {item}")
 
         new_filter = filter_registry[item](queryset)
@@ -176,11 +166,17 @@ def __resolve_segments_internal(
 ):
     combined = BASE_QUERYSET.none()
 
+    segment_registry = get_mail_segments()
+
     combined = add_dynamic_segments(
-        queryset=combined, segment_names=dynamic_segment_names_additive
+        queryset=combined,
+        segment_names=dynamic_segment_names_additive,
+        segment_registry=segment_registry,
     )
     combined = remove_dynamic_segments(
-        queryset=combined, segment_names=dynamic_segment_names_subtractive
+        queryset=combined,
+        segment_names=dynamic_segment_names_subtractive,
+        segment_registry=segment_registry,
     )
     combined = apply_complex_filters(queryset=combined, filter_list=filter_list)
 
@@ -242,14 +238,18 @@ def apply_complex_filters(queryset: QuerySet, filter_list: list[str]):
     return queryset
 
 
-def add_dynamic_segments(queryset: QuerySet, segment_names: list[str]):
+def add_dynamic_segments(
+    queryset: QuerySet, segment_names: list[str], segment_registry: MailSegmentRegistry
+):
     for segment_name in segment_names:
         LOG.info(f"Adding segment {segment_name}")
         queryset = queryset.union(segment_registry[segment_name]())
     return queryset
 
 
-def remove_dynamic_segments(queryset: QuerySet, segment_names: list[str]):
+def remove_dynamic_segments(
+    queryset: QuerySet, segment_names: list[str], segment_registry: MailSegmentRegistry
+):
     for segment_name in segment_names:
         LOG.info(f"Subtracting segment {segment_name}")
         queryset = queryset.difference(segment_registry[segment_name]())

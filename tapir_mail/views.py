@@ -34,7 +34,7 @@ from tapir_mail.models import (
     ExternalRecipient,
     ExternalRecipientConfirmation,
 )
-from tapir_mail.registries import segment_registry, filter_registry
+from tapir_mail.registries import get_mail_segments, get_mail_segment_filters
 from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
     EmailConfigurationDispatchSerializer,
@@ -695,7 +695,7 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["GET"])
     def available_filters(self, request):
-        available_filters = list(filter_registry.keys())
+        available_filters = list(get_mail_segment_filters().keys())
         return Response({"filters": available_filters})
 
     @extend_schema(
@@ -708,7 +708,7 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
     def available_segments(self, request):
         dynamic_segments = {
             segment_name: f"Dynamisches Segment: {segment_name}"
-            for segment_name in segment_registry.keys()
+            for segment_name in get_mail_segments().keys()
         }
 
         static_segments = {

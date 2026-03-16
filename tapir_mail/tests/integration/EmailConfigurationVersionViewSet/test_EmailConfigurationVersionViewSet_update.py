@@ -3,7 +3,8 @@ from tapir_mail.models import (
     ReleaseStatus,
     EmailConfigurationDispatch,
 )
-from tapir_mail.service.segment import register_segment
+from tapir_mail.registries import mail_segment_providers
+
 from tapir_mail.tests.factories import (
     EmailConfigurationVersionFactory,
     EmailConfigurationDispatchFactory,
@@ -22,10 +23,9 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         self.assertStatusCode(response, 400)
 
     def test_default_emailConfigurationVersionGetsUpdated(self):
-        def test_segment():
-            return DummyTapirUser.objects.all()
-
-        register_segment(self.TEST_SEGMENT, test_segment)
+        mail_segment_providers.add(
+            lambda: {self.TEST_SEGMENT: DummyTapirUser.objects.all}
+        )
 
         version = EmailConfigurationVersionFactory.create(
             email_configuration__name="Name before",

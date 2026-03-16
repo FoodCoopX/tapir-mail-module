@@ -4,11 +4,8 @@ from tapir_mail.models import (
     MailCategory,
     MailCategoryMode,
 )
-from tapir_mail.service.segment import (
-    resolve_segments,
-    register_filter,
-    register_segment,
-)
+from tapir_mail.registries import mail_segment_providers, mail_segment_filter_providers
+from tapir_mail.service.segment import resolve_segments
 from tapir_mail.tests.factories import StaticSegmentRecipientFactory
 from tapir_mail.tests.test_utils import TapirIntegrationTest
 from tapir_mail.triggers.transactional_trigger import TransactionalTriggerData
@@ -48,12 +45,13 @@ class TestSegments(TapirIntegrationTest):
         def not_coop_members():
             return DummyTapirUser.objects.filter(has_coop_shares=False)
 
-        def all_users():
-            return DummyTapirUser.objects.all()
-
-        register_segment(cls.SEGMENT_ALL_USERS, all_users)
-        register_segment(cls.SEGMENT_COOP_MEMBERS, coop_members)
-        register_segment(cls.SEGMENT_NOT_COOP_MEMBERS, not_coop_members)
+        mail_segment_providers.add(
+            lambda: {
+                cls.SEGMENT_ALL_USERS: DummyTapirUser.objects.all,
+                cls.SEGMENT_COOP_MEMBERS: coop_members,
+                cls.SEGMENT_NOT_COOP_MEMBERS: not_coop_members,
+            }
+        )
 
         # Create a static segment
         cls.static_segment = StaticSegment.objects.create(name="Static1")
@@ -67,7 +65,9 @@ class TestSegments(TapirIntegrationTest):
         def has_coop_shares_filter(qs):
             return qs.filter(has_coop_shares=True)
 
-        register_filter(cls.FILTER_HAS_COOP_SHARES, has_coop_shares_filter)
+        mail_segment_filter_providers.add(
+            lambda: {cls.FILTER_HAS_COOP_SHARES: has_coop_shares_filter}
+        )
 
     def test_combineSegmentsWithFilters_addSegments_returnsCorrectList(self):
         result = resolve_segments(

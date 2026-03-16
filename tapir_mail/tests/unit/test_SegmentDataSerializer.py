@@ -2,8 +2,8 @@ from unittest.mock import patch, Mock
 
 from rest_framework import serializers
 
+from tapir_mail.registries import mail_segment_providers, mail_segment_filter_providers
 from tapir_mail.serializers import SegmentDataSerializer
-from tapir_mail.service.segment import register_segment, register_filter
 from tapir_mail.tests.test_utils import TapirUnitTest
 
 
@@ -41,27 +41,29 @@ class SegmentDataSerializerTest(TapirUnitTest):
         mock_validate_segments.assert_called_once_with(add_segments)
 
     def test_validateSegments_validSegment_returnsInput(self):
-        register_segment("a_valid_segment", lambda _: True)
+        mail_segment_providers.add(lambda: {"a_valid_segment": lambda _: True})
 
         result = SegmentDataSerializer().validate_segments(["a_valid_segment"])
 
         self.assertEqual(["a_valid_segment"], result)
 
     def test_validateSegments_invalidSegment_raisesError(self):
-        register_segment("a_valid_segment", lambda _: True)
+        mail_segment_providers.add(lambda: {"a_valid_segment": lambda _: True})
 
         with self.assertRaises(serializers.ValidationError):
             SegmentDataSerializer().validate_segments(["an_invalid_segment"])
 
     def test_validateFilterList_validFilter_returnsInput(self):
-        register_filter("a_valid_filter", lambda _: True)
+        mail_segment_filter_providers.clear()
+        mail_segment_filter_providers.add(lambda: {"a_valid_filter": lambda _: True})
 
         result = SegmentDataSerializer().validate_filter_list(["a_valid_filter", "AND"])
 
         self.assertEqual(["a_valid_filter", "AND"], result)
 
     def test_validateFilterList_invalidFilter_raisesError(self):
-        register_filter("a_valid_filter", lambda _: True)
+        mail_segment_filter_providers.clear()
+        mail_segment_filter_providers.add(lambda: {"a_valid_filter": lambda _: True})
 
         with self.assertRaises(serializers.ValidationError):
             SegmentDataSerializer().validate_filter_list(["an_invalid_filter"])
