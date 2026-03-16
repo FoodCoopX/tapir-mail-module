@@ -35,6 +35,5 @@ class RecipientListProvider:
             mail_category_ids_additive=version.mail_categories_additive.values_list(
                 "id", flat=True
             ),
-            filter_list=version.filter_list,
             override_recipients=override_recipients,
         )

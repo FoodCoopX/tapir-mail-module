@@ -34,7 +34,7 @@ from tapir_mail.models import (
     ExternalRecipient,
     ExternalRecipientConfirmation,
 )
-from tapir_mail.registries import get_mail_segments, get_mail_segment_filters
+from tapir_mail.registries import get_mail_segments
 from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
     EmailConfigurationDispatchSerializer,
@@ -266,7 +266,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             dynamic_segments_subtractive=segment_data.get(
                 "dynamic_segment_names_subtractive", []
             ),
-            filter_list=segment_data.get("filter_list", []),
         )
         new_version.static_segments_additive.set(
             StaticSegment.objects.filter(
@@ -341,7 +340,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         updated_version.dynamic_segments_subtractive = segment_data.get(
             "dynamic_segment_names_subtractive", []
         )
-        updated_version.filter_list = segment_data.get("filter_list", [])
         updated_version.static_segments_additive.set(
             StaticSegment.objects.filter(
                 id__in=segment_data.get("static_segment_ids_additive", [])
@@ -389,7 +387,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                     "mail_category_ids_additive": version.mail_categories_additive.values_list(
                         "id", flat=True
                     ),
-                    "filter_list": version.filter_list,
                 },
                 "triggers": version.triggers,
             }
@@ -684,22 +681,6 @@ class EmailDispatchViewSet(viewsets.ReadOnlyModelViewSet):
 class SegmentAndFilterViewSet(viewsets.ViewSet):
     @extend_schema(
         responses={
-            200: {
-                "type": "object",
-                "properties": {
-                    "filters": {"type": "array", "items": {"type": "string"}}
-                },
-            }
-        },
-        description="Get a list of available filters.",
-    )
-    @action(detail=False, methods=["GET"])
-    def available_filters(self, request):
-        available_filters = list(get_mail_segment_filters().keys())
-        return Response({"filters": available_filters})
-
-    @extend_schema(
-        responses={
             200: AvailableSegmentsResponseSerializer,
         },
         description="Get a list of available segments.",
@@ -770,7 +751,6 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
                 static_segment_ids_additive=data["static_segment_ids_additive"],
                 static_segment_ids_subtractive=data["static_segment_ids_subtractive"],
                 mail_category_ids_additive=data["mail_category_ids_additive"],
-                filter_list=data["filter_list"],
             )
             return Response(
                 {

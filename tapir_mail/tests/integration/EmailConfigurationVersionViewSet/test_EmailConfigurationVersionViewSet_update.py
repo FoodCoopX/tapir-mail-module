@@ -51,7 +51,6 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
                 "static_segment_ids_additive": [],
                 "static_segment_ids_subtractive": [],
                 "mail_category_ids_additive": [],
-                "filter_list": [],
             },
         }
         response = self._send_request(version.id, put_data)

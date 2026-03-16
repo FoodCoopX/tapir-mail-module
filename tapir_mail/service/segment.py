@@ -1,14 +1,10 @@
 import logging
 import traceback
-from collections import deque
-from typing import Any
 
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 
-from tapir_mail.exceptions import TapirMailException
 from tapir_mail.models import StaticSegment, MailCategory
 from tapir_mail.registries import (
-    get_mail_segment_filters,
     get_mail_segments,
     MailSegmentRegistry,
 )
@@ -56,68 +52,14 @@ def _apply_top_operator(operator_stack, operand_stack):
             raise ValueError("Missing operand for AND/OR")
 
 
-def _apply_complex_filters(queryset, filter_list):
-    operator_stack = deque()
-    operand_stack = deque()
-
-    for item in filter_list:
-        apply_filter(item, operand_stack, operator_stack, queryset)
-
-    while operator_stack:
-        _apply_top_operator(operator_stack, operand_stack)
-
-    if operand_stack:
-        return queryset.filter(operand_stack.pop())
-    else:
-        return queryset  # return the original queryset if operand_stack is empty
-
-
-def apply_filter(item, operand_stack: deque[Any], operator_stack: deque[Any], queryset):
-    if item == "(":
-        operator_stack.append(item)
-    elif item == ")":
-        while operator_stack and operator_stack[-1] != "(":
-            _apply_top_operator(operator_stack, operand_stack)
-        if operator_stack:
-            operator_stack.pop()
-        else:
-            raise ValueError("Mismatched parentheses")
-    elif item in ["AND", "OR", "NOT"]:
-        while operator_stack and _precedence(item) <= _precedence(operator_stack[-1]):
-            _apply_top_operator(operator_stack, operand_stack)
-        operator_stack.append(item)
-    else:
-        filter_registry = get_mail_segment_filters()
-        if item not in filter_registry.keys():
-            raise ValueError(f"Unknown filter or operand: {item}")
-
-        new_filter = filter_registry[item](queryset)
-        operand_stack.append(Q(id__in=new_filter.values_list("id", flat=True)))
-
-
-def _precedence(operator):
-    if operator == "NOT":
-        return 3
-    elif operator == "AND":
-        return 2
-    elif operator == "OR":
-        return 1
-    elif operator == "(":
-        return 0
-    raise TapirMailException("Unknown operator " + operator)
-
-
 def resolve_segments(
     dynamic_segment_names_additive=None,
     static_segment_ids_additive=None,
     static_segment_ids_subtractive=None,
     dynamic_segment_names_subtractive=None,
-    filter_list=None,
     mail_category_ids_additive=None,
     override_recipients: list = None,
 ) -> list:
-    if filter_list is None:
-        filter_list = []
     if dynamic_segment_names_subtractive is None:
         dynamic_segment_names_subtractive = []
     if static_segment_ids_additive is None:
@@ -144,12 +86,11 @@ def resolve_segments(
             static_segment_ids_additive=static_segment_ids_additive,
             static_segment_ids_subtractive=static_segment_ids_subtractive,
             mail_category_ids_additive=mail_category_ids_additive,
-            filter_list=filter_list,
             override_recipients=override_recipients,
         )
     except Exception as e:
         LOG.error(
-            f"Error combining segments: {e}. addSegments: {dynamic_segment_names_additive}, removeSegments: {dynamic_segment_names_subtractive}, filterList: {filter_list}, override_recipients: {override_recipients}, mail_categories: {mail_category_ids_additive}"
+            f"Error combining segments: {e}. addSegments: {dynamic_segment_names_additive}, removeSegments: {dynamic_segment_names_subtractive}, override_recipients: {override_recipients}, mail_categories: {mail_category_ids_additive}"
         )
         traceback.print_exc()
         raise e
@@ -161,7 +102,6 @@ def __resolve_segments_internal(
     static_segment_ids_additive: list[str],
     static_segment_ids_subtractive: list[str],
     mail_category_ids_additive: list[str],
-    filter_list: list[str],
     override_recipients: list = None,
 ):
     combined = BASE_QUERYSET.none()
@@ -178,7 +118,6 @@ def __resolve_segments_internal(
         segment_names=dynamic_segment_names_subtractive,
         segment_registry=segment_registry,
     )
-    combined = apply_complex_filters(queryset=combined, filter_list=filter_list)
 
     ids = combined.values_list("id", flat=True)
     combined = BASE_QUERYSET.filter(id__in=ids).distinct()
@@ -226,16 +165,6 @@ def add_mail_categories(recipient_list: list, mail_category_ids: list[str]):
         recipient_list.extend(
             MailCategoryRecipientResolver.resolve_recipients(mail_category)
         )
-
-
-def apply_complex_filters(queryset: QuerySet, filter_list: list[str]):
-    if not filter_list:
-        return queryset
-
-    LOG.info(f"Adding filters {filter_list}")
-    id_list = list(queryset.values_list("id", flat=True))
-    queryset = _apply_complex_filters(BASE_QUERYSET.filter(id__in=id_list), filter_list)
-    return queryset
 
 
 def add_dynamic_segments(

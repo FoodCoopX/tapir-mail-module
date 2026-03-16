@@ -4,7 +4,7 @@ COPY ./tapir_mail_ui /app/tapir_mail_ui
 
 WORKDIR /app
 
-RUN npm install -g @openapitools/openapi-generator-cli@2.7.0
+RUN npm install -g @openapitools/openapi-generator-cli@2.30.2
 
 RUN apt update -y && apt upgrade -y && \
     apt install -y default-jdk && \

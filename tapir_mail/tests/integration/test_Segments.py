@@ -4,7 +4,7 @@ from tapir_mail.models import (
     MailCategory,
     MailCategoryMode,
 )
-from tapir_mail.registries import mail_segment_providers, mail_segment_filter_providers
+from tapir_mail.registries import mail_segment_providers
 from tapir_mail.service.segment import resolve_segments
 from tapir_mail.tests.factories import StaticSegmentRecipientFactory
 from tapir_mail.tests.test_utils import TapirIntegrationTest
@@ -23,8 +23,6 @@ class TestSegments(TapirIntegrationTest):
 
     STATIC_RECIPIENT_1 = "static1@example.com"
     STATIC_RECIPIENT_2 = "static2@example.com"
-
-    FILTER_HAS_COOP_SHARES = "has_coop_shares"
 
     @classmethod
     def setUpTestData(cls):
@@ -62,13 +60,6 @@ class TestSegments(TapirIntegrationTest):
             segment=cls.static_segment, email=cls.STATIC_RECIPIENT_2
         )
 
-        def has_coop_shares_filter(qs):
-            return qs.filter(has_coop_shares=True)
-
-        mail_segment_filter_providers.add(
-            lambda: {cls.FILTER_HAS_COOP_SHARES: has_coop_shares_filter}
-        )
-
     def test_combineSegmentsWithFilters_addSegments_returnsCorrectList(self):
         result = resolve_segments(
             dynamic_segment_names_additive=[self.SEGMENT_ALL_USERS]
@@ -96,13 +87,6 @@ class TestSegments(TapirIntegrationTest):
             },
             {2, 4, self.STATIC_RECIPIENT_1, self.STATIC_RECIPIENT_2},
         )
-
-    def test_combineSegmentsWithFilters_addSegmentWithFilter_returnsCorrectList(self):
-        result = resolve_segments(
-            dynamic_segment_names_additive=[self.SEGMENT_ALL_USERS],
-            filter_list=[self.FILTER_HAS_COOP_SHARES],
-        )
-        self.assertSetEqual({r.id for r in result}, {1, 3})
 
     def test_combineSegmentsWithFilters_addStaticSegment_returnsCorrectList(self):
         result = resolve_segments(static_segment_ids_additive=[self.static_segment.id])

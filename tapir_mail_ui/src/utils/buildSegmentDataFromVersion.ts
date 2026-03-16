@@ -9,6 +9,5 @@ export function buildSegmentDataFromVersion(
     staticSegmentIdsAdditive: version.staticSegmentsAdditive ?? [],
     staticSegmentIdsSubtractive: version.staticSegmentsSubtractive,
     mailCategoryIdsAdditive: version.mailCategoriesAdditive,
-    filterList: version.filterList ?? [],
   };
 }

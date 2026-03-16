@@ -63,7 +63,6 @@ const SendTestMailModal = ({
           staticSegmentIdsSubtractive: [],
           dynamicSegmentNamesAdditive: [],
           dynamicSegmentNamesSubtractive: [],
-          filterList: [],
           mailCategoryIdsAdditive: [],
         },
       })

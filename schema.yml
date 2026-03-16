@@ -2325,27 +2325,6 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /api/segment/available_filters/:
-    get:
-      operationId: segment_available_filters_retrieve
-      description: Get a list of available filters.
-      tags:
-      - segment
-      security:
-      - tokenAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  filters:
-                    type: array
-                    items:
-                      type: string
-          description: ''
   /api/segment/available_segments/:
     get:
       operationId: segment_available_segments_retrieve
@@ -3133,11 +3112,6 @@ components:
           items:
             type: string
             maxLength: 100
-        filter_list:
-          type: array
-          items:
-            type: string
-            maxLength: 100
         static_segments_additive:
           type: array
           items:
@@ -3188,12 +3162,6 @@ components:
             minLength: 1
             maxLength: 100
         dynamic_segments_subtractive:
-          type: array
-          items:
-            type: string
-            minLength: 1
-            maxLength: 100
-        filter_list:
           type: array
           items:
             type: string
@@ -3962,14 +3930,9 @@ components:
           type: array
           items:
             type: string
-        filter_list:
-          type: array
-          items:
-            type: string
       required:
       - dynamic_segment_names_additive
       - dynamic_segment_names_subtractive
-      - filter_list
       - mail_category_ids_additive
       - static_segment_ids_additive
       - static_segment_ids_subtractive
@@ -4001,15 +3964,9 @@ components:
           items:
             type: string
             minLength: 1
-        filter_list:
-          type: array
-          items:
-            type: string
-            minLength: 1
       required:
       - dynamic_segment_names_additive
       - dynamic_segment_names_subtractive
-      - filter_list
       - mail_category_ids_additive
       - static_segment_ids_additive
       - static_segment_ids_subtractive

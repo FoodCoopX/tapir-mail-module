@@ -11,8 +11,6 @@ import { useApi } from "../../hooks/useApi";
 import { formatDate } from "../../utils/formatDate";
 import Loading from "../loading";
 import SegmentsDisplay from "../segmentsDisplay";
-import FilterDisplay from "../segments/filterDisplay";
-import { guessElementType } from "../segments/common";
 import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
 import TapirPagination from "../TapirPagination";
 import SelectVersionModal from "./SelectVersionModal";
@@ -190,29 +188,14 @@ const EmailConfigurationDispatchTable: React.FC<
                             }
                           </span>
                         ) : (
-                          <>
-                            <SegmentsDisplay
-                              segmentData={buildSegmentDataFromVersion(
-                                emailConfigurationDispatch.emailConfigurationVersion,
-                              )}
-                              availableDynamicSegments={
-                                availableDynamicSegments
-                              }
-                              availableStaticSegments={availableStaticSegments}
-                              availableMailCategories={availableMailCategories}
-                            />
-                            <FilterDisplay
-                              filter={(
-                                emailConfigurationDispatch
-                                  .emailConfigurationVersion.filterList ?? []
-                              ).map((filter) => {
-                                return {
-                                  value: filter,
-                                  elementType: guessElementType(filter),
-                                };
-                              })}
-                            />
-                          </>
+                          <SegmentsDisplay
+                            segmentData={buildSegmentDataFromVersion(
+                              emailConfigurationDispatch.emailConfigurationVersion,
+                            )}
+                            availableDynamicSegments={availableDynamicSegments}
+                            availableStaticSegments={availableStaticSegments}
+                            availableMailCategories={availableMailCategories}
+                          />
                         )}
                       </td>
                       {content === "last-sent" && (

@@ -117,7 +117,6 @@ class EmailConfigurationVersion(BaseModel):
     static_segments_subtractive = ManyToManyField(
         StaticSegment, related_name="versions_with_subtractive"
     )
-    filter_list = ArrayField(base_field=models.CharField(max_length=100), default=list)
     mail_categories_additive = ManyToManyField(MailCategory)
 
     @transaction.atomic

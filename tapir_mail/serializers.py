@@ -16,7 +16,7 @@ from tapir_mail.models import (
     StaticSegmentRecipient,
     MailCategory,
 )
-from tapir_mail.registries import get_mail_segments, get_mail_segment_filters
+from tapir_mail.registries import get_mail_segments
 from tapir_mail.service.segment import BASE_QUERYSET
 from tapir_mail.service.triggers import Trigger, trigger_registry
 
@@ -34,7 +34,7 @@ class TriggerDataSerializer(serializers.Serializer):
     def validate(self, data: dict):
         trigger_id = data.get("trigger_id", None)
         if not trigger_id:
-            return
+            return None
 
         trigger_class = trigger_registry.get(data["trigger_id"], None)
         if not trigger_class:
@@ -81,12 +81,14 @@ class EmailConfigurationSerializer(serializers.ModelSerializer):
     last_updated_draft_date = serializers.SerializerMethodField()
     can_be_deleted = serializers.SerializerMethodField()
 
-    def get_released_date(self, obj: EmailConfiguration) -> datetime.datetime | None:
+    @staticmethod
+    def get_released_date(obj: EmailConfiguration) -> datetime.datetime | None:
         released_version = obj.versions.filter(status=ReleaseStatus.RELEASED).first()
         return released_version.updated_at if released_version else None
 
+    @staticmethod
     def get_last_updated_draft_date(
-        self, obj: EmailConfiguration
+        obj: EmailConfiguration,
     ) -> datetime.datetime | None:
         last_updated_draft = (
             obj.versions.filter(status=ReleaseStatus.DRAFT)
@@ -116,8 +118,6 @@ class SegmentDataSerializer(serializers.Serializer):
     )
     mail_category_ids_additive = serializers.ListField(child=serializers.CharField())
 
-    filter_list = serializers.ListField(child=serializers.CharField())
-
     def validate_dynamic_segment_names_additive(
         self, dynamic_segment_names_additive: list[str]
     ):
@@ -140,20 +140,6 @@ class SegmentDataSerializer(serializers.Serializer):
                 f"The following segment names are not registered: {invalid_segment_names}"
             )
         return segment_names
-
-    @staticmethod
-    def validate_filter_list(filter_list):
-        invalid_filters = [
-            f
-            for f in filter_list
-            if f not in get_mail_segment_filters().keys()
-            and f not in ["AND", "OR", "NOT", "(", ")"]
-        ]
-        if invalid_filters:
-            raise serializers.ValidationError(
-                f"The following filters are invalid: {invalid_filters}"
-            )
-        return filter_list
 
     def validate_static_segment_ids_additive(
         self, static_segment_ids_additive: list[str]
@@ -244,24 +230,28 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     delivered_count = serializers.SerializerMethodField()
     error_count = serializers.SerializerMethodField()
 
-    def get_sent_count(self, obj) -> int:
+    @staticmethod
+    def get_sent_count(obj) -> int:
         return obj.emaildispatch_set.filter(
             sent_time__isnull=False, next_retry__isnull=True
         ).count()
 
-    def get_opened_count(self, obj) -> int:
+    @staticmethod
+    def get_opened_count(obj) -> int:
         return obj.emaildispatch_set.filter(
             opened_time__isnull=False, next_retry__isnull=True
         ).count()
 
-    def get_delivered_count(self, obj) -> int:
+    @staticmethod
+    def get_delivered_count(obj) -> int:
         return obj.emaildispatch_set.filter(
             dsn_delivered_time__isnull=False,
             next_retry__isnull=True,
             opened_time__isnull=True,
         ).count()
 
-    def get_error_count(self, obj) -> int:
+    @staticmethod
+    def get_error_count(obj) -> int:
         return (
             obj.emaildispatch_set.filter(
                 next_retry__isnull=True, opened_time__isnull=False
@@ -364,7 +354,8 @@ class StaticSegmentSerializer(serializers.ModelSerializer):
     recipients = StaticSegmentRecipientSerializer(many=True, read_only=True)
     belongs_to_a_category = serializers.SerializerMethodField()
 
-    def get_belongs_to_a_category(self, obj: StaticSegment) -> bool:
+    @staticmethod
+    def get_belongs_to_a_category(obj: StaticSegment) -> bool:
         return getattr(obj, "mailcategory", None) is not None
 
 
@@ -395,10 +386,12 @@ class MailCategorySerializer(serializers.ModelSerializer):
     nb_recipients = serializers.SerializerMethodField()
     registration_form_link = serializers.SerializerMethodField()
 
-    def get_nb_recipients(self, obj: MailCategory) -> int:
+    @staticmethod
+    def get_nb_recipients(obj: MailCategory) -> int:
         return obj.static_segment.recipients.count()
 
-    def get_registration_form_link(self, obj: MailCategory) -> str:
+    @staticmethod
+    def get_registration_form_link(obj: MailCategory) -> str:
         return settings.SITE_URL + reverse(
             "category_registration_external_form", args=[obj.id]
         )

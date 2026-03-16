@@ -61,7 +61,6 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
                 "static_segment_ids_additive": [],
                 "static_segment_ids_subtractive": [],
                 "mail_category_ids_additive": [],
-                "filter_list": [],
             },
         }
         response = self._send_request(post_data)
@@ -78,7 +77,6 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
         self.assertEqual(0, version.static_segments_additive.count())
         self.assertEqual(0, version.static_segments_subtractive.count())
         self.assertEqual(0, version.mail_categories_additive.count())
-        self.assertEqual([], version.filter_list)
         self.assertEqual({"id": version.id}, json.loads(response.content))
 
     def test_creatingDraftVersion_triggerNotExecuted(self):
