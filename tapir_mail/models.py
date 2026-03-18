@@ -155,22 +155,6 @@ class EmailConfigurationDispatch(BaseModel):
         return f"{self.email_configuration_version} - {self.scheduled_time} - {self.is_sent}"
 
 
-def delete_unsent_dispatches_if_not_released(
-    instance: EmailConfigurationVersion, **kwargs
-):
-    if instance.status == ReleaseStatus.RELEASED:
-        return
-
-    EmailConfigurationDispatch.objects.filter(
-        email_configuration_version=instance, is_sent=False
-    ).delete()
-
-
-models.signals.post_save.connect(
-    delete_unsent_dispatches_if_not_released, sender=EmailConfigurationVersion
-)
-
-
 class EmailDispatch(BaseModel):
     """
     This represents an email that has been sent to a single recipient.
