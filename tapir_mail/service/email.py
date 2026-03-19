@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from tapir_mail.service.mjml import mjml2html
 
+from tapir_mail.service.mjml import mjml2html
 from tapir_mail.service.tracking import add_tracking_pixel
 
 
@@ -53,8 +53,9 @@ def _build_from_email(email_host_sender: str, tracking_id: str):
 def _get_dispatch_id_from_email_return_path(email_from: str):
     if not email_from or "@" not in email_from:
         return None
-    prefix, _ = email_from.split("@")
+
+    prefix, _ = email_from.split("@", maxsplit=1)
     if "+" not in prefix:
         return None
-    _, dispatch_id = prefix.split("+")
-    return dispatch_id
+
+    return prefix.split("+")[-1]
