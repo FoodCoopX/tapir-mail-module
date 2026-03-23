@@ -60,6 +60,7 @@ const EmailInput: React.FC<EmailInputProps> = ({
       }
     });
     setEmailList(newEmails);
+    onEmailListChange(newEmails);
   };
 
   const addEmail = (email: string) => {
