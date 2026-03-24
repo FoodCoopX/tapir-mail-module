@@ -258,7 +258,7 @@ class SendEmailBatch:
             ]
             for dispatch in dispatches_to_update:
                 dispatch.error_message = str(e)
-            EmailDispatch.objects.bulk_update(dispatches_to_update, "error_message")
+            EmailDispatch.objects.bulk_update(dispatches_to_update, ["error_message"])
 
         LOG.info(f"Sent {len(sent_emails)} emails in this batch")
         cls._post_send(sent_emails)
@@ -355,6 +355,7 @@ class RetryEmailDispatch:
             email_configuration_dispatch=email_dispatch.email_configuration_dispatch,
             recipient=email_dispatch.recipient,
             recipient_tokens=email_dispatch.recipient_tokens,
+            additional_tokens=email_dispatch.additional_tokens,
         )
 
     @classmethod

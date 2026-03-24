@@ -11,7 +11,7 @@ class TestUtils:
         sent_time=None,
         created_at=None,
         recipient_prefix="test",
-    ):
+    ) -> list[EmailDispatch]:
         dispatches = EmailDispatch.objects.bulk_create(
             EmailDispatchFactory.build(
                 email_configuration_dispatch=config_dispatch,

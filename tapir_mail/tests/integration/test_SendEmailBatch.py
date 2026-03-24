@@ -128,6 +128,9 @@ class SendEmailBatchTest(TapirIntegrationTest):
             error_message="Test error",
             sent_time=self.NOW,
         )[0]
+        dispatch.recipient_tokens = {"test_recipient_token": "Bart"}
+        dispatch.additional_tokens = {"test_additional_token": "Lisa"}
+        dispatch.save()
 
         original_dispatch_count = EmailDispatch.objects.count()
 
@@ -138,9 +141,11 @@ class SendEmailBatchTest(TapirIntegrationTest):
 
         # Check the new dispatch
         dispatch.refresh_from_db()
-        retry_dispatch = dispatch.next_retry
+        retry_dispatch: EmailDispatch = dispatch.next_retry
         self.assertEqual(retry_dispatch.recipient, dispatch.recipient)
         self.assertIsNone(retry_dispatch.sent_time)
+        self.assertEqual(dispatch.recipient_tokens, retry_dispatch.recipient_tokens)
+        self.assertEqual(dispatch.additional_tokens, retry_dispatch.additional_tokens)
 
         # Original dispatch should have a reference to the retry
         self.assertIsNotNone(dispatch.next_retry)
