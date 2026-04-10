@@ -35,6 +35,14 @@ const customFontList = [
     name: "DinNextLight",
     css: "/static/fonts/DinNextLight.css",
   },
+  {
+    name: "AmaticSC",
+    css: "/static/fonts/AmaticSC.css",
+  },
+  {
+    name: "Rubik",
+    css: "/static/fonts/Rubik.css",
+  },
 ].map(({ name, css }) => ({ value: name, label: name, css: css }));
 
 const fontList = [
