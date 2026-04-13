@@ -3,6 +3,8 @@ from django.conf import settings
 from django.db import migrations
 from django.templatetags.static import static
 
+from tapir_mail.models import ReleaseStatus
+
 
 def add_more_custom_fonts(apps, schema_editor):
     email_configuration_version_class = apps.get_model(
@@ -17,7 +19,9 @@ def add_more_custom_fonts(apps, schema_editor):
         ]
     )
 
-    for version in email_configuration_version_class.objects.all():
+    for version in email_configuration_version_class.objects.filter(
+        status__in=[ReleaseStatus.DRAFT, ReleaseStatus.RELEASED]
+    ):
         content = version.content
         search = 'Bitter.css" />'
         index = content.find(search)
