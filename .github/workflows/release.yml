@@ -72,8 +72,6 @@ jobs:
       - name: Draft new release
         id: create_release
         uses: softprops/action-gh-release@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.TAPIR_MAIL_RELEASE_TOKEN }}
         with:
           repository: FoodCoopX/tapir-mail-releases
           tag_name: ${{ steps.set_tag_version.outputs.tag }}
@@ -85,3 +83,4 @@ jobs:
             [View commit on GitHub](https://github.com/FoodCoopX/tapir-mail-module/commit/${{ github.sha }})
           files: ${{ steps.build.outputs.wheel_file }}
           working_directory: dist
+          token: ${{ secrets.TAPIR_MAIL_RELEASE_TOKEN }}
