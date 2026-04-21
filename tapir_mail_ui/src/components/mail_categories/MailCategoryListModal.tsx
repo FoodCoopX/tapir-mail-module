@@ -123,7 +123,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
               <tbody>
                 {mailCategories.length === 0 && (
                   <tr>
-                    <td colSpan={6}>Noch keine Kategorien</td>
+                    <td colSpan={7}>Noch keine Kategorien</td>
                   </tr>
                 )}
                 {mailCategories.map((category: MailCategory) => (
