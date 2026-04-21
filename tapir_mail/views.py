@@ -110,13 +110,19 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
     def duplicate(self, request, pk=None):
         copy_source = get_object_or_404(EmailConfiguration, id=pk)
 
-        copy_destination = EmailConfiguration(
-            name=f"Kopie von: {copy_source.name}",
-            description=copy_source.description,
-        )
-        copy_destination.save()
+        base_name = f"Kopie von: {copy_source.name}"
+        indexed_name = base_name
+        counter = 0
+        while EmailConfiguration.objects.filter(name=indexed_name).exists():
+            counter += 1
+            indexed_name = f"{base_name} ({counter})"
 
-        self.duplication_best_version(copy_source, copy_destination)
+        with transaction.atomic():
+            copy_destination = EmailConfiguration.objects.create(
+                name=indexed_name,
+                description=copy_source.description,
+            )
+            self.duplication_best_version(copy_source, copy_destination)
 
         serializer = EmailConfigurationSerializer(copy_destination, many=False)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -140,8 +146,14 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
         if not version_copy_source:
             return
 
-        fields_to_copy = ["content", "subject", "triggers", "segment_data"]
-        version_copy_destination = EmailConfigurationVersion(
+        fields_to_copy = [
+            "content",
+            "subject",
+            "triggers",
+            "dynamic_segments_additive",
+            "dynamic_segments_subtractive",
+        ]
+        version_copy_destination = EmailConfigurationVersion.objects.create(
             **{
                 field_name: getattr(version_copy_source, field_name)
                 for field_name in fields_to_copy
@@ -149,7 +161,15 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
             email_configuration=configuration_copy_destination,
             status=ReleaseStatus.DRAFT,
         )
-        version_copy_destination.save()
+        version_copy_destination.static_segments_additive.set(
+            version_copy_source.static_segments_additive.all()
+        )
+        version_copy_destination.static_segments_subtractive.set(
+            version_copy_source.static_segments_subtractive.all()
+        )
+        version_copy_destination.mail_categories_additive.set(
+            version_copy_source.mail_categories_additive.all()
+        )
 
     @classmethod
     def does_email_configuration_version_have_trigger(
