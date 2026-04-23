@@ -30,19 +30,16 @@ export const EmailConfigurationDispatchStats: React.FC<{
           title={"Geöffnet: " + emailConfigurationDispatch.openedCount}
           variant="success"
           now={emailConfigurationDispatch.openedCount * 100}
-          key={1}
         />
         <ProgressBar
           title={"Fehler: " + emailConfigurationDispatch.errorCount}
           variant="danger"
           now={emailConfigurationDispatch.errorCount * 100}
-          key={3}
         />
         <ProgressBar
           title={"Zugestellt: " + emailConfigurationDispatch.deliveredCount}
           variant="primary"
           now={emailConfigurationDispatch.deliveredCount * 100}
-          key={1}
         />
 
         <ProgressBar
@@ -50,16 +47,17 @@ export const EmailConfigurationDispatchStats: React.FC<{
             "Nicht geöffnet: " +
             (emailConfigurationDispatch.sentCount -
               emailConfigurationDispatch.openedCount -
-              emailConfigurationDispatch.errorCount)
+              emailConfigurationDispatch.errorCount -
+              emailConfigurationDispatch.deliveredCount)
           }
           variant="warning"
           now={
             (emailConfigurationDispatch.sentCount -
               emailConfigurationDispatch.openedCount -
-              emailConfigurationDispatch.errorCount) *
+              emailConfigurationDispatch.errorCount -
+              emailConfigurationDispatch.deliveredCount) *
             100
           }
-          key={2}
         />
       </ProgressBar>
     </span>
