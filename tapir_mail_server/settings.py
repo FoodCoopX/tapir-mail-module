@@ -121,9 +121,8 @@ if EMAIL_ENV == "dev":
     EMAIL_HOST_SENDER = "test_host_sender@mail.net"
     EMAIL_BOUNCE_ADDRESS = "bounce@mail.net"
     EMAIL_HOST_SENDER_NAME = "Test host sender"
-elif EMAIL_ENV == "test":
-    # Local SMTP
-    EMAIL_BACKEND = "tapir_mail.service.smtp_backend_with_dsn.SmtpBackendWithDsn"
+    EMAIL_BOUNCE_USER = "Test bounce user"
+    EMAIL_BOUNCE_PASSWORD = "Email bounce password"
 elif EMAIL_ENV == "prod":
     EMAIL_BACKEND = "tapir_mail.service.smtp_backend_with_dsn.SmtpBackendWithDsn"
     EMAIL_HOST = env.str("EMAIL_HOST")
@@ -137,6 +136,8 @@ elif EMAIL_ENV == "prod":
     EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
     EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
     EMAIL_AUTO_BCC = env.str("EMAIL_AUTO_BCC", default=None)
+    EMAIL_BOUNCE_USER = env.str("EMAIL_BOUNCE_USER", default=None)
+    EMAIL_BOUNCE_PASSWORD = env.str("EMAIL_BOUNCE_PASSWORD", default=None)
 
 
 DATABASES = {

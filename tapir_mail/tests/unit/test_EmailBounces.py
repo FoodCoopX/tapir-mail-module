@@ -23,7 +23,7 @@ class TestEmailBounces(TapirUnitTest):
             settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP
         )
         mock_mail_client.login.assert_called_once_with(
-            settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
+            settings.EMAIL_BOUNCE_USER, settings.EMAIL_BOUNCE_PASSWORD
         )
         mock_mail_client.search.assert_not_called()
 
@@ -43,7 +43,7 @@ class TestEmailBounces(TapirUnitTest):
             settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP
         )
         mock_mail_client.login.assert_called_once_with(
-            settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
+            settings.EMAIL_BOUNCE_USER, settings.EMAIL_BOUNCE_PASSWORD
         )
         mock_mail_client.select.assert_called_once()
         mock_mail_client.search.assert_called_once_with(None, "(UNSEEN)")
@@ -65,7 +65,7 @@ class TestEmailBounces(TapirUnitTest):
             settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP
         )
         mock_mail_client.login.assert_called_once_with(
-            settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD
+            settings.EMAIL_BOUNCE_USER, settings.EMAIL_BOUNCE_PASSWORD
         )
         mock_mail_client.select.assert_called_once()
         mock_mail_client.search.assert_called_once_with(None, "(UNSEEN)")
@@ -161,7 +161,7 @@ class TestEmailBounces(TapirUnitTest):
     @patch("tapir_mail.service.email_bounces.LOG")
     @patch.object(EmailDispatch.objects, "filter")
     @patch("tapir_mail.service.email_bounces.email.message_from_bytes")
-    def test_processMessage_noDispatchForId_logsWarningAndMarksEmailAsRead(
+    def test_processMessage_noDispatchForId_logsWarning(
         self, mock_message_from_bytes: Mock, mock_filter: Mock, mock_log: Mock
     ):
         mail_client = Mock()
@@ -179,9 +179,8 @@ class TestEmailBounces(TapirUnitTest):
 
         mail_client.fetch.assert_called_once_with(message_id, "(RFC822)")
         mock_message_from_bytes.assert_called_once_with(message_content)
-        mail_client.store.assert_called_once_with(message_id, "+FLAGS", "(SEEN)")
         mock_filter.assert_called_once_with(id="dispatch_id")
-        mock_log.warning.assert_called_once()
+        mock_log.debug.assert_called_once()
         mock_filter.return_value.first.assert_called_once_with()
 
     @patch("tapir_mail.service.email_bounces.EmailBounces.determine_bounce_type")
