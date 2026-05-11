@@ -12,6 +12,7 @@ from tapir_mail.models import (
     MailCategory,
     MailCategoryMode,
 )
+from tapir_mail.tests.test_utils import build_time_trigger_dict
 
 
 class EmailTemplateFactory(factory.django.DjangoModelFactory[EmailTemplate]):
@@ -53,6 +54,7 @@ class EmailConfigurationVersionFactory(
     status = factory.Faker(
         "random_element", elements=[choice[0] for choice in RELEASE_STATUS_CHOICES]
     )
+    triggers = [build_time_trigger_dict()]
 
 
 class EmailConfigurationDispatchFactory(

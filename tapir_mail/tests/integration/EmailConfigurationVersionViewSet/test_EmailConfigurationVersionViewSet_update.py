@@ -16,6 +16,12 @@ from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
     TEST_SEGMENT = "Test segment"
 
+    def setUp(self) -> None:
+        super().setUp()
+        mail_segment_providers.add(
+            lambda: {self.TEST_SEGMENT: DummyTapirUser.objects.all}
+        )
+
     def test_invalidData_returns400(self):
         version = EmailConfigurationVersionFactory.create()
         response = self._send_request(version.id, {"invalid_parameter": "aaa"})
@@ -23,10 +29,6 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         self.assertStatusCode(response, 400)
 
     def test_default_emailConfigurationVersionGetsUpdated(self):
-        mail_segment_providers.add(
-            lambda: {self.TEST_SEGMENT: DummyTapirUser.objects.all}
-        )
-
         version = EmailConfigurationVersionFactory.create(
             email_configuration__name="Name before",
             email_configuration__description="Description before",
@@ -77,7 +79,16 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         put_data = {
             "name": older_release.email_configuration.name,
             "content": older_release.content,
+            "subject": "test subject",
             "release_status": ReleaseStatus.RELEASED,
+            "triggers": [build_time_trigger_dict()],
+            "segment_data": {
+                "dynamic_segment_names_additive": [self.TEST_SEGMENT],
+                "dynamic_segment_names_subtractive": [],
+                "static_segment_ids_additive": [],
+                "static_segment_ids_subtractive": [],
+                "mail_category_ids_additive": [],
+            },
         }
         response = self._send_request(new_version.id, put_data)
 
@@ -99,6 +110,14 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
             "name": version.email_configuration.name,
             "content": version.content,
             "release_status": ReleaseStatus.ARCHIVED,
+            "triggers": [build_time_trigger_dict()],
+            "segment_data": {
+                "dynamic_segment_names_additive": [self.TEST_SEGMENT],
+                "dynamic_segment_names_subtractive": [],
+                "static_segment_ids_additive": [],
+                "static_segment_ids_subtractive": [],
+                "mail_category_ids_additive": [],
+            },
         }
         response = self._send_request(version.id, put_data)
         self.assertStatusCode(response, 200)

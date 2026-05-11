@@ -37,6 +37,16 @@ class TestSegments(TapirIntegrationTest):
             id=4, has_coop_shares=False, email="mail4@test.net"
         )
 
+        # Create a static segment
+        cls.static_segment = StaticSegment.objects.create(name="Static1")
+        StaticSegmentRecipient.objects.create(
+            segment=cls.static_segment, email=cls.STATIC_RECIPIENT_1
+        )
+        StaticSegmentRecipient.objects.create(
+            segment=cls.static_segment, email=cls.STATIC_RECIPIENT_2
+        )
+
+    def setUp(self) -> None:
         def coop_members():
             return DummyTapirUser.objects.filter(has_coop_shares=True)
 
@@ -45,19 +55,10 @@ class TestSegments(TapirIntegrationTest):
 
         mail_segment_providers.add(
             lambda: {
-                cls.SEGMENT_ALL_USERS: DummyTapirUser.objects.all,
-                cls.SEGMENT_COOP_MEMBERS: coop_members,
-                cls.SEGMENT_NOT_COOP_MEMBERS: not_coop_members,
+                self.SEGMENT_ALL_USERS: DummyTapirUser.objects.all,
+                self.SEGMENT_COOP_MEMBERS: coop_members,
+                self.SEGMENT_NOT_COOP_MEMBERS: not_coop_members,
             }
-        )
-
-        # Create a static segment
-        cls.static_segment = StaticSegment.objects.create(name="Static1")
-        StaticSegmentRecipient.objects.create(
-            segment=cls.static_segment, email=cls.STATIC_RECIPIENT_1
-        )
-        StaticSegmentRecipient.objects.create(
-            segment=cls.static_segment, email=cls.STATIC_RECIPIENT_2
         )
 
     def test_combineSegmentsWithFilters_addSegments_returnsCorrectList(self):

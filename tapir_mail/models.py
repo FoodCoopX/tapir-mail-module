@@ -121,6 +121,13 @@ class EmailConfigurationVersion(BaseModel):
 
     @transaction.atomic
     def release(self):
+        from tapir_mail.service.email_configuration_version_release_validator import (
+            EmailConfigurationVersionReleaseValidator,
+        )
+
+        EmailConfigurationVersionReleaseValidator.validate_version_can_be_released(
+            version=self
+        )
         self.status = ReleaseStatus.RELEASED
         self.save()
 

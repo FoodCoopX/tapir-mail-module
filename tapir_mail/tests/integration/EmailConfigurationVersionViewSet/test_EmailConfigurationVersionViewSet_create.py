@@ -6,17 +6,25 @@ from tapir_mail.models import (
     EmailConfiguration,
     EmailConfigurationDispatch,
 )
+from tapir_mail.registries import mail_segment_providers
 from tapir_mail.tests.factories import (
     EmailConfigurationFactory,
     EmailConfigurationVersionFactory,
 )
 from tapir_mail.tests.test_utils import TapirIntegrationTest, build_time_trigger_dict
+from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 
 
 class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
     CONFIG_NAME = "Test name"
     VERSION_CONTENT = "Test content"
     VERSION_SUBJECT = "Test subject"
+
+    def setUp(self) -> None:
+        super().setUp()
+        mail_segment_providers.add(
+            lambda: {"test_segment": DummyTapirUser.objects.all()}
+        )
 
     def test_invalidData_returns400(self):
         response = self._send_request({"invalid_parameter": "aaa"})
@@ -130,8 +138,17 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
     def get_minimal_post_data(self):
         return {
             "name": self.CONFIG_NAME,
+            "subject": self.VERSION_SUBJECT,
             "content": self.VERSION_CONTENT,
             "release_status": ReleaseStatus.DRAFT,
+            "triggers": [build_time_trigger_dict()],
+            "segment_data": {
+                "dynamic_segment_names_additive": ["test_segment"],
+                "dynamic_segment_names_subtractive": [],
+                "static_segment_ids_additive": [],
+                "static_segment_ids_subtractive": [],
+                "mail_category_ids_additive": [],
+            },
         }
 
     def _send_request(self, post_data: dict | None):

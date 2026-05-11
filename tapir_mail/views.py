@@ -261,12 +261,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         email_configuration.save()
 
         release_status = serializer.validated_data["release_status"]
-        if release_status == ReleaseStatus.RELEASED:
-            for old_released_version in EmailConfigurationVersion.objects.filter(
-                email_configuration=email_configuration,
-                status=ReleaseStatus.RELEASED,
-            ):
-                old_released_version.archive()
 
         # Create EmailConfigurationVersion
         MailContentValidator.validate_tokens(
@@ -303,6 +297,9 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             )
         )
 
+        if release_status == ReleaseStatus.RELEASED:
+            new_version.release()
+
         Trigger.on_email_configuration_version_save(new_version)
 
         return Response({"id": new_version.id}, status=status.HTTP_201_CREATED)
@@ -336,12 +333,6 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         email_configuration.save()
 
         release_status = serializer.validated_data["release_status"]
-        if release_status == ReleaseStatus.RELEASED:
-            for old_released_version in EmailConfigurationVersion.objects.filter(
-                email_configuration=email_configuration,
-                status=ReleaseStatus.RELEASED,
-            ).exclude(id=updated_version.id):
-                old_released_version.archive()
 
         # Update EmailConfigurationVersion
         MailContentValidator.validate_tokens(
@@ -376,6 +367,9 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             )
         )
         updated_version.save()
+
+        if release_status == ReleaseStatus.RELEASED:
+            updated_version.release()
 
         Trigger.on_email_configuration_version_save(updated_version)
 

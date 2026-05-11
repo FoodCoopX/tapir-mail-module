@@ -8,6 +8,7 @@ from django.core.cache import cache
 from django.test import TestCase, Client, SimpleTestCase
 from rest_framework.test import APIClient
 
+from tapir_mail.registries import mail_segment_providers
 from tapir_mail.triggers.time_trigger import TimeTrigger
 
 
@@ -23,6 +24,7 @@ class TapirIntegrationTest(TapirFactoryMixin, TestCase):
         self.client = Client()
         self.apiClient = APIClient()
         cache.clear()
+        mail_segment_providers.clear()
 
     def assertStatusCode(self, response, expected_status_code):
         self.assertEqual(
