@@ -54,9 +54,7 @@ const EmailConfigurationEditor = () => {
   const [loadedContent, setLoadedContent] = useState<IPage | undefined>(
     EMPTY_PAGE,
   );
-  const [segmentData, setSegmentData] = useState<SegmentData | undefined>(
-    undefined,
-  );
+  const [segmentData, setSegmentData] = useState<SegmentData>();
   const [content, setContent] = useState<any>(undefined);
   const [status, setStatus] = useState<StatusEnum>(StatusEnum.Draft);
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
@@ -173,7 +171,13 @@ const EmailConfigurationEditor = () => {
         name: mailingName,
         releaseStatus: newStatus,
         triggers: cleanTriggers,
-        segmentData: segmentData,
+        segmentData: segmentData ?? {
+          dynamicSegmentNamesAdditive: [],
+          dynamicSegmentNamesSubtractive: [],
+          staticSegmentIdsAdditive: [],
+          staticSegmentIdsSubtractive: [],
+          mailCategoryIdsAdditive: [],
+        },
       };
 
       if (currentId) {
