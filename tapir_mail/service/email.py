@@ -30,15 +30,24 @@ def prepare_email(
     if tracking_url:
         email_body = add_tracking_pixel(email_body, tracking_url)
 
+    reply_to = None
+    if getattr(settings, "EMAIL_REPLY_TO", None) is not None:
+        reply_to = [settings.EMAIL_REPLY_TO]
+
+    bcc = None
+    if getattr(settings, "EMAIL_AUTO_BCC", None) is not None:
+        reply_to = [settings.EMAIL_AUTO_BCC]
+
     email = EmailMultiAlternatives(
         subject=subject,
         body=email_body,
         to=recipients if isinstance(recipients, list) else [recipients],
-        bcc=[getattr(settings, "EMAIL_AUTO_BCC", None)],
+        bcc=bcc,
         from_email=_build_from_email(settings.EMAIL_BOUNCE_ADDRESS, tracking_id),
         headers={
             "From": f"{settings.EMAIL_HOST_SENDER_NAME} <{settings.EMAIL_HOST_SENDER}>",
         },
+        reply_to=reply_to,
     )
     email.content_subtype = "html"
 

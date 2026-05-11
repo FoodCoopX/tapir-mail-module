@@ -136,6 +136,7 @@ elif EMAIL_ENV == "prod":
     EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
     EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
     EMAIL_AUTO_BCC = env.str("EMAIL_AUTO_BCC", default=None)
+    EMAIL_REPLY_TO = env.str("EMAIL_REPLY_TO", default=None)
     EMAIL_BOUNCE_USER = env.str("EMAIL_BOUNCE_USER", default=None)
     EMAIL_BOUNCE_PASSWORD = env.str("EMAIL_BOUNCE_PASSWORD", default=None)
 
