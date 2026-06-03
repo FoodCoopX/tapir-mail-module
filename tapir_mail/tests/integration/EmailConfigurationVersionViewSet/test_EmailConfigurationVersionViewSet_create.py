@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from tapir_mail.models import (
@@ -123,8 +124,13 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
         self.assertEqual(triggers, email_configuration_version.triggers)
 
     def test_creatingReleaseVersion_olderReleaseGetsArchived(self):
-        older_release: EmailConfigurationVersion = (
-            EmailConfigurationVersionFactory.create(status=ReleaseStatus.RELEASED)
+        older_release = EmailConfigurationVersionFactory.create(
+            status=ReleaseStatus.RELEASED
+        )
+        EmailConfigurationVersion.objects.filter(id=older_release.id).update(
+            updated_at=datetime.datetime(
+                year=2021, month=1, day=17, hour=12, minute=34, tzinfo=datetime.UTC
+            )
         )
         post_data = self.get_minimal_post_data()
         post_data["name"] = older_release.email_configuration.name
@@ -134,6 +140,13 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
         self.assertStatusCode(response, 201)
         older_release.refresh_from_db()
         self.assertEqual(ReleaseStatus.ARCHIVED, older_release.status)
+        self.assertEqual(
+            datetime.datetime(
+                year=2021, month=1, day=17, hour=12, minute=34, tzinfo=datetime.UTC
+            ),
+            older_release.updated_at,
+            "The updated_at field should not get updated on archive",
+        )
 
     def get_minimal_post_data(self):
         return {

@@ -138,8 +138,10 @@ class EmailConfigurationVersion(BaseModel):
             version.archive()
 
     def archive(self):
-        self.status = ReleaseStatus.ARCHIVED
-        self.save()
+        # Use update() instead of save() so that updated_at doesn't get set
+        EmailConfigurationVersion.objects.filter(id=self.id).update(
+            status=ReleaseStatus.ARCHIVED
+        )
 
     def __str__(self):
         return f"{self.email_configuration.name} ({self.status}) ({self.updated_at})"
