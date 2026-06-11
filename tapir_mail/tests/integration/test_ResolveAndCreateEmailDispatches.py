@@ -211,24 +211,49 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
         self, mock_get_recipient_list_from_email_configuration_dispatch: Mock
     ):
         config_dispatch = self.create_email_config_dispatch(scheduled_time=self.NOW)
-        self.email_config_version.content = "foo {{Empfänger.Vorname}} bar"
+        self.email_config_version.content = "FirstName:{{Empfänger.Vorname}} LastName:{{Empfänger.Nachname}} Email:{{Empfänger.Email}} IBAN:{{Empfänger.IBAN}}"
         self.email_config_version.save()
         register_tokens(
-            user_tokens={"Vorname": "first_name"}, dynamic_tokens={}, general_tokens={}
+            user_tokens={
+                "Vorname": "first_name",
+                "Nachname": "last_name",
+                "IBAN": "iban",
+                "Email": "email",
+            },
+            dynamic_tokens={},
+            general_tokens={},
         )
         static_recipient = StaticSegmentRecipientFactory.create(
-            email="static@example.com", first_name="FN-static"
+            email="static@example.com", first_name="FN-static", last_name="LN-static"
         )
         dynamic_recipient_without_extra = DummyTapirUserFactory.create(
-            email="noextra@example.com", first_name="FN-noextra"
+            email="noextra@example.com",
+            first_name="FN-noextra",
+            last_name="LN-noextra",
+            iban="IBAN-noextra",
         )
         dynamic_recipient_with_extras = DummyTapirUserFactory.create(
-            email="withextra@example.com", first_name="FN-withextra"
+            email="withextra@example.com",
+            first_name="FN-withextra",
+            last_name="LN-withextra",
+            iban="IBAN-withextra",
+        )
+        extra_recipient_1 = Mock(
+            email="extra1@example.com",
+            first_name="FN-extra1",
+            last_name="LN-extra1",
+            iban="IBAN-extra1",
+        )
+        extra_recipient_2 = Mock(
+            email="extra2@example.com",
+            first_name="FN-extra2",
+            last_name="LN-extra2",
+            iban="IBAN-extra2",
         )
         setattr(
             dynamic_recipient_with_extras,
-            "get_extra_recipient_addresses",
-            lambda _: ["extra1@example.com", "extra2@example.com"],
+            "get_extra_recipients",
+            lambda _: [extra_recipient_1, extra_recipient_2],
         )
 
         mock_get_recipient_list_from_email_configuration_dispatch.return_value = [
@@ -256,20 +281,55 @@ class ResolveAndCreateEmailDispatchesTest(TapirIntegrationTest):
             key: EmailDispatch.objects.get(recipient=f"{key}@example.com")
             for key in ["static", "noextra", "withextra", "extra1", "extra2"]
         }
-        self.assertEqual(
-            email_dispatches["withextra"].recipient_tokens,
-            email_dispatches["extra1"].recipient_tokens,
+
+        self._assert_recipient_tokens_are_correct(
+            {
+                "first_name": "FN-static",
+                "last_name": "LN-static",
+                "email": "static@example.com",
+                "iban": "",
+            },
+            email_dispatches["static"].recipient_tokens,
         )
-        self.assertEqual(
-            email_dispatches["withextra"].recipient_tokens,
-            email_dispatches["extra2"].recipient_tokens,
-        )
-        self.assertEqual(
-            "FN-withextra",
-            email_dispatches["extra1"].recipient_tokens["first_name"],
-            "The extra recipients should get the same mail with the same token values as the main recipient",
-        )
-        self.assertNotEqual(
-            email_dispatches["withextra"].recipient_tokens,
+        self._assert_recipient_tokens_are_correct(
+            {
+                "first_name": "FN-noextra",
+                "last_name": "LN-noextra",
+                "email": "noextra@example.com",
+                "iban": "IBAN-noextra",
+            },
             email_dispatches["noextra"].recipient_tokens,
         )
+        self._assert_recipient_tokens_are_correct(
+            {
+                "first_name": "FN-withextra",
+                "last_name": "LN-withextra",
+                "email": "withextra@example.com",
+                "iban": "IBAN-withextra",
+            },
+            email_dispatches["withextra"].recipient_tokens,
+        )
+        self._assert_recipient_tokens_are_correct(
+            {
+                "first_name": "FN-extra1",
+                "last_name": "LN-extra1",
+                "email": "withextra@example.com",
+                "iban": "IBAN-withextra",
+            },
+            email_dispatches["extra1"].recipient_tokens,
+        )  # The first and last names should be overridden with the values from the extra recipient, but all other tokens should stay the same
+        self._assert_recipient_tokens_are_correct(
+            {
+                "first_name": "FN-extra2",
+                "last_name": "LN-extra2",
+                "email": "withextra@example.com",
+                "iban": "IBAN-withextra",
+            },
+            email_dispatches["extra2"].recipient_tokens,
+        )
+
+    def _assert_recipient_tokens_are_correct(
+        self, expected_tokens: dict, actual_tokens: dict
+    ):
+        for token in ["first_name", "last_name", "email", "iban"]:
+            self.assertEqual(expected_tokens[token], actual_tokens[token])

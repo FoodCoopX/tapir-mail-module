@@ -19,10 +19,11 @@ class DummyTapirUser(models.Model):
     email = models.EmailField(_("email address"), blank=True)
     pickup_location = models.ForeignKey(DummyPickupLocation, on_delete=models.PROTECT)
     has_coop_shares = models.BooleanField(default=False)
+    iban = models.CharField(max_length=100, blank=True)
 
     @property
     def subscription_type(self):
-        return f"2 × M-Ernteanteil"
+        return "2 × M-Ernteanteil"
 
     @property
     def full_name(self):

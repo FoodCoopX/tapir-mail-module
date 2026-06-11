@@ -74,7 +74,7 @@ class ResolveAndCreateEmailDispatches:
                         config_dispatch.email_configuration_version.save()
                         redis_cache.delete(cache_key)
                     else:
-                        LOG.error(
+                        LOG.exception(
                             f"Error while creating email dispatches for EmailConfigurationDispatch#{config_dispatch.id}. Retrying... Error: {e}"
                         )
 
@@ -135,19 +135,16 @@ class ResolveAndCreateEmailDispatches:
                 dynamic_tokens=dynamic_tokens,
                 cache=cache,
                 email=recipient.email,
+                recipient_tokens_override={},
             )
         ]
 
-        get_extra_recipient_addresses = getattr(
-            recipient, "get_extra_recipient_addresses", None
-        )
-        extra_addresses = (
-            []
-            if get_extra_recipient_addresses is None
-            else get_extra_recipient_addresses(cache)
+        get_extra_recipients = getattr(recipient, "get_extra_recipients", None)
+        extra_recipients = (
+            [] if get_extra_recipients is None else get_extra_recipients(cache)
         )
 
-        for extra_address in extra_addresses:
+        for extra_recipient in extra_recipients:
             dispatches.append(
                 cls._build_email_dispatch(
                     config_dispatch=config_dispatch,
@@ -155,7 +152,11 @@ class ResolveAndCreateEmailDispatches:
                     recipient_tokens=recipient_tokens,
                     dynamic_tokens=dynamic_tokens,
                     cache=cache,
-                    email=extra_address,
+                    email=extra_recipient.email,
+                    recipient_tokens_override={
+                        "first_name": getattr(extra_recipient, "first_name", None),
+                        "last_name": getattr(extra_recipient, "last_name", None),
+                    },
                 )
             )
 
@@ -169,11 +170,19 @@ class ResolveAndCreateEmailDispatches:
         dynamic_tokens,
         cache: dict,
         email: str,
+        recipient_tokens_override: dict,
     ):
-        return EmailDispatch(
+        resolved_recipient_tokens = resolve_recipient_tokens(
+            recipient_tokens, recipient
+        )
+        for token, value in recipient_tokens_override.items():
+            if value is not None and token in resolved_recipient_tokens:
+                resolved_recipient_tokens[token] = value
+
+        result = EmailDispatch(
             email_configuration_dispatch=config_dispatch,
             recipient=email,
-            recipient_tokens=resolve_recipient_tokens(recipient_tokens, recipient)
+            recipient_tokens=resolved_recipient_tokens
             | resolve_dynamic_tokens(
                 dynamic_tokens,
                 recipient,
@@ -182,6 +191,7 @@ class ResolveAndCreateEmailDispatches:
             additional_tokens=config_dispatch.additional_tokens,
             created_at=config_dispatch.scheduled_time,
         )
+        return result
 
     @staticmethod
     def _get_email_configuration_dispatches_that_should_be_sent():
@@ -250,11 +260,11 @@ class SendEmailBatch:
                     if success:
                         sent_emails[email_message] = email_dispatch
         except Exception as e:
-            LOG.error(f"Error with SMTP connection: {e}")
+            LOG.exception(f"Error with SMTP connection: {e}")
             dispatches_to_update = [
                 email_dispatch
                 for email_message, email_dispatch in emails
-                if email_message not in sent_emails.keys()
+                if email_message not in sent_emails
             ]
             for dispatch in dispatches_to_update:
                 dispatch.error_message = str(e)
@@ -281,7 +291,9 @@ class SendEmailBatch:
 
             return True
         except Exception as e:
-            LOG.error(f"Error while sending email to {email_dispatch.recipient}: {e}")
+            LOG.exception(
+                f"Error while sending email to {email_dispatch.recipient}: {e}"
+            )
             smtp_response = getattr(email_message, "smtp_response", None)
             if smtp_response:
                 email_dispatch.smtp_response_code = smtp_response.code
@@ -312,7 +324,7 @@ class SendEmailBatch:
                 )
                 emails.append((email, email_dispatch))
             except Exception as e:
-                LOG.error(
+                LOG.exception(
                     f"Error while preparing email to {email_dispatch.recipient}: {e}"
                 )
                 with transaction.atomic():
@@ -340,7 +352,7 @@ class SendEmailBatch:
                     email_dispatch.sent_time = timezone.now()
                     email_dispatch.save()
             except Exception as e:
-                LOG.error(
+                LOG.exception(
                     f"Error after sending email to {email_dispatch.recipient}: {e}"
                 )
                 with transaction.atomic():
