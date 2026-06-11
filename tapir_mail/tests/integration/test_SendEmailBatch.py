@@ -58,10 +58,12 @@ class SendEmailBatchTest(TapirIntegrationTest):
             "tapir_mail.service.email_dispatch.prepare_email",
             side_effect=Exception("Test exception"),
         ):
-            with patch("tapir_mail.service.email_dispatch.LOG.error") as mock_log_error:
+            with patch(
+                "tapir_mail.service.email_dispatch.LOG.exception"
+            ) as mock_log_exception:
                 SendEmailBatch.send_email_dispatches()
 
-                mock_log_error.assert_called_once_with(
+                mock_log_exception.assert_called_once_with(
                     "Error while preparing email to test0@example.com: Test exception"
                 )
 
