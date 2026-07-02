@@ -36,7 +36,7 @@ def prepare_email(
 
     bcc = None
     if getattr(settings, "EMAIL_AUTO_BCC", None) is not None:
-        reply_to = [settings.EMAIL_AUTO_BCC]
+        bcc = [settings.EMAIL_AUTO_BCC]
 
     email = EmailMultiAlternatives(
         subject=subject,
