@@ -19,12 +19,10 @@
         außerhalb von Tapir. Die Tokens sind:
         <ul>
           <li>
-            {{Mail-Kategorie-Registrierung - Bestätigung
-            erforderlich.Kategorie-Name}}
+            {{Mail-Kategorie-Registrierung - Bestätigung erforderlich.Kategorie-Name}}
           </li>
           <li>
-            {{Mail-Kategorie-Registrierung - Bestätigung
-            erforderlich.Bestätigungslink}}
+            {{Mail-Kategorie-Registrierung - Bestätigung erforderlich.Bestätigungslink}}
           </li>
         </ul>
       </mj-text>
