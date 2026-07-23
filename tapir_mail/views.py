@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, QuerySet
@@ -1036,7 +1037,8 @@ class RegisterToMailCategoryView(FormView):
                 key=TransactionalTriggerKeys.MAIL_CATEGORY_REGISTRATION_CONFIRMATION_LINK,
                 token_data={
                     "category_name": self.get_category().name,
-                    "confirmation_link": reverse(
+                    "confirmation_link": settings.SITE_URL
+                    + reverse(
                         "user_confirms_registration",
                         args=[external_recipient_confirmation.confirmation_secret],
                     ),
