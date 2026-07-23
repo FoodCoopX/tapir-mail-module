@@ -19,12 +19,10 @@
         von Tapir. Die Tokens sind:
         <ul>
           <li>
-            {{Mail-Kategorie-Registrierung - Registrierung
-            bestätigt.Kategorie-Name}}
+            {{Mail-Kategorie-Registrierung - Registrierung bestätigt.Kategorie-Name}}
           </li>
           <li>
-            {{Mail-Kategorie-Registrierung - Registrierung
-            bestätigt.Verwaltungslink}}
+            {{Mail-Kategorie-Registrierung - Registrierung bestätigt.Verwaltungslink}}
           </li>
         </ul>
       </mj-text>
