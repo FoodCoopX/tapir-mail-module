@@ -1171,6 +1171,10 @@ class ExternalRecipientManagementView(FormView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse(
-            "external_recipient_manager", args=[self.kwargs.get("recipient_secret")]
-        )
+        recipient_secret = self.kwargs.get("recipient_secret")
+        if ExternalRecipient.objects.filter(secret_key=recipient_secret).exists():
+            return reverse(
+                "external_recipient_manager", args=[self.kwargs.get("recipient_secret")]
+            )
+
+        return settings.SITE_URL
