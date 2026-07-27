@@ -1083,6 +1083,26 @@ class ConfirmRegistrationToMailCategoryView(TemplateView):
             external_recipient=external_recipient_confirmation.external_recipient,
         )
 
+        external_recipient = external_recipient_confirmation.external_recipient
+        TransactionalTrigger.fire_action(
+            TransactionalTriggerData(
+                key=TransactionalTriggerKeys.MAIL_CATEGORY_REGISTRATION_CONFIRMED,
+                token_data={
+                    "category_name": external_recipient_confirmation.mail_category.name,
+                    "management_link": settings.SITE_URL
+                    + reverse(
+                        "external_recipient_manager",
+                        kwargs={"recipient_secret": external_recipient.secret_key},
+                    ),
+                },
+                recipient_outside_of_base_queryset=TransactionalTriggerData.RecipientOutsideOfBaseQueryset(
+                    email=external_recipient.email,
+                    first_name=external_recipient.first_name,
+                    last_name="",
+                ),
+            )
+        )
+
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
