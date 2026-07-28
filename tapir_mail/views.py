@@ -1075,6 +1075,9 @@ class ConfirmRegistrationToMailCategoryView(TemplateView):
     @transaction.atomic
     def get(self, request, *args, **kwargs):
         external_recipient_confirmation = self.get_external_recipient_confirmation()
+        if external_recipient_confirmation.confirmed_at is not None:
+            return super().get(request, *args, **kwargs)
+
         external_recipient_confirmation.confirmed_at = datetime.datetime.now()
         external_recipient_confirmation.save()
 
