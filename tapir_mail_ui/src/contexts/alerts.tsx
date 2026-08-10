@@ -69,13 +69,16 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
           transform: "translateX(-50%)",
           whiteSpace: "pre",
           zIndex: 999999,
+          maxWidth: "1000px",
         }}
         hidden={!show}
         variant={variant}
         transition
         dismissible
       >
-        {message}
+        <p style={{ overflowWrap: "break-word", textWrap: "wrap" }}>
+          {message}
+        </p>
       </Alert>
     </AlertContext.Provider>
   );
