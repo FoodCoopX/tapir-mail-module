@@ -35,5 +35,5 @@ class MailContentValidator:
 
         if len(invalid_tokens) > 0:
             raise ValidationError(
-                f"Folgende Tokens sind nicht bekannt: {invalid_tokens}"
+                f"Folgende Tokens sind nicht bekannt: {invalid_tokens}. Sollen die Tokens im Editor richtig aussehen, den Fehler aber trotzdem auftreten, lösche bitte die ganze Zeile mit dem Token und schreib sie neu um versteckte Schriftzeichen zu vermeiden."
             )
