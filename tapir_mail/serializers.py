@@ -17,6 +17,7 @@ from tapir_mail.models import (
     MailCategory,
 )
 from tapir_mail.registries import get_mail_segments
+from tapir_mail.service.mail_category_recipients_resolver import MailCategoryRecipientResolver
 from tapir_mail.service.segment import BASE_QUERYSET
 from tapir_mail.service.triggers import Trigger, trigger_registry
 
@@ -388,7 +389,7 @@ class MailCategorySerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_nb_recipients(obj: MailCategory) -> int:
-        return obj.static_segment.recipients.count()
+        return len(MailCategoryRecipientResolver.resolve_recipients(obj))
 
     @staticmethod
     def get_registration_form_link(obj: MailCategory) -> str:
