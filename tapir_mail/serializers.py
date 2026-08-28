@@ -17,7 +17,9 @@ from tapir_mail.models import (
     MailCategory,
 )
 from tapir_mail.registries import get_mail_segments
-from tapir_mail.service.mail_category_recipients_resolver import MailCategoryRecipientResolver
+from tapir_mail.service.mail_category_recipients_resolver import (
+    MailCategoryRecipientResolver,
+)
 from tapir_mail.service.segment import BASE_QUERYSET
 from tapir_mail.service.triggers import Trigger, trigger_registry
 
