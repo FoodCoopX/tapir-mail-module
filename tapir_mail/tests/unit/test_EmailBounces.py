@@ -1,6 +1,8 @@
 from email.message import Message
 from unittest.mock import patch, Mock, call
 
+from django.test import override_settings
+
 from tapir_mail.models import EmailDispatch
 from tapir_mail.service.email_bounces import EmailBounces
 from tapir_mail.tests.test_utils import TapirUnitTest
@@ -46,7 +48,9 @@ class TestEmailBounces(TapirUnitTest):
             settings.EMAIL_BOUNCE_USER, settings.EMAIL_BOUNCE_PASSWORD
         )
         mock_mail_client.select.assert_called_once()
-        mock_mail_client.search.assert_called_once_with(None, "(UNSEEN)")
+        mock_mail_client.search.assert_called_once_with(
+            None, '(UNSEEN HEADER X-Original-To "@mail.net")'
+        )
         mock_mail_client.logout.assert_called_once_with()
 
     @patch("tapir_mail.service.email_bounces.IMAP4_SSL")
@@ -68,7 +72,9 @@ class TestEmailBounces(TapirUnitTest):
             settings.EMAIL_BOUNCE_USER, settings.EMAIL_BOUNCE_PASSWORD
         )
         mock_mail_client.select.assert_called_once()
-        mock_mail_client.search.assert_called_once_with(None, "(UNSEEN)")
+        mock_mail_client.search.assert_called_once_with(
+            None, '(UNSEEN HEADER X-Original-To "@mail.net")'
+        )
         self.assertEqual(6, mock_process_message.call_count)
         mock_process_message.assert_has_calls(
             [
@@ -138,7 +144,7 @@ class TestEmailBounces(TapirUnitTest):
         with self.assertRaises(Exception):
             EmailBounces.process_message(mail_client, message_id)
 
-        mail_client.fetch.assert_called_once_with(message_id, "(RFC822)")
+        mail_client.fetch.assert_called_once_with(message_id, "(BODY.PEEK[])")
 
     @patch("tapir_mail.service.email_bounces.email.message_from_bytes")
     def test_processMessage_noDispatchId_doesNothing(
@@ -151,11 +157,12 @@ class TestEmailBounces(TapirUnitTest):
         message_id = "message_id"
         message = Message()
         message["Return-Path"] = "no_dispatch_id@test.de"
+        message["X-Original-To"] = settings.EMAIL_BOUNCE_ADDRESS
         mock_message_from_bytes.return_value = message
 
         EmailBounces.process_message(mail_client, message_id)
 
-        mail_client.fetch.assert_called_once_with(message_id, "(RFC822)")
+        mail_client.fetch.assert_called_once_with(message_id, "(BODY.PEEK[])")
         mock_message_from_bytes.assert_called_once_with(message_content)
 
     @patch("tapir_mail.service.email_bounces.LOG")
@@ -171,13 +178,14 @@ class TestEmailBounces(TapirUnitTest):
         message_id = "message_id"
         message = Message()
         message["Return-Path"] = "test+dispatch_id@test.de"
+        message["X-Original-To"] = settings.EMAIL_BOUNCE_ADDRESS
         mock_message_from_bytes.return_value = message
         mock_filter.return_value = Mock()
         mock_filter.return_value.first.return_value = None
 
         EmailBounces.process_message(mail_client, message_id)
 
-        mail_client.fetch.assert_called_once_with(message_id, "(RFC822)")
+        mail_client.fetch.assert_called_once_with(message_id, "(BODY.PEEK[])")
         mock_message_from_bytes.assert_called_once_with(message_content)
         mock_filter.assert_called_once_with(id="dispatch_id")
         mock_log.debug.assert_called_once()
@@ -201,6 +209,7 @@ class TestEmailBounces(TapirUnitTest):
         message = Message()
         message["Message-Id"] = message_uid
         message["Return-Path"] = "test+dispatch_id@test.de"
+        message["X-Original-To"] = settings.EMAIL_BOUNCE_ADDRESS
         mock_message_from_bytes.return_value = message
         mock_filter.return_value = Mock()
         mock_dispatch = Mock()
@@ -220,9 +229,9 @@ class TestEmailBounces(TapirUnitTest):
         )
         mock_dispatch.save.assert_called_once_with()
 
-        mail_client.fetch.assert_called_once_with(message_id, "(RFC822)")
+        mail_client.fetch.assert_called_once_with(message_id, "(BODY.PEEK[])")
         mock_message_from_bytes.assert_called_once_with(message_content)
-        mail_client.store.assert_called_once_with(message_id, "+FLAGS", "(SEEN)")
+        mail_client.store.assert_called_once_with(message_id, "+FLAGS", "(\\Seen)")
         mock_filter.assert_called_once_with(id="dispatch_id")
         mock_filter.return_value.first.assert_called_once_with()
         mock_determine_bounce_type.assert_called_once_with(
@@ -247,7 +256,7 @@ class TestEmailBounces(TapirUnitTest):
         message = Message()
         message["Message-Id"] = message_uid
         message["Return-Path"] = "<>"
-        message["To"] = "test+dispatch_id@test.de"
+        message["To"] = "bounce+dispatch_id@mail.net"
         mock_message_from_bytes.return_value = message
         mock_filter.return_value = Mock()
         mock_dispatch = Mock()
@@ -258,3 +267,62 @@ class TestEmailBounces(TapirUnitTest):
         EmailBounces.process_message(mail_client, message_id)
 
         mock_filter.assert_called_once_with(id="dispatch_id")
+
+    def test_buildSearchCriteria_bounceAddressConfigured_filtersOnItsDomain(self):
+        result = EmailBounces.build_search_criteria()
+
+        self.assertEqual('(UNSEEN HEADER X-Original-To "@mail.net")', result)
+
+    @override_settings(EMAIL_BOUNCE_ADDRESS=None)
+    def test_buildSearchCriteria_noBounceAddress_fallsBackToUnseen(self):
+        result = EmailBounces.build_search_criteria()
+
+        self.assertEqual("(UNSEEN)", result)
+
+    def test_belongsToThisInstance_addressOfAnotherInstance_returnsFalse(self):
+        message = Message()
+        message["X-Original-To"] = "bounce+dispatch_id@other-instance.net"
+
+        self.assertFalse(EmailBounces.belongs_to_this_instance(message))
+
+    def test_belongsToThisInstance_ownAddressWithVerpExtension_returnsTrue(self):
+        message = Message()
+        message["X-Original-To"] = "bounce+dispatch_id@mail.net"
+
+        self.assertTrue(EmailBounces.belongs_to_this_instance(message))
+
+    def test_belongsToThisInstance_ownAddressWithoutVerpExtension_returnsTrue(self):
+        # Keycloak sends with the plain bounce address, without a dispatch id
+        message = Message()
+        message["X-Original-To"] = "bounce@mail.net"
+
+        self.assertTrue(EmailBounces.belongs_to_this_instance(message))
+
+    def test_belongsToThisInstance_sameDomainButOtherLocalPart_returnsFalse(self):
+        message = Message()
+        message["X-Original-To"] = "other-bounce+dispatch_id@mail.net"
+
+        self.assertFalse(EmailBounces.belongs_to_this_instance(message))
+
+    @patch.object(EmailDispatch.objects, "filter")
+    @patch("tapir_mail.service.email_bounces.email.message_from_bytes")
+    def test_processMessage_messageOfAnotherInstance_leavesItUnread(
+        self, mock_message_from_bytes: Mock, mock_filter: Mock
+    ):
+        mail_client = Mock()
+        message_content = Mock()
+        mail_client.fetch.return_value = ("OK", [[None, message_content]])
+        message_id = "message_id"
+        message = Message()
+        message["Message-Id"] = "message_uid"
+        message["Return-Path"] = "bounce+dispatch_id@other-instance.net"
+        message["X-Original-To"] = "bounce+dispatch_id@other-instance.net"
+        mock_message_from_bytes.return_value = message
+
+        EmailBounces.process_message(mail_client, message_id)
+
+        # BODY.PEEK does not set \Seen, and we must not set it either: the
+        # instance that owns this message still has to find it as unread.
+        mail_client.fetch.assert_called_once_with(message_id, "(BODY.PEEK[])")
+        mail_client.store.assert_not_called()
+        mock_filter.assert_not_called()
