@@ -59,7 +59,7 @@ class TestEmailBounces(TapirUnitTest):
         mock_mail_client = Mock()
         mock_mail_client_constructor.return_value = mock_mail_client
         mock_mail_client.login.return_value = ("OK", None)
-        mock_mail_client.search.return_value = ("OK", ["a b c", "d e f"])
+        mock_mail_client.search.return_value = ("OK", [b"a b c", b"d e f"])
 
         EmailBounces.check_for_bounces()
 
