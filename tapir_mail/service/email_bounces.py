@@ -50,7 +50,7 @@ class EmailBounces:
 
             for block in messages_id_blocks:
                 for message_id in block.split():
-                    cls.process_message(mail_client, message_id)
+                    cls.process_message(mail_client, message_id.decode())
         finally:
             mail_client.logout()
 
