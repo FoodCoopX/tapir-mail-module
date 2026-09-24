@@ -2796,13 +2796,12 @@ components:
           format: date-time
           nullable: true
         segment_data:
-          allOf:
-          - $ref: '#/components/schemas/SegmentData'
-          nullable: true
+          $ref: '#/components/schemas/SegmentData'
       required:
       - content
       - name
       - release_status
+      - segment_data
     BundledEmailConfigurationRequest:
       type: object
       properties:
@@ -2830,13 +2829,12 @@ components:
           format: date-time
           nullable: true
         segment_data:
-          allOf:
-          - $ref: '#/components/schemas/SegmentDataRequest'
-          nullable: true
+          $ref: '#/components/schemas/SegmentDataRequest'
       required:
       - content
       - name
       - release_status
+      - segment_data
     CreateMissingTriggerMailRequest:
       type: object
       properties:
@@ -2931,12 +2929,18 @@ components:
           type: string
           maxLength: 255
         email:
-          type: string
-          format: email
           title: Email address
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         has_coop_shares:
           type: boolean
+        iban:
+          type: string
+          maxLength: 100
       required:
       - id
       - pickup_location
@@ -2952,12 +2956,18 @@ components:
           type: string
           maxLength: 255
         email:
-          type: string
-          format: email
           title: Email address
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         has_coop_shares:
           type: boolean
+        iban:
+          type: string
+          maxLength: 100
       required:
       - pickup_location
     EmailConfiguration:
@@ -3722,9 +3732,7 @@ components:
           format: date-time
           nullable: true
         segment_data:
-          allOf:
-          - $ref: '#/components/schemas/SegmentDataRequest'
-          nullable: true
+          $ref: '#/components/schemas/SegmentDataRequest'
     PatchedDummyPickupLocationRequest:
       type: object
       properties:
@@ -3749,12 +3757,18 @@ components:
           type: string
           maxLength: 255
         email:
-          type: string
-          format: email
           title: Email address
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         has_coop_shares:
           type: boolean
+        iban:
+          type: string
+          maxLength: 100
     PatchedEmailConfigurationDispatchRequest:
       type: object
       properties:

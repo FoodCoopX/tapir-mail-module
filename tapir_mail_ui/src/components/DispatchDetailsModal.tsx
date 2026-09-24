@@ -19,6 +19,7 @@ import TapirPagination from "./TapirPagination";
 import TapirTooltip from "./TapirTooltip";
 import EmailConfigurationDispatchStats from "./dashboard/EmailConfigurationDispatchStats";
 import TapirDropdown, { Choice } from "./tapirDropdown";
+import TapirHelpButton from "./TapirHelpButton";
 
 interface DispatchDetailsModalProps {
   configDispatch: EmailConfigurationDispatch;
@@ -39,7 +40,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
   const [dispatchCount, setDispatchCount] = useState(0);
   const [statusFilter, setStatusFilter] = useState<Choice>();
 
-  const filterChoices = [];
+  const filterChoices: Choice[] = [];
   let key: keyof typeof EMAIL_DISPATCH_STATUS_PROPS;
   for (key in EMAIL_DISPATCH_STATUS_PROPS) {
     filterChoices.push({
@@ -141,7 +142,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
       </Modal.Header>
       <Modal.Body>
         <div className="d-flex justify-content-between align-items-center">
-          <span style={{ display: "flex" }}>
+          <span className={"d-flex align-items-center gap-2"}>
             <TapirDropdown
               choices={filterChoices}
               onChoiceSelected={(choice) => {
@@ -161,6 +162,19 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
                 />
               </TapirTooltip>
             )}
+            <TapirHelpButton
+              text={
+                <ul>
+                  {Object.entries(EMAIL_DISPATCH_STATUS_PROPS).map(
+                    ([key, value]) => (
+                      <li key={key}>
+                        {value.text}: {value.extraText}
+                      </li>
+                    ),
+                  )}
+                </ul>
+              }
+            />
           </span>
           <TapirButton
             variant={

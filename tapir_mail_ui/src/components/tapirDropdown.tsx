@@ -1,12 +1,10 @@
 import React from "react";
-import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
-import "@fortawesome/fontawesome-free/css/solid.css";
-import "@fortawesome/fontawesome-free/css/fontawesome.css";
-import { Dropdown, DropdownButton } from "react-bootstrap";
+import { Dropdown, DropdownButton, Form } from "react-bootstrap";
 
 export interface Choice {
   id: number | string;
   name: string;
+  extraText?: string;
 }
 
 interface DropdownProps<T extends Choice> {
@@ -36,8 +34,17 @@ const TapirDropdown = <T extends Choice>({
         <Dropdown.Item
           key={index}
           eventKey={index}
+          style={{ maxWidth: "500px" }}
         >
           {choice.name}
+          {choice.extraText && (
+            <>
+              <br />
+              <Form.Text style={{ textWrap: "wrap" }}>
+                {choice.extraText}
+              </Form.Text>
+            </>
+          )}
         </Dropdown.Item>
       ))}
     </DropdownButton>
