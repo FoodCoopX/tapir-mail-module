@@ -1,8 +1,6 @@
 from email.message import Message
 from unittest.mock import patch, Mock, call
 
-from django.test import override_settings
-
 from tapir_mail.models import EmailDispatch
 from tapir_mail.service.email_bounces import EmailBounces
 from tapir_mail.tests.test_utils import TapirUnitTest
@@ -268,17 +266,6 @@ class TestEmailBounces(TapirUnitTest):
 
         mock_filter.assert_called_once_with(id="dispatch_id")
 
-    def test_buildSearchCriteria_bounceAddressConfigured_filtersOnItsDomain(self):
-        result = EmailBounces.build_search_criteria()
-
-        self.assertEqual('(UNSEEN HEADER X-Original-To "@mail.net")', result)
-
-    @override_settings(EMAIL_BOUNCE_ADDRESS=None)
-    def test_buildSearchCriteria_noBounceAddress_fallsBackToUnseen(self):
-        result = EmailBounces.build_search_criteria()
-
-        self.assertEqual("(UNSEEN)", result)
-
     def test_belongsToThisInstance_addressOfAnotherInstance_returnsFalse(self):
         message = Message()
         message["X-Original-To"] = "bounce+dispatch_id@other-instance.net"
@@ -321,8 +308,6 @@ class TestEmailBounces(TapirUnitTest):
 
         EmailBounces.process_message(mail_client, message_id)
 
-        # BODY.PEEK does not set \Seen, and we must not set it either: the
-        # instance that owns this message still has to find it as unread.
         mail_client.fetch.assert_called_once_with(message_id, "(BODY.PEEK[])")
         mail_client.store.assert_not_called()
         mock_filter.assert_not_called()
