@@ -25,7 +25,7 @@ class RegisterToMailCategoryForm(Form):
 
 
 class ExternalRecipientManagementForm(Form):
-    first_name = forms.CharField()
+    first_name = forms.CharField(label="Vorname")
 
     def __init__(self, *args, **kwargs):
         self.external_recipient: ExternalRecipient = kwargs.pop("external_recipient")
