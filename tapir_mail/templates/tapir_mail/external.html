@@ -1,15 +1,15 @@
 {% load django_bootstrap5 %}
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Tapir newsletter registration</title>
+  <title>Tapir Newsletter-Anmeldung</title>
   <link rel="stylesheet" href="{% static 'core/bootstrap/5.3.8/css/bootstrap.min.css' %}">
 </head>
 <body>
 <div class="card">
-  <div class="card-header"><h5>Anmeldung zu Newsletter : {{ category_name }}</h5></div>
+  <div class="card-header"><h5>Anmeldung zum Newsletter: {{ category_name }}</h5></div>
   <div class="card-body">
     <form method="post">
       {% csrf_token %}

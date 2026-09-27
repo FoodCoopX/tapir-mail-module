@@ -19,7 +19,7 @@ class RegisterToMailCategoryForm(Form):
             mail_category=self.category, email=self.cleaned_data["email"]
         ):
             raise ValidationError(
-                "Diese Mail-Adresse ist schon für dieser Newsletter eingetragen"
+                "Diese Mail-Adresse ist schon für diesen Newsletter eingetragen"
             )
         return self.cleaned_data["email"]
 
