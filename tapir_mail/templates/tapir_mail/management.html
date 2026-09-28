@@ -1,7 +1,7 @@
 {% load static %}
 {% load django_bootstrap5 %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <title>Tapir Newsletter-Verwaltung</title>
@@ -14,8 +14,8 @@
   <div class="card-header"><h5>Abo-Verwaltung</h5></div>
   <div class="card-body">
     <div>
-      <p>Hallo {{ first_name }}. Hier kannst du dich für unsere verschiedenen Newsletter an- oder -abmelden.</p>
-      <p>Wenn du dich von allen Newsletter abmeldest, löschen wir entsprechend alle deine Daten von unserem Server.</p>
+      <p>Hallo {{ first_name }}, hier kannst du dich für unsere verschiedenen Newsletter an- oder abmelden.</p>
+      <p>Wenn du dich von allen Newslettern abmeldest, löschen wir alle deine Daten von unserem Server.</p>
     </div>
     {% if messages %}
       <ul class="messages">
@@ -28,7 +28,7 @@
       {% csrf_token %}
       {% bootstrap_form form %}
       <button type="submit" class="btn btn-primary">
-        Anmeldungen anpassen.
+        Anmeldungen anpassen
       </button>
     </form>
   </div>

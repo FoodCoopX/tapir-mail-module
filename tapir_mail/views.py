@@ -1143,7 +1143,7 @@ class ExternalRecipientManagementView(FormView):
         return context_data
 
     def form_valid(self, form):
-        messages.success(self.request, "Änderungen gespreichert")
+        messages.success(self.request, "Änderungen gespeichert")
 
         external_recipient = self.get_external_recipient()
         external_recipient.first_name = form.cleaned_data["first_name"]
