@@ -1,6 +1,8 @@
 from email.message import Message
 from unittest.mock import patch, Mock, call
 
+from django.test import override_settings
+
 from tapir_mail.models import EmailDispatch
 from tapir_mail.service.email_bounces import EmailBounces
 from tapir_mail.tests.test_utils import TapirUnitTest
@@ -81,6 +83,33 @@ class TestEmailBounces(TapirUnitTest):
             ]
         )
         mock_mail_client.logout.assert_called_once_with()
+
+    @override_settings(EMAIL_BOUNCE_HOST="bounce.example.org")
+    @patch("tapir_mail.service.email_bounces.IMAP4_SSL")
+    def test_checkForBounces_bounceHostSet_connectsToBounceHost(
+        self, mock_mail_client_constructor: Mock
+    ):
+        mock_mail_client = Mock()
+        mock_mail_client_constructor.return_value = mock_mail_client
+        mock_mail_client.login.return_value = ("ERROR", [])
+
+        with self.assertRaises(Exception):
+            EmailBounces.check_for_bounces()
+
+        mock_mail_client_constructor.assert_called_once_with(
+            "bounce.example.org", port=settings.EMAIL_PORT_IMAP
+        )
+
+    def test_getImapHost_bounceHostNotSet_returnsEmailHost(self):
+        self.assertEqual(settings.EMAIL_HOST, EmailBounces.get_imap_host())
+
+    @override_settings(EMAIL_BOUNCE_HOST="")
+    def test_getImapHost_bounceHostEmpty_returnsEmailHost(self):
+        self.assertEqual(settings.EMAIL_HOST, EmailBounces.get_imap_host())
+
+    @override_settings(EMAIL_BOUNCE_HOST="bounce.example.org")
+    def test_getImapHost_bounceHostSet_returnsBounceHost(self):
+        self.assertEqual("bounce.example.org", EmailBounces.get_imap_host())
 
     @patch("tapir_mail.service.email_bounces.all_failures")
     def test_determineBounceType_recipientAddressIsInBothSoftAndHard_returnsHard(

@@ -139,6 +139,7 @@ elif EMAIL_ENV == "prod":
     EMAIL_REPLY_TO = env.str("EMAIL_REPLY_TO", default=None)
     EMAIL_BOUNCE_USER = env.str("EMAIL_BOUNCE_USER", default=None)
     EMAIL_BOUNCE_PASSWORD = env.str("EMAIL_BOUNCE_PASSWORD", default=None)
+    EMAIL_BOUNCE_HOST = env.str("EMAIL_BOUNCE_HOST", default=None)
 
 
 DATABASES = {
