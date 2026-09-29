@@ -25,7 +25,7 @@ class EmailBounces:
             LOG.debug("Missing bounce user or bounce password, cancelling bounce check")
             return
 
-        mail_client = IMAP4_SSL(settings.EMAIL_HOST, port=settings.EMAIL_PORT_IMAP)
+        mail_client = IMAP4_SSL(cls.get_imap_host(), port=settings.EMAIL_PORT_IMAP)
         return_code, _ = mail_client.login(
             settings.EMAIL_BOUNCE_USER, settings.EMAIL_BOUNCE_PASSWORD
         )
@@ -53,6 +53,13 @@ class EmailBounces:
                     cls.process_message(mail_client, message_id.decode())
         finally:
             mail_client.logout()
+
+    @classmethod
+    def get_imap_host(cls) -> str:
+        # The bounce mailbox can live on a different server than the SMTP host,
+        # e.g. when an instance sends through its own mail provider but its
+        # bounce address is delivered to a central mailbox.
+        return getattr(settings, "EMAIL_BOUNCE_HOST", None) or settings.EMAIL_HOST
 
     @classmethod
     def process_message(cls, mail_client: IMAP4, message_id: str):
