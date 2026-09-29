@@ -1,22 +1,25 @@
-from datetime import datetime, timezone
+import datetime
 from unittest.mock import patch
 
 from dateutil.relativedelta import relativedelta
 from django.core import mail
 
+from tapir_mail.config import ExternalConfig
 from tapir_mail.models import EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import _get_dispatch_id_from_email_return_path
 from tapir_mail.service.email_dispatch import RetryEmailDispatch, SendEmailBatch
 from tapir_mail.tests.factories import (
     EmailConfigurationDispatchFactory,
     EmailConfigurationVersionFactory,
+    EmailDispatchFactory,
 )
 from tapir_mail.tests.integration.utils import TestUtils
-from tapir_mail.tests.test_utils import TapirIntegrationTest
+from tapir_mail.tests.test_utils import TapirIntegrationTest, build_time_trigger_dict
+from tapir_mail.triggers.transactional_trigger import TransactionalTrigger
 
 
 class SendEmailBatchTest(TapirIntegrationTest):
-    NOW = datetime(2023, 9, 10, 12, 30, tzinfo=timezone.utc)
+    NOW = datetime.datetime(2023, 9, 10, 12, 30, tzinfo=datetime.timezone.utc)
     SUBJECT = "Test Subject"
 
     def setUp(self):
@@ -239,3 +242,84 @@ class SendEmailBatchTest(TapirIntegrationTest):
         self.assertEqual(
             EmailDispatch.objects.filter(next_retry__isnull=False).count(), 0
         )
+
+    def test_sendEmailDispatches_mailIsMassMailAndBccProviderDefined_sendMailWithBcc(
+        self,
+    ):
+        email_dispatch = EmailDispatchFactory.create(
+            sent_time=None,
+            email_configuration_dispatch__email_configuration_version__status=ReleaseStatus.RELEASED,
+        )
+        email_dispatch.email_configuration_dispatch.email_configuration_version.triggers = [
+            build_time_trigger_dict(
+                scheduled_time=self.NOW - datetime.timedelta(days=1)
+            )
+        ]
+        email_dispatch.email_configuration_dispatch.email_configuration_version.save()
+
+        ExternalConfig.MASS_MAIL_BCC_PROVIDER = lambda: "test_bcc@example.com"
+
+        SendEmailBatch.send_email_dispatches(batch_size=1)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(["test_bcc@example.com"], mail.outbox[0].bcc)
+
+    def test_sendEmailDispatches_mailIsMassMailAndBccProviderNotDefined_sendMailWithoutBcc(
+        self,
+    ):
+        email_dispatch = EmailDispatchFactory.create(
+            sent_time=None,
+            email_configuration_dispatch__email_configuration_version__status=ReleaseStatus.RELEASED,
+        )
+        email_dispatch.email_configuration_dispatch.email_configuration_version.triggers = [
+            build_time_trigger_dict(
+                scheduled_time=self.NOW - datetime.timedelta(days=1)
+            )
+        ]
+        email_dispatch.email_configuration_dispatch.email_configuration_version.save()
+
+        ExternalConfig.MASS_MAIL_BCC_PROVIDER = None
+
+        SendEmailBatch.send_email_dispatches(batch_size=1)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual([], mail.outbox[0].bcc)
+
+    def test_sendEmailDispatches_mailIsMassMailAndBccProviderGivesEmptyValue_sendMailWithoutBcc(
+        self,
+    ):
+        email_dispatch = EmailDispatchFactory.create(
+            sent_time=None,
+            email_configuration_dispatch__email_configuration_version__status=ReleaseStatus.RELEASED,
+        )
+        email_dispatch.email_configuration_dispatch.email_configuration_version.triggers = [
+            build_time_trigger_dict(
+                scheduled_time=self.NOW - datetime.timedelta(days=1)
+            )
+        ]
+        email_dispatch.email_configuration_dispatch.email_configuration_version.save()
+
+        ExternalConfig.MASS_MAIL_BCC_PROVIDER = lambda: ""
+
+        SendEmailBatch.send_email_dispatches(batch_size=1)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual([], mail.outbox[0].bcc)
+
+    def test_sendEmailDispatches_mailIsTransactionalMailAndProviderIsDefined_sendMailWithBcc(
+        self,
+    ):
+        email_dispatch = EmailDispatchFactory.create(
+            sent_time=None,
+            email_configuration_dispatch__email_configuration_version__status=ReleaseStatus.RELEASED,
+        )
+        email_dispatch.email_configuration_dispatch.email_configuration_version.triggers = [
+            {"trigger_id": TransactionalTrigger.get_id()}
+        ]
+        email_dispatch.email_configuration_dispatch.email_configuration_version.save()
+
+        ExternalConfig.MASS_MAIL_BCC_PROVIDER = lambda: "mass_mail_bcc@example.com"
+        ExternalConfig.TRANSACTIONAL_MAIL_BCC_PROVIDER = (
+            lambda: "transactional_mail_bcc@example.com"
+        )
+
+        SendEmailBatch.send_email_dispatches(batch_size=1)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(["transactional_mail_bcc@example.com"], mail.outbox[0].bcc)

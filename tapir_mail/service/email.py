@@ -1,16 +1,18 @@
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
+from tapir_mail.config import BccProvider
 from tapir_mail.service.mjml import mjml2html
 from tapir_mail.service.tracking import add_tracking_pixel
 
 
 def prepare_email(
-    mjml: str = None,
-    subject: str = None,
+    mjml: str | None = None,
+    subject: str | None = None,
     recipients=None,
-    tracking_url: str = None,
-    tracking_id: str = None,
+    tracking_url: str | None = None,
+    tracking_id: str | None = None,
+    bcc_provider: BccProvider | None = None,
 ):
     """
     Sends an email using the configuration provided in the kwargs.
@@ -34,15 +36,20 @@ def prepare_email(
     if getattr(settings, "EMAIL_REPLY_TO", None) is not None:
         reply_to = [settings.EMAIL_REPLY_TO]
 
-    bcc = None
+    bcc_addresses = []
     if getattr(settings, "EMAIL_AUTO_BCC", None) is not None:
-        bcc = [settings.EMAIL_AUTO_BCC]
+        bcc_addresses.append(settings.EMAIL_AUTO_BCC)
+
+    if bcc_provider is not None:
+        bcc_address = bcc_provider()
+        if bcc_address:
+            bcc_addresses.append(bcc_address)
 
     email = EmailMultiAlternatives(
         subject=subject,
         body=email_body,
         to=recipients if isinstance(recipients, list) else [recipients],
-        bcc=bcc,
+        bcc=bcc_addresses,
         from_email=_build_from_email(settings.EMAIL_BOUNCE_ADDRESS, tracking_id),
         headers={
             "From": f"{settings.EMAIL_HOST_SENDER_NAME} <{settings.EMAIL_HOST_SENDER}>",

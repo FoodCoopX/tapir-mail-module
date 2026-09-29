@@ -7,6 +7,7 @@ from django.core.mail.backends.base import BaseEmailBackend
 from django.db import transaction
 from django.utils import timezone
 
+from tapir_mail.config import BccProvider, ExternalConfig
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.recipient_list_provider import (
@@ -22,6 +23,7 @@ from tapir_mail.service.token import (
 )
 from tapir_mail.service.tracking import get_tracking_url
 from tapir_mail.service.triggers import trigger_registry
+from tapir_mail.triggers.time_trigger import TimeTrigger
 
 LOG = logging.getLogger(__name__)
 
@@ -229,7 +231,6 @@ class SendEmailBatch:
                     "email_configuration_dispatch__email_configuration_version"
                 )[:batch_size]
             )
-
             cls._send_batch(batch)
         finally:
             lock.release()
@@ -321,6 +322,7 @@ class SendEmailBatch:
                     recipients=[email_dispatch.recipient],
                     tracking_url=get_tracking_url(email_dispatch),
                     tracking_id=email_dispatch.id,
+                    bcc_provider=cls._get_bcc_provider(email_dispatch),
                 )
                 emails.append((email, email_dispatch))
             except Exception as e:
@@ -332,6 +334,23 @@ class SendEmailBatch:
                     email_dispatch.save()
 
         return emails
+
+    @classmethod
+    def _get_bcc_provider(cls, email_dispatch: EmailDispatch) -> BccProvider | None:
+        for trigger_data in (
+            email_dispatch.email_configuration_dispatch.email_configuration_version.triggers
+            or []
+        ):
+            trigger_class = trigger_registry.get(
+                trigger_data["trigger_id"],
+                None,
+            )
+            if trigger_class:
+                if trigger_class == TimeTrigger:
+                    return ExternalConfig.MASS_MAIL_BCC_PROVIDER
+                else:
+                    return ExternalConfig.TRANSACTIONAL_MAIL_BCC_PROVIDER
+        return None
 
     @classmethod
     def _post_send(cls, emails):
