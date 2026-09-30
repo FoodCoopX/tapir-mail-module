@@ -8,25 +8,26 @@ export const EMAIL_DISPATCH_STATUS_PROPS = {
   error: {
     color: "danger",
     text: "Fehler beim Versand",
-    extraText: "Der Versand ist fehlgeschlagen",
+    extraText:
+      "Der Versand ist fehlgeschlagen. Bitte wende dich an FoodCoopX über das Ticketportal.",
   },
   bounced: {
     color: "danger",
     text: "Bounce",
     extraText:
-      "Der Mail-Server des Empfängers hat die Mail verweigert. In der Regel ist die Mailbox voll.",
+      "Der Mail-Server des Empfängers hat die Mail verweigert. In der Regel ist die Mailbox voll. Bitte wende dich im ersten Schritt an das betreffende Mitglied und bitte um Klärung.",
   },
   unknown: {
     color: "warning",
     text: "Nicht geöffnet",
     extraText:
-      "Die Email hat unseren Mail-Server verlassen. Wir haben keine Infos, ob sie angekommen oder geöffnet worden ist. Es gab aber zumindest keinen Fehler beim Versand.",
+      "Die Email hat unseren Mail-Server verlassen. Wir haben keine Infos, ob sie angekommen oder geöffnet worden ist. Es gab aber zumindest keinen Fehler beim Versand. Wende dich im Zweifel im ersten Schritt an das Mitglied, um herauszufinden, ob die Mail doch im Posteingang oder SPAM-Ordner gelandet ist.",
   },
   sending: {
     color: "info",
     text: "Wird versendet",
     extraText:
-      "Die Mail ist vorbereitet worden aber noch nicht versendet. Der Versand müsste in den kommenden 1-2 Minuten erfolgen.",
+      "Die Mail ist vorbereitet worden aber noch nicht versendet. Der Versand müsste in den kommenden 1-2 Minuten erfolgen. Wenn die Mail länger in dem Status hängen bleibt, dann wende dich an FoodCoopX über das Ticketportal.",
   },
   delivered: {
     color: "primary",
