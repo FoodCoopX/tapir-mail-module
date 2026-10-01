@@ -256,9 +256,7 @@ class EmailConfigurationDispatchSerializer(serializers.Serializer):
     @staticmethod
     def get_error_count(obj) -> int:
         return (
-            obj.emaildispatch_set.filter(
-                next_retry__isnull=True, opened_time__isnull=False
-            )
+            obj.emaildispatch_set.filter(next_retry__isnull=True)
             .with_error(True)
             .distinct()
             .count()
