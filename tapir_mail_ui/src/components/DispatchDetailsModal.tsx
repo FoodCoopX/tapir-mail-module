@@ -174,6 +174,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
                   )}
                 </ul>
               }
+              width={"80vw"}
             />
           </span>
           <TapirButton

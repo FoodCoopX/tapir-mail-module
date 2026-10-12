@@ -3,7 +3,7 @@ export const EMAIL_DISPATCH_STATUS_PROPS = {
     color: "success",
     text: "Geöffnet",
     extraText:
-      "Es kann sicher davon ausgegangen werden, dass die Mail angekommen ist.",
+      "Es kann sicher davon ausgegangen werden, dass die Mail angekommen ist. Beachte: Wenn Mitglieder ein Mailprogramm nutzen, das Bilder blockiert (z.B. Thunderbird tut das standardmäßig oder auch Posteo im Browser), dann kann der Status nicht korrekt erfasst werden und Mails werden ggf. nicht als geöffnet angezeigt, obwohl sie gelesen wurden.",
   },
   error: {
     color: "danger",
