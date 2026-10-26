@@ -20,6 +20,7 @@ import TapirTooltip from "./TapirTooltip";
 import EmailConfigurationDispatchStats from "./dashboard/EmailConfigurationDispatchStats";
 import TapirDropdown, { Choice } from "./tapirDropdown";
 import TapirHelpButton from "./TapirHelpButton";
+import DispatchErrorMessage from "./DispatchErrorMessage";
 
 interface DispatchDetailsModalProps {
   configDispatch: EmailConfigurationDispatch;
@@ -84,12 +85,31 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
           </span>
         );
       case "error":
-        return <span>{dispatch.errorMessage}</span>;
+        return <DispatchErrorMessage errorMessage={dispatch.errorMessage} />;
       case "opened":
         return <span>Geöffnet am {formatDate(dispatch.openedTime)}</span>;
       case "unknown":
         return <span></span>;
+      case "sending":
+        return renderPendingAutomaticRetry(dispatch);
     }
+  }
+
+  function renderPendingAutomaticRetry(dispatch: EmailDispatch) {
+    if (!dispatch.isAutomaticRetry || !dispatch.notBefore) {
+      return <span></span>;
+    }
+    const reason =
+      "Der vorherige Versuch ist an einem vorübergehenden Fehler gescheitert (z.B. Mailserver nicht erreichbar). ";
+    if (dispatch.notBefore > new Date()) {
+      return (
+        <span>
+          {reason}Automatischer erneuter Versuch ab{" "}
+          {formatDate(dispatch.notBefore)}.
+        </span>
+      );
+    }
+    return <span>{reason}Automatischer erneuter Versuch in Kürze.</span>;
   }
 
   function retryConfigDispatch() {

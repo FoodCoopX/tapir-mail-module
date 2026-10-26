@@ -7,6 +7,7 @@ import { useApi } from "../hooks/useApi";
 import { useAlert } from "../contexts/alerts";
 import TapirPagination from "./TapirPagination";
 import Loading from "./loading";
+import DispatchErrorMessage from "./DispatchErrorMessage";
 
 interface DispatchErrorDetailsModalProps {
   open: boolean;
@@ -69,7 +70,7 @@ const DispatchErrorDetailsModal: React.FC<DispatchErrorDetailsModalProps> = ({
           </span>
         );
       case "error":
-        return <span>{dispatch.errorMessage}</span>;
+        return <DispatchErrorMessage errorMessage={dispatch.errorMessage} />;
       case "opened":
         return <span>Geöffnet am {formatDate(dispatch.openedTime)}</span>;
       case "unknown":

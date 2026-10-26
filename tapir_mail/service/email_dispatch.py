@@ -1,4 +1,6 @@
+import datetime
 import logging
+import smtplib
 
 from django.conf import settings
 from django.core.cache import cache as redis_cache
@@ -222,7 +224,8 @@ class SendEmailBatch:
                 batch_size = getattr(settings, "EMAIL_DISPATCH_BATCH_SIZE", 50)
 
             batch = (
-                EmailDispatch.objects.filter(sent_time=None)
+                EmailDispatch.objects.filter(sent_time=None, error_message=None)
+                .filter(Q(not_before=None) | Q(not_before__lte=timezone.now()))
                 .exclude(
                     Q(
                         email_configuration_version__isnull=True,
@@ -272,10 +275,13 @@ class SendEmailBatch:
                 email_dispatch
                 for email_message, email_dispatch in emails
                 if email_message not in sent_emails
+                and email_dispatch.error_message is None
             ]
             for dispatch in dispatches_to_update:
                 dispatch.error_message = str(e)
             EmailDispatch.objects.bulk_update(dispatches_to_update, ["error_message"])
+            for dispatch in dispatches_to_update:
+                RetryEmailDispatch.schedule_automatic_retry(dispatch, e)
 
         LOG.info(f"Sent {len(sent_emails)} emails in this batch")
         cls._post_send(sent_emails)
@@ -307,6 +313,7 @@ class SendEmailBatch:
                 email_dispatch.smtp_response_message = smtp_response.message
             email_dispatch.error_message = str(e)
             email_dispatch.save()
+            RetryEmailDispatch.schedule_automatic_retry(email_dispatch, e)
             return False
 
     @classmethod
@@ -386,6 +393,12 @@ class SendEmailBatch:
 
 
 class RetryEmailDispatch:
+    AUTOMATIC_RETRY_DELAYS = [
+        datetime.timedelta(minutes=5),
+        datetime.timedelta(minutes=30),
+        datetime.timedelta(hours=2),
+    ]
+
     @classmethod
     def _copy_email_dispatch(cls, email_dispatch: EmailDispatch):
         return EmailDispatch(
@@ -394,6 +407,40 @@ class RetryEmailDispatch:
             recipient=email_dispatch.recipient,
             recipient_tokens=email_dispatch.recipient_tokens,
             additional_tokens=email_dispatch.additional_tokens,
+        )
+
+    @staticmethod
+    def is_temporary_failure(exception: Exception) -> bool:
+        if isinstance(exception, smtplib.SMTPRecipientsRefused):
+            return all(
+                400 <= code < 500 for code, _ in exception.recipients.values()
+            )
+        if isinstance(
+            exception, (smtplib.SMTPConnectError, smtplib.SMTPServerDisconnected)
+        ):
+            return True
+        if isinstance(exception, smtplib.SMTPResponseException):
+            return 400 <= exception.smtp_code < 500
+        if isinstance(exception, smtplib.SMTPException):
+            return False
+        return isinstance(exception, OSError)
+
+    @classmethod
+    def schedule_automatic_retry(cls, email_dispatch: EmailDispatch, exception):
+        if not cls.is_temporary_failure(exception):
+            return
+
+        retry_count = email_dispatch.get_consecutive_automatic_retry_count()
+        if retry_count >= len(cls.AUTOMATIC_RETRY_DELAYS):
+            LOG.warning(
+                f"EmailDispatch#{email_dispatch.id} reached the maximum number of automatic retries"
+            )
+            return
+
+        cls.retry(
+            email_dispatch,
+            not_before=timezone.now() + cls.AUTOMATIC_RETRY_DELAYS[retry_count],
+            is_automatic_retry=True,
         )
 
     @classmethod
@@ -410,7 +457,12 @@ class RetryEmailDispatch:
 
     @classmethod
     @transaction.atomic
-    def retry(cls, email_dispatch: EmailDispatch):
+    def retry(
+        cls,
+        email_dispatch: EmailDispatch,
+        not_before=None,
+        is_automatic_retry=False,
+    ):
         most_recent_dispatch = email_dispatch
         while most_recent_dispatch.next_retry is not None:
             most_recent_dispatch = most_recent_dispatch.next_retry
@@ -428,6 +480,8 @@ class RetryEmailDispatch:
         LOG.info(f"Retrying EmailDispatch#{most_recent_dispatch.id}")
 
         retry_dispatch = cls._copy_email_dispatch(most_recent_dispatch)
+        retry_dispatch.not_before = not_before
+        retry_dispatch.is_automatic_retry = is_automatic_retry
         retry_dispatch.save()
 
         most_recent_dispatch.next_retry = retry_dispatch

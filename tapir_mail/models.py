@@ -227,12 +227,22 @@ class EmailDispatch(BaseModel):
         null=True,
         blank=True,
     )
+    not_before = models.DateTimeField(null=True, blank=True)
+    is_automatic_retry = models.BooleanField(default=False)
 
     def get_email_configuration_version(self):
         return (
             self.email_configuration_version
             or self.email_configuration_dispatch.email_configuration_version
         )
+
+    def get_consecutive_automatic_retry_count(self):
+        count = 0
+        current_dispatch = self
+        while current_dispatch is not None and current_dispatch.is_automatic_retry:
+            count += 1
+            current_dispatch = getattr(current_dispatch, "previous_retry", None)
+        return count
 
     def get_previous_retries(self):
         retries = []
