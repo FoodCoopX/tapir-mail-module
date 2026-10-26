@@ -5,6 +5,7 @@ from django.core.cache import cache as redis_cache
 from django.core.mail import get_connection, EmailMultiAlternatives
 from django.core.mail.backends.base import BaseEmailBackend
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from tapir_mail.config import BccProvider, ExternalConfig
@@ -223,13 +224,18 @@ class SendEmailBatch:
             batch = (
                 EmailDispatch.objects.filter(sent_time=None)
                 .exclude(
-                    email_configuration_dispatch__email_configuration_version__status=ReleaseStatus.ERROR
+                    Q(
+                        email_configuration_version__isnull=True,
+                        email_configuration_dispatch__email_configuration_version__status=ReleaseStatus.ERROR,
+                    )
+                    | Q(email_configuration_version__status=ReleaseStatus.ERROR)
                 )
                 .order_by("created_at")
                 .prefetch_related("email_configuration_dispatch")
                 .prefetch_related(
                     "email_configuration_dispatch__email_configuration_version"
-                )[:batch_size]
+                )
+                .prefetch_related("email_configuration_version")[:batch_size]
             )
             cls._send_batch(batch)
         finally:
@@ -307,18 +313,18 @@ class SendEmailBatch:
     def _prepare_emails(cls, email_dispatches):
         emails = []
         for email_dispatch in email_dispatches:
-            config_dispatch = email_dispatch.email_configuration_dispatch
+            version = email_dispatch.get_email_configuration_version()
 
             try:
                 mjml = replace_tokens(
-                    config_dispatch.email_configuration_version.content,
+                    version.content,
                     email_dispatch.recipient_tokens,
                     email_dispatch.additional_tokens,
                 )
 
                 email = prepare_email(
                     mjml=mjml,
-                    subject=config_dispatch.email_configuration_version.subject,
+                    subject=version.subject,
                     recipients=[email_dispatch.recipient],
                     tracking_url=get_tracking_url(email_dispatch),
                     tracking_id=email_dispatch.id,
@@ -338,7 +344,7 @@ class SendEmailBatch:
     @classmethod
     def _get_bcc_provider(cls, email_dispatch: EmailDispatch) -> BccProvider | None:
         for trigger_data in (
-            email_dispatch.email_configuration_dispatch.email_configuration_version.triggers
+            email_dispatch.get_email_configuration_version().triggers
             or []
         ):
             trigger_class = trigger_registry.get(
@@ -358,7 +364,7 @@ class SendEmailBatch:
             try:
                 with transaction.atomic():
                     for trigger_data in (
-                        email_dispatch.email_configuration_dispatch.email_configuration_version.triggers
+                        email_dispatch.get_email_configuration_version().triggers
                         or []
                     ):
                         trigger_class = trigger_registry.get(
@@ -384,9 +390,22 @@ class RetryEmailDispatch:
     def _copy_email_dispatch(cls, email_dispatch: EmailDispatch):
         return EmailDispatch(
             email_configuration_dispatch=email_dispatch.email_configuration_dispatch,
+            email_configuration_version=cls._get_released_version(email_dispatch),
             recipient=email_dispatch.recipient,
             recipient_tokens=email_dispatch.recipient_tokens,
             additional_tokens=email_dispatch.additional_tokens,
+        )
+
+    @classmethod
+    def _get_released_version(cls, email_dispatch: EmailDispatch):
+        current_version = email_dispatch.get_email_configuration_version()
+        return (
+            current_version.email_configuration.versions.filter(
+                status=ReleaseStatus.RELEASED
+            )
+            .order_by("-updated_at")
+            .first()
+            or current_version
         )
 
     @classmethod

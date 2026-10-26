@@ -160,6 +160,30 @@ class SendEmailBatchTest(TapirIntegrationTest):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [dispatch.recipient])
 
+    def test_retrySingleEmailDispatch_newerVersionReleased_sendsNewerVersion(self):
+        dispatch = TestUtils.create_email_dispatches(
+            1,
+            config_dispatch=self.config_dispatch,
+            error_message="Test error",
+            sent_time=self.NOW,
+        )[0]
+        newer_version = EmailConfigurationVersionFactory.create(
+            email_configuration=self.email_config_version.email_configuration,
+            status=ReleaseStatus.RELEASED,
+            subject="Newer subject",
+        )
+        self.email_config_version.archive()
+
+        RetryEmailDispatch.retry(dispatch)
+        dispatch.refresh_from_db()
+
+        self.assertEqual(
+            newer_version, dispatch.next_retry.get_email_configuration_version()
+        )
+        SendEmailBatch.send_email_dispatches()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, "Newer subject")
+
     def test_retrySingleEmailDispatch_originalNotInErrorState_raisesError(self):
         dispatch = TestUtils.create_email_dispatches(
             1,

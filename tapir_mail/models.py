@@ -220,6 +220,19 @@ class EmailDispatch(BaseModel):
         blank=True,
         related_name="previous_retry",
     )
+    # Overrides the version of email_configuration_dispatch, set on retries
+    email_configuration_version = models.ForeignKey(
+        EmailConfigurationVersion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    def get_email_configuration_version(self):
+        return (
+            self.email_configuration_version
+            or self.email_configuration_dispatch.email_configuration_version
+        )
 
     def get_previous_retries(self):
         retries = []
