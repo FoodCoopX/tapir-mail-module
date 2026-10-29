@@ -35,7 +35,7 @@ from tapir_mail.models import (
     ExternalRecipient,
     ExternalRecipientConfirmation,
 )
-from tapir_mail.registries import get_mail_segments
+from tapir_mail.registries import get_mail_segment_definitions
 from tapir_mail.serializers import (
     BundledEmailConfigurationSerializer,
     EmailConfigurationDispatchSerializer,
@@ -54,6 +54,7 @@ from tapir_mail.serializers import (
     CreateMissingTriggerMailSerializer,
     MailCategorySerializer,
     AvailableSegmentsResponseSerializer,
+    SegmentOptionSerializer,
 )
 from tapir_mail.service.email import prepare_email
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
@@ -702,31 +703,43 @@ class SegmentAndFilterViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=["GET"])
     def available_segments(self, request):
-        dynamic_segments = {
-            segment_name: f"Dynamisches Segment: {segment_name}"
-            for segment_name in get_mail_segments().keys()
-        }
+        segments = [
+            {
+                "id": segment_name,
+                "type": SegmentOptionSerializer.TYPE_DYNAMIC,
+                "label": segment.label,
+                "group": segment.group,
+                "description": segment.description,
+            }
+            for segment_name, segment in get_mail_segment_definitions().items()
+        ]
 
-        static_segments = {
-            segment.id: f"Statisches Segment: {segment.name}"
+        segments.extend(
+            {
+                "id": segment.id,
+                "type": SegmentOptionSerializer.TYPE_STATIC,
+                "label": segment.name,
+                "group": "Statische Segmente",
+                "description": "",
+            }
             for segment in StaticSegment.objects.filter(
                 recipients__isnull=False, mailcategory__isnull=True
-            )
-        }
+            ).distinct()
+        )
 
-        mail_categories = {
-            category.id: f"Kategorie: {category.name}"
+        segments.extend(
+            {
+                "id": category.id,
+                "type": SegmentOptionSerializer.TYPE_CATEGORY,
+                "label": category.name,
+                "group": "Kategorien",
+                "description": "",
+            }
             for category in MailCategory.objects.all()
-        }
+        )
 
         return Response(
-            AvailableSegmentsResponseSerializer(
-                {
-                    "dynamic_segments": dynamic_segments,
-                    "static_segments": static_segments,
-                    "mail_categories": mail_categories,
-                }
-            ).data
+            AvailableSegmentsResponseSerializer({"segments": segments}).data
         )
 
     @extend_schema(

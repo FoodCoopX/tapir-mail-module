@@ -1,7 +1,7 @@
 import { Badge } from "react-bootstrap";
 import React, { Fragment } from "react";
 import "./chainedBadges.css";
-import { SegmentData } from "../api_client";
+import { SegmentData, SegmentOption, TypeEnum } from "../api_client";
 
 interface SegmentsDisplayProps {
   segmentData: SegmentData;
@@ -12,17 +12,13 @@ interface SegmentsDisplayProps {
     onStaticSegmentToRemoveClicked: (segment: string) => void;
     onMailCategoryIdClicked: (segment: string) => void;
   };
-  availableDynamicSegments: { [id: string]: string };
-  availableStaticSegments: { [id: string]: string };
-  availableMailCategories: { [id: string]: string };
+  availableSegments: SegmentOption[];
 }
 
 const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
   segmentData,
   interactions,
-  availableDynamicSegments,
-  availableStaticSegments,
-  availableMailCategories,
+  availableSegments,
 }) => {
   if (
     segmentData.dynamicSegmentNamesAdditive.length +
@@ -31,6 +27,13 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
     0
   ) {
     return null;
+  }
+
+  function buildLabel(type: TypeEnum, id: string) {
+    const option = availableSegments.find(
+      (segment) => segment.type === type && segment.id === id,
+    );
+    return <span title={option?.description}>{option?.label ?? id}</span>;
   }
 
   const segmentStyle: React.CSSProperties = interactions
@@ -51,7 +54,7 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
                   : () => {}
               }
             >
-              {availableDynamicSegments[segmentId]}
+              {buildLabel(TypeEnum.Dynamic, segmentId)}
             </Badge>
           </Fragment>
         ))}
@@ -66,7 +69,7 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
                   : () => {}
               }
             >
-              {availableDynamicSegments[segmentId]}
+              {buildLabel(TypeEnum.Dynamic, segmentId)}
             </Badge>
           </Fragment>
         ))}
@@ -83,7 +86,7 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
                   : () => {}
               }
             >
-              {availableStaticSegments[segmentId]}
+              {buildLabel(TypeEnum.Static, segmentId)}
             </Badge>
           </Fragment>
         ))}
@@ -99,7 +102,7 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
                   : () => {}
               }
             >
-              {availableStaticSegments[segmentId]}
+              {buildLabel(TypeEnum.Static, segmentId)}
             </Badge>
           </Fragment>
         ))}
@@ -115,7 +118,7 @@ const SegmentsDisplay: React.FC<SegmentsDisplayProps> = ({
                   : () => {}
               }
             >
-              {availableMailCategories[mailCategoryId]}
+              {buildLabel(TypeEnum.Category, mailCategoryId)}
             </Badge>
           </Fragment>
         ))}

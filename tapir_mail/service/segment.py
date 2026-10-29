@@ -4,10 +4,7 @@ import traceback
 from django.db.models import QuerySet
 
 from tapir_mail.models import StaticSegment, MailCategory
-from tapir_mail.registries import (
-    get_mail_segments,
-    MailSegmentRegistry,
-)
+from tapir_mail.registries import get_mail_segments, SegmentQuerysetRegistry
 from tapir_mail.service.mail_category_recipients_resolver import (
     MailCategoryRecipientResolver,
 )
@@ -168,7 +165,9 @@ def add_mail_categories(recipient_list: list, mail_category_ids: list[str]):
 
 
 def add_dynamic_segments(
-    queryset: QuerySet, segment_names: list[str], segment_registry: MailSegmentRegistry
+    queryset: QuerySet,
+    segment_names: list[str],
+    segment_registry: SegmentQuerysetRegistry,
 ):
     for segment_name in segment_names:
         LOG.info(f"Adding segment {segment_name}")
@@ -177,7 +176,9 @@ def add_dynamic_segments(
 
 
 def remove_dynamic_segments(
-    queryset: QuerySet, segment_names: list[str], segment_registry: MailSegmentRegistry
+    queryset: QuerySet,
+    segment_names: list[str],
+    segment_registry: SegmentQuerysetRegistry,
 ):
     for segment_name in segment_names:
         LOG.info(f"Subtracting segment {segment_name}")

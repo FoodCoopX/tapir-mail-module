@@ -6,7 +6,7 @@ from tapir_mail.models import (
 )
 from tapir_mail.registries import mail_segment_providers
 from tapir_mail.service.segment import resolve_segments
-from tapir_mail.tests.factories import StaticSegmentRecipientFactory
+from tapir_mail.tests.factories import StaticSegmentRecipientFactory, MailSegmentFactory
 from tapir_mail.tests.test_utils import TapirIntegrationTest
 from tapir_mail.triggers.transactional_trigger import TransactionalTriggerData
 from tapir_mail_server.dummy_accounts.models import DummyTapirUser
@@ -55,9 +55,15 @@ class TestSegments(TapirIntegrationTest):
 
         mail_segment_providers.add(
             lambda: {
-                self.SEGMENT_ALL_USERS: DummyTapirUser.objects.all,
-                self.SEGMENT_COOP_MEMBERS: coop_members,
-                self.SEGMENT_NOT_COOP_MEMBERS: not_coop_members,
+                self.SEGMENT_ALL_USERS: MailSegmentFactory.build(
+                    get_queryset=DummyTapirUser.objects.all
+                ),
+                self.SEGMENT_COOP_MEMBERS: MailSegmentFactory.build(
+                    get_queryset=coop_members
+                ),
+                self.SEGMENT_NOT_COOP_MEMBERS: MailSegmentFactory.build(
+                    get_queryset=not_coop_members
+                ),
             }
         )
 

@@ -1,10 +1,15 @@
-import { MinusCircleIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import React, { FC, useEffect, useState } from "react";
-import { Accordion, Badge, Form } from "react-bootstrap";
-import { SegmentApi, SegmentData } from "../../api_client";
+import { Accordion, Badge, Button, Form } from "react-bootstrap";
+import {
+  SegmentApi,
+  SegmentData,
+  SegmentOption,
+  TypeEnum,
+} from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
 import SegmentsDisplay from "../segmentsDisplay";
+import SegmentPickerModal from "./SegmentPickerModal";
 
 type SegmentInputProps = {
   initialData?: SegmentData;
@@ -15,17 +20,10 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
   const segmentApi = useApi(SegmentApi);
   const showAlert = useAlert();
 
-  const [availableDynamicSegments, setAvailableDynamicSegments] = useState<{
-    [id: string]: string;
-  }>({});
-  const [availableStaticSegments, setAvailableStaticSegments] = useState<{
-    [id: string]: string;
-  }>({});
-  const [availableMailCategories, setAvailableMailCategories] = useState<{
-    [id: string]: string;
-  }>({});
-
-  const [selectedSegment, setSelectedSegment] = useState<string>("");
+  const [availableSegments, setAvailableSegments] = useState<SegmentOption[]>(
+    [],
+  );
+  const [segmentPickerOpen, setSegmentPickerOpen] = useState(false);
 
   const [segmentsToAdd, setSegmentsToAdd] = useState<string[]>([]);
   const [staticSegmentsToAdd, setStaticSegmentsToAdd] = useState<string[]>([]);
@@ -60,9 +58,7 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     segmentApi
       .segmentAvailableSegmentsRetrieve()
       .then((response) => {
-        setAvailableDynamicSegments(response.dynamicSegments);
-        setAvailableStaticSegments(response.staticSegments);
-        setAvailableMailCategories(response.mailCategories);
+        setAvailableSegments(response.segments);
 
         if (initialData) {
           setSegmentsToAdd(initialData.dynamicSegmentNamesAdditive);
@@ -116,84 +112,38 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     selectedMailCategoryIds,
   ]);
 
-  const handleAddSegment = () => {
-    if (selectedSegment === "") return;
-    if (Object.keys(availableStaticSegments).includes(selectedSegment)) {
-      setStaticSegmentsToAdd((prev) => [...prev, selectedSegment]);
-    } else if (Object.keys(availableMailCategories).includes(selectedSegment)) {
-      setSelectedMailCategoryIds((previous) => [...previous, selectedSegment]);
-    } else {
-      setSegmentsToAdd((prev) => [...prev, selectedSegment]);
+  const handleAddSegment = (option: SegmentOption) => {
+    switch (option.type) {
+      case TypeEnum.Static:
+        setStaticSegmentsToAdd((previous) => [...previous, option.id]);
+        break;
+      case TypeEnum.Category:
+        setSelectedMailCategoryIds((previous) => [...previous, option.id]);
+        break;
+      default:
+        setSegmentsToAdd((previous) => [...previous, option.id]);
     }
-    setSelectedSegment("");
   };
 
-  const handleRemoveSegment = () => {
-    if (selectedSegment === "") return;
-
-    if (Object.keys(availableStaticSegments).includes(selectedSegment)) {
-      setStaticSegmentsToRemove((prev) => [...prev, selectedSegment]);
+  const handleSubtractSegment = (option: SegmentOption) => {
+    if (option.type === TypeEnum.Static) {
+      setStaticSegmentsToRemove((previous) => [...previous, option.id]);
     } else {
-      setSegmentsToRemove((prev) => [...prev, selectedSegment]);
+      setSegmentsToRemove((previous) => [...previous, option.id]);
     }
-
-    setSelectedSegment("");
   };
 
-  function getDynamicSegmentOptions() {
-    const segmentOptions = Object.entries(availableDynamicSegments).filter(
-      ([segmentId, _]) =>
-        !segmentsToAdd.includes(segmentId) &&
-        !segmentsToRemove.includes(segmentId),
-    );
+  const canSubtractSegment = (option: SegmentOption) =>
+    option.type !== TypeEnum.Category && segmentsToAdd.length > 0;
 
-    return segmentOptions.map(([segmentId, segmentName]) => (
-      <option
-        key={segmentId}
-        value={segmentId}
-      >
-        {segmentName}
-      </option>
-    ));
-  }
-
-  function getStaticSegmentOptions() {
-    const staticSegmentOptions = Object.entries(availableStaticSegments).filter(
-      ([segmentId, _]) =>
-        !staticSegmentsToAdd.includes(segmentId) &&
-        !staticSegmentsToRemove.includes(segmentId),
-    );
-
-    return staticSegmentOptions.map(([segmentId, segmentName]) => (
-      <option
-        key={segmentId}
-        value={segmentId}
-      >
-        {segmentName}
-      </option>
-    ));
-  }
-
-  function getMailCategoryOptions() {
-    const options = Object.entries(availableMailCategories).filter(
-      ([categoryId, _]) => !selectedMailCategoryIds.includes(categoryId),
-    );
-
-    return options.map(([categoryId, categoryName]) => (
-      <option
-        key={categoryId}
-        value={categoryId}
-      >
-        {categoryName}
-      </option>
-    ));
-  }
-
-  const plusSegmentButtonDisabled = !selectedSegment || selectedSegment === "";
-  const minusSegmentButtonDisabled =
-    plusSegmentButtonDisabled ||
-    segmentsToAdd.length === 0 ||
-    Object.keys(availableMailCategories).includes(selectedSegment);
+  const alreadyUsedIds: { [type: string]: string[] } = {
+    [TypeEnum.Dynamic]: [...segmentsToAdd, ...segmentsToRemove],
+    [TypeEnum.Static]: [...staticSegmentsToAdd, ...staticSegmentsToRemove],
+    [TypeEnum.Category]: selectedMailCategoryIds,
+  };
+  const pickableSegments = availableSegments.filter(
+    (option) => !alreadyUsedIds[option.type].includes(option.id),
+  );
 
   function onSegmentToAddClicked(segment: string) {
     const newSegmentsToAdd = segmentsToAdd.filter((s) => s !== segment);
@@ -221,9 +171,17 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
     );
   }
 
+  const hasSegments =
+    segmentsToAdd.length > 0 ||
+    staticSegmentsToAdd.length > 0 ||
+    selectedMailCategoryIds.length > 0;
+
   return (
     <div>
-      <Form.Label>Segmente</Form.Label>
+      <Form.Label className="d-block">Segmente</Form.Label>
+      {!hasSegments && (
+        <div className="text-muted mb-2">Kein Segment ausgewählt</div>
+      )}
       <SegmentsDisplay
         segmentData={{
           dynamicSegmentNamesAdditive: segmentsToAdd,
@@ -239,47 +197,24 @@ const SegmentInput: FC<SegmentInputProps> = ({ initialData, onChange }) => {
           onStaticSegmentToRemoveClicked: onStaticSegmentToRemoveClicked,
           onMailCategoryIdClicked: onMailCategoryIdClicked,
         }}
-        availableDynamicSegments={availableDynamicSegments}
-        availableStaticSegments={availableStaticSegments}
-        availableMailCategories={availableMailCategories}
+        availableSegments={availableSegments}
       />
-      <div style={{ display: "flex" }}>
-        <Form.Select
-          onChange={(e) => setSelectedSegment(e.currentTarget.value)}
-          value={selectedSegment || ""}
-        >
-          <option
-            value=""
-            disabled
-          >
-            Segment auswählen
-          </option>
-          {getDynamicSegmentOptions()}
-          {getStaticSegmentOptions()}
-          {getMailCategoryOptions()}
-        </Form.Select>
-        <PlusCircleIcon
-          style={{
-            marginLeft: "0.5em",
-            cursor: plusSegmentButtonDisabled ? "not-allowed" : "pointer",
-          }}
-          color={plusSegmentButtonDisabled ? "lightgrey" : "green"}
-          onClick={plusSegmentButtonDisabled ? undefined : handleAddSegment}
-          width="3em"
-        />
-        <MinusCircleIcon
-          style={{
-            cursor: minusSegmentButtonDisabled ? "not-allowed" : "pointer",
-          }}
-          color={minusSegmentButtonDisabled ? "lightgrey" : "red"}
-          onClick={minusSegmentButtonDisabled ? undefined : handleRemoveSegment}
-          width="3em"
-        />
-      </div>
+      <Button
+        variant="outline-primary"
+        onClick={() => setSegmentPickerOpen(true)}
+      >
+        Segment hinzufügen
+      </Button>
+      <SegmentPickerModal
+        show={segmentPickerOpen}
+        onHide={() => setSegmentPickerOpen(false)}
+        options={pickableSegments}
+        onAdd={handleAddSegment}
+        onSubtract={handleSubtractSegment}
+        canSubtract={canSubtractSegment}
+      />
 
-      {(segmentsToAdd.length > 0 ||
-        staticSegmentsToAdd.length > 0 ||
-        selectedMailCategoryIds.length > 0) && (
+      {hasSegments && (
         <Accordion style={{ marginTop: "1em" }}>
           <Accordion.Item eventKey="0">
             <Accordion.Header>

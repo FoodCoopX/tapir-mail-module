@@ -2,23 +2,29 @@ import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "react-bootstrap";
 import { useApi } from "../../hooks/useApi";
 import { useAlert } from "../../contexts/alerts";
-import { MailCategory, MailCategoryApi, ModeEnum } from "../../api_client";
+import {
+  MailCategory,
+  MailCategoryApi,
+  ModeEnum,
+  SegmentOption,
+} from "../../api_client";
 import TapirButton from "../TapirButton";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import MailCategoryForm from "./MailCategoryForm";
+import SegmentPickerModal from "../segments/SegmentPickerModal";
 
 interface MailCategoryEditModalProps {
   open: boolean;
   onClose: () => void;
   category: MailCategory;
-  segmentNames: string[];
+  segmentOptions: SegmentOption[];
 }
 
 const MailCategoryEditModal: React.FC<MailCategoryEditModalProps> = ({
   open,
   onClose,
   category,
-  segmentNames,
+  segmentOptions,
 }) => {
   const [loading, setLoading] = useState(false);
   const mailCategoryApi = useApi(MailCategoryApi);
@@ -29,6 +35,7 @@ const MailCategoryEditModal: React.FC<MailCategoryEditModalProps> = ({
   );
   const [externalsEnabled, setExternalsEnabled] = useState(false);
   const [segmentName, setSegmentName] = useState("");
+  const [segmentPickerOpen, setSegmentPickerOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -68,39 +75,49 @@ const MailCategoryEditModal: React.FC<MailCategoryEditModalProps> = ({
   }
 
   return (
-    <Modal
-      show={open}
-      onHide={onClose}
-      size={"lg"}
-      centered={true}
-    >
-      <Modal.Header closeButton>
-        <Modal.Title>Mail Kategorie erzeugen</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <MailCategoryForm
-          open={open}
-          categoryName={categoryName}
-          setCategoryName={setCategoryName}
-          categoryMode={categoryMode}
-          setCategoryMode={setCategoryMode}
-          segmentName={segmentName}
-          setSegmentName={setSegmentName}
-          externalsEnabled={externalsEnabled}
-          setExternalsEnabled={setExternalsEnabled}
-          segmentNames={segmentNames}
-        />
-      </Modal.Body>
-      <Modal.Footer className="d-flex justify-content-end align-items-center">
-        <TapirButton
-          variant={"primary"}
-          text={loading ? "Loading..." : "Speichern"}
-          icon={PlusCircleIcon}
-          disabled={loading}
-          onClick={() => onSaveClicked()}
-        />
-      </Modal.Footer>
-    </Modal>
+    <>
+      <Modal
+        show={open && !segmentPickerOpen}
+        onHide={onClose}
+        size={"lg"}
+        centered={true}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Mail Kategorie erzeugen</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <MailCategoryForm
+            open={open}
+            categoryName={categoryName}
+            setCategoryName={setCategoryName}
+            categoryMode={categoryMode}
+            setCategoryMode={setCategoryMode}
+            segmentName={segmentName}
+            setSegmentName={setSegmentName}
+            externalsEnabled={externalsEnabled}
+            setExternalsEnabled={setExternalsEnabled}
+            segmentOptions={segmentOptions}
+            onOpenSegmentPicker={() => setSegmentPickerOpen(true)}
+          />
+        </Modal.Body>
+        <Modal.Footer className="d-flex justify-content-end align-items-center">
+          <TapirButton
+            variant={"primary"}
+            text={loading ? "Loading..." : "Speichern"}
+            icon={PlusCircleIcon}
+            disabled={loading}
+            onClick={() => onSaveClicked()}
+          />
+        </Modal.Footer>
+      </Modal>
+      <SegmentPickerModal
+        show={open && segmentPickerOpen}
+        onHide={() => setSegmentPickerOpen(false)}
+        options={segmentOptions}
+        onAdd={(option) => setSegmentName(option.id)}
+        title="Segment auswählen"
+      />
+    </>
   );
 };
 

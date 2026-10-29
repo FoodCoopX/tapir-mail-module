@@ -5,6 +5,7 @@ from tapir_mail.service.mail_category_recipients_resolver import (
 )
 
 from tapir_mail.tests.factories import (
+    MailSegmentFactory,
     MailCategoryFactory,
     StaticSegmentRecipientFactory,
 )
@@ -43,7 +44,13 @@ class TestMailCategoryRecipientResolver(TapirIntegrationTest):
         external_recipient = StaticSegmentRecipientFactory.create(
             segment=mail_category.static_segment
         )
-        mail_segment_providers.add(lambda: {"test_segment": DummyTapirUser.objects.all})
+        mail_segment_providers.add(
+            lambda: {
+                "test_segment": MailSegmentFactory.build(
+                    get_queryset=DummyTapirUser.objects.all
+                )
+            }
+        )
         internal_recipient = DummyTapirUserFactory.create()
 
         result = MailCategoryRecipientResolver.resolve_recipients(
@@ -58,7 +65,13 @@ class TestMailCategoryRecipientResolver(TapirIntegrationTest):
         mail_category = MailCategoryFactory.create(
             dynamic_segment_name="test_segment", mode=MailCategoryMode.ALWAYS_ON
         )
-        mail_segment_providers.add(lambda: {"test_segment": DummyTapirUser.objects.all})
+        mail_segment_providers.add(
+            lambda: {
+                "test_segment": MailSegmentFactory.build(
+                    get_queryset=DummyTapirUser.objects.all
+                )
+            }
+        )
         internal_recipient = DummyTapirUserFactory.create()
 
         result = MailCategoryRecipientResolver.resolve_recipients(
@@ -89,7 +102,13 @@ class TestMailCategoryRecipientResolver(TapirIntegrationTest):
             dynamic_segment_name="test_segment",
             mode=MailCategoryMode.OPTIONAL_DEFAULT_ON,
         )
-        mail_segment_providers.add(lambda: {"test_segment": DummyTapirUser.objects.all})
+        mail_segment_providers.add(
+            lambda: {
+                "test_segment": MailSegmentFactory.build(
+                    get_queryset=DummyTapirUser.objects.all
+                )
+            }
+        )
         internal_recipient = DummyTapirUserFactory.create()
 
         result = MailCategoryRecipientResolver.resolve_recipients(
@@ -120,7 +139,13 @@ class TestMailCategoryRecipientResolver(TapirIntegrationTest):
             dynamic_segment_name="test_segment",
             mode=MailCategoryMode.OPTIONAL_DEFAULT_OFF,
         )
-        mail_segment_providers.add(lambda: {"test_segment": DummyTapirUser.objects.all})
+        mail_segment_providers.add(
+            lambda: {
+                "test_segment": MailSegmentFactory.build(
+                    get_queryset=DummyTapirUser.objects.all
+                )
+            }
+        )
         internal_recipient = DummyTapirUserFactory.create()
 
         result = MailCategoryRecipientResolver.resolve_recipients(

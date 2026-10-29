@@ -3,7 +3,13 @@ import { Modal, Table } from "react-bootstrap";
 import { useApi } from "../../hooks/useApi";
 import { useAlert } from "../../contexts/alerts";
 import Loading from "./../loading";
-import { MailCategory, MailCategoryApi, SegmentApi } from "../../api_client";
+import {
+  MailCategory,
+  MailCategoryApi,
+  SegmentApi,
+  SegmentOption,
+  TypeEnum,
+} from "../../api_client";
 import TapirButton from "../TapirButton";
 import {
   DocumentDuplicateIcon,
@@ -32,7 +38,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
   const [categorySelectedForEdition, setCategorySelectedForEdition] =
     useState<MailCategory>();
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [segmentNames, setSegmentNames] = useState<string[]>([]);
+  const [segmentOptions, setSegmentOptions] = useState<SegmentOption[]>([]);
   const mailCategoryApi = useApi(MailCategoryApi);
   const segmentApi = useApi(SegmentApi);
   const showAlert = useAlert();
@@ -54,7 +60,11 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
     ])
       .then(([mailCategories, availableSegments]) => {
         setMailCategories(mailCategories);
-        setSegmentNames(Object.keys(availableSegments.dynamicSegments));
+        setSegmentOptions(
+          availableSegments.segments.filter(
+            (segment) => segment.type === TypeEnum.Dynamic,
+          ),
+        );
       })
       .catch((error) => {
         console.error(error);
@@ -200,7 +210,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
           setCreateModalOpen(false);
           loadData();
         }}
-        segmentNames={segmentNames}
+        segmentOptions={segmentOptions}
       />
       <ConfirmDeleteModal
         message={
@@ -221,7 +231,7 @@ const MailCategoryListModal: React.FC<MailCategoryListModalProps> = ({
             loadData();
           }}
           category={categorySelectedForEdition}
-          segmentNames={segmentNames}
+          segmentOptions={segmentOptions}
         />
       )}
     </>

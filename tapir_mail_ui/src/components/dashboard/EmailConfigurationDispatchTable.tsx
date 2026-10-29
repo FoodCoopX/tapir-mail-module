@@ -5,6 +5,7 @@ import {
   EmailConfigurationDispatchApi,
   EmailConfigurationVersion,
   SegmentApi,
+  SegmentOption,
 } from "../../api_client";
 import { useAlert } from "../../contexts/alerts";
 import { useApi } from "../../hooks/useApi";
@@ -44,23 +45,15 @@ const EmailConfigurationDispatchTable: React.FC<
     emailConfigurationDispatchForStats,
     setEmailConfigurationDispatchForStats,
   ] = useState<EmailConfigurationDispatch>();
-  const [availableDynamicSegments, setAvailableDynamicSegments] = useState<{
-    [id: string]: string;
-  }>({});
-  const [availableStaticSegments, setAvailableStaticSegments] = useState<{
-    [id: string]: string;
-  }>({});
-  const [availableMailCategories, setAvailableMailCategories] = useState<{
-    [id: string]: string;
-  }>({});
+  const [availableSegments, setAvailableSegments] = useState<SegmentOption[]>(
+    [],
+  );
 
   useEffect(() => {
     segmentApi
       .segmentAvailableSegmentsRetrieve()
       .then((response) => {
-        setAvailableDynamicSegments(response.dynamicSegments);
-        setAvailableStaticSegments(response.staticSegments);
-        setAvailableMailCategories(response.mailCategories);
+        setAvailableSegments(response.segments);
       })
       .catch((err) => {
         console.error(err);
@@ -192,9 +185,7 @@ const EmailConfigurationDispatchTable: React.FC<
                             segmentData={buildSegmentDataFromVersion(
                               emailConfigurationDispatch.emailConfigurationVersion,
                             )}
-                            availableDynamicSegments={availableDynamicSegments}
-                            availableStaticSegments={availableStaticSegments}
-                            availableMailCategories={availableMailCategories}
+                            availableSegments={availableSegments}
                           />
                         )}
                       </td>

@@ -398,7 +398,17 @@ class MailCategorySerializer(serializers.ModelSerializer):
         )
 
 
+class SegmentOptionSerializer(serializers.Serializer):
+    TYPE_DYNAMIC = "dynamic"
+    TYPE_STATIC = "static"
+    TYPE_CATEGORY = "category"
+
+    id = serializers.CharField()
+    type = serializers.ChoiceField(choices=[TYPE_DYNAMIC, TYPE_STATIC, TYPE_CATEGORY])
+    label = serializers.CharField()
+    group = serializers.CharField()
+    description = serializers.CharField(allow_blank=True)
+
+
 class AvailableSegmentsResponseSerializer(serializers.Serializer):
-    dynamic_segments = serializers.DictField(child=serializers.CharField())
-    static_segments = serializers.DictField(child=serializers.CharField())
-    mail_categories = serializers.DictField(child=serializers.CharField())
+    segments = SegmentOptionSerializer(many=True)

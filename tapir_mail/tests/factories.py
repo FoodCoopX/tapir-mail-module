@@ -12,6 +12,7 @@ from tapir_mail.models import (
     MailCategory,
     MailCategoryMode,
 )
+from tapir_mail.registries import MailSegment
 from tapir_mail.tests.test_utils import build_time_trigger_dict
 
 
@@ -113,3 +114,12 @@ class MailCategoryFactory(factory.django.DjangoModelFactory[MailCategory]):
     available_for_external_recipients = True
     static_segment = factory.SubFactory(StaticSegmentFactory)
     dynamic_segment_name = ""
+
+
+class MailSegmentFactory(factory.Factory[MailSegment]):
+    class Meta:
+        model = MailSegment
+
+    label = factory.Faker("word")
+    description = factory.Faker("sentence")
+    group = factory.Faker("word")

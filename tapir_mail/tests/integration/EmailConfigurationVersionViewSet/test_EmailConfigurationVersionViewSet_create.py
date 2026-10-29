@@ -9,6 +9,7 @@ from tapir_mail.models import (
 )
 from tapir_mail.registries import mail_segment_providers
 from tapir_mail.tests.factories import (
+    MailSegmentFactory,
     EmailConfigurationFactory,
     EmailConfigurationVersionFactory,
 )
@@ -24,7 +25,11 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
     def setUp(self) -> None:
         super().setUp()
         mail_segment_providers.add(
-            lambda: {"test_segment": DummyTapirUser.objects.all()}
+            lambda: {
+                "test_segment": MailSegmentFactory.build(
+                    get_queryset=DummyTapirUser.objects.all
+                )
+            }
         )
 
     def test_invalidData_returns400(self):

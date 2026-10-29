@@ -3,8 +3,10 @@ from unittest.mock import patch, Mock
 from rest_framework import serializers
 
 from tapir_mail.registries import mail_segment_providers
+from tapir_mail.tests.factories import MailSegmentFactory
 from tapir_mail.serializers import SegmentDataSerializer
 from tapir_mail.tests.test_utils import TapirUnitTest
+from tapir_mail_server.dummy_accounts.models import DummyTapirUser
 
 
 class SegmentDataSerializerTest(TapirUnitTest):
@@ -40,14 +42,26 @@ class SegmentDataSerializerTest(TapirUnitTest):
         mock_validate_segments.assert_called_once_with(add_segments)
 
     def test_validateSegments_validSegment_returnsInput(self):
-        mail_segment_providers.add(lambda: {"a_valid_segment": lambda _: True})
+        mail_segment_providers.add(
+            lambda: {
+                "a_valid_segment": MailSegmentFactory.build(
+                    get_queryset=DummyTapirUser.objects.none
+                )
+            }
+        )
 
         result = SegmentDataSerializer().validate_segments(["a_valid_segment"])
 
         self.assertEqual(["a_valid_segment"], result)
 
     def test_validateSegments_invalidSegment_raisesError(self):
-        mail_segment_providers.add(lambda: {"a_valid_segment": lambda _: True})
+        mail_segment_providers.add(
+            lambda: {
+                "a_valid_segment": MailSegmentFactory.build(
+                    get_queryset=DummyTapirUser.objects.none
+                )
+            }
+        )
 
         with self.assertRaises(serializers.ValidationError):
             SegmentDataSerializer().validate_segments(["an_invalid_segment"])

@@ -2,6 +2,8 @@ import {
   EmailConfigurationVersion,
   EmailConfigurationVersionApi,
   SegmentApi,
+  SegmentOption,
+  TypeEnum,
 } from "../../api_client";
 import { useApi } from "../../hooks/useApi";
 import { useAlert } from "../../contexts/alerts";
@@ -22,7 +24,7 @@ const SendTestMailModal = ({
   const segmentApi = useApi(SegmentApi);
   const showAlert = useAlert();
 
-  const [staticSegments, setStaticSegments] = useState<string[]>([]);
+  const [staticSegments, setStaticSegments] = useState<SegmentOption[]>([]);
   const [selectedSegment, setSelectedSegment] = useState<string | undefined>(
     undefined,
   );
@@ -32,8 +34,10 @@ const SendTestMailModal = ({
   };
 
   useEffect(() => {
-    segmentApi.segmentAvailableSegmentsRetrieve().then(({ staticSegments }) => {
-      setStaticSegments(Object.values(staticSegments) || []);
+    segmentApi.segmentAvailableSegmentsRetrieve().then(({ segments }) => {
+      setStaticSegments(
+        segments.filter((segment) => segment.type === TypeEnum.Static),
+      );
     });
   }, []);
 
@@ -115,10 +119,10 @@ const SendTestMailModal = ({
               <option value="">Segment auswählen</option>
               {staticSegments.map((segment) => (
                 <option
-                  key={segment}
-                  value={segment}
+                  key={segment.id}
+                  value={segment.id}
                 >
-                  {segment}
+                  {segment.label}
                 </option>
               ))}
             </Form.Select>

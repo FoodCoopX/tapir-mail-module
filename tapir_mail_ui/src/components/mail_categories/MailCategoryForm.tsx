@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { Form, Row } from "react-bootstrap";
-import { ModeEnum } from "../../api_client";
+import { Button, Form, Row } from "react-bootstrap";
+import { ModeEnum, SegmentOption } from "../../api_client";
 import { getModeDisplay } from "../../utils/getModeDisplay";
 
 interface MailCategoryFormProps {
@@ -13,7 +13,8 @@ interface MailCategoryFormProps {
   setSegmentName: (name: string) => void;
   externalsEnabled: boolean;
   setExternalsEnabled: (enabled: boolean) => void;
-  segmentNames: string[];
+  segmentOptions: SegmentOption[];
+  onOpenSegmentPicker: () => void;
 }
 
 const MailCategoryForm: React.FC<MailCategoryFormProps> = ({
@@ -26,9 +27,13 @@ const MailCategoryForm: React.FC<MailCategoryFormProps> = ({
   setSegmentName,
   externalsEnabled,
   setExternalsEnabled,
-  segmentNames,
+  segmentOptions,
+  onOpenSegmentPicker,
 }) => {
   const nameRef = useRef<HTMLInputElement | null>(null);
+  const selectedSegment = segmentOptions.find(
+    (option) => option.id === segmentName,
+  );
 
   useEffect(() => {
     if (open) {
@@ -74,20 +79,38 @@ const MailCategoryForm: React.FC<MailCategoryFormProps> = ({
       <Row className={"mt-2"}>
         <Form.Group>
           <Form.Label>Segment</Form.Label>
-          <Form.Select
-            value={segmentName}
-            onChange={(event) => setSegmentName(event.target.value)}
-          >
-            <option value={""}>Kein Segment</option>
-            {segmentNames.map((name) => (
-              <option
-                key={name}
-                value={name}
+          <div className="d-flex align-items-center gap-2">
+            <div className="flex-grow-1">
+              {segmentName ? (
+                <>
+                  <div>{selectedSegment?.label ?? segmentName}</div>
+                  {selectedSegment?.description && (
+                    <small className="text-muted">
+                      {selectedSegment.description}
+                    </small>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted">Kein Segment</span>
+              )}
+            </div>
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={onOpenSegmentPicker}
+            >
+              {segmentName ? "Ändern" : "Auswählen"}
+            </Button>
+            {segmentName && (
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={() => setSegmentName("")}
               >
-                {name}
-              </option>
-            ))}
-          </Form.Select>
+                Entfernen
+              </Button>
+            )}
+          </div>
         </Form.Group>
       </Row>
       <Row className={"mt-4"}>

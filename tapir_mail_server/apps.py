@@ -2,6 +2,7 @@ from django.apps import AppConfig
 
 from tapir_mail.registries import (
     mail_segment_providers,
+    MailSegment,
     MailSegmentRegistry,
 )
 from tapir_mail.triggers.transactional_trigger import TransactionalTrigger
@@ -53,9 +54,34 @@ class TapirMailServerAppConfig(AppConfig):
             return DummyTapirUser.objects.filter(has_coop_shares=False)
 
         return {
-            "Alle Benutzer": DummyTapirUser.objects.all,
-            "Geno-Mitglieder": coop_members,
-            "Nicht Geno-Mitglied": not_coop_members,
-            "Mit laufendem Ertevertrag": coop_members,
-            "Kein laufender Ertevertrag": not_coop_members,
+            "Alle Benutzer": MailSegment(
+                get_queryset=DummyTapirUser.objects.all,
+                label="Alle Benutzer",
+                description="Alle Benutzer",
+                group="Allgemein",
+            ),
+            "Geno-Mitglieder": MailSegment(
+                get_queryset=coop_members,
+                label="Geno-Mitglieder",
+                description="Benutzer mit Genossenschaftsanteilen",
+                group="Allgemein",
+            ),
+            "Nicht Geno-Mitglied": MailSegment(
+                get_queryset=not_coop_members,
+                label="Nicht Geno-Mitglied",
+                description="Benutzer ohne Genossenschaftsanteile",
+                group="Allgemein",
+            ),
+            "Mit laufendem Vertrag": MailSegment(
+                get_queryset=coop_members,
+                label="Mit laufendem Vertrag",
+                description="Benutzer mit einem laufenden Vertrag",
+                group="Verträge",
+            ),
+            "Ohne laufenden Vertrag": MailSegment(
+                get_queryset=not_coop_members,
+                label="Ohne laufenden Vertrag",
+                description="Benutzer ohne laufenden Vertrag",
+                group="Verträge",
+            ),
         }
