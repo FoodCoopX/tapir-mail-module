@@ -188,7 +188,8 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
                   {Object.entries(EMAIL_DISPATCH_STATUS_PROPS).map(
                     ([key, value]) => (
                       <li key={key}>
-                        {value.text}: {value.extraText}
+                        <Badge bg={value.color}>{value.text}</Badge>:{" "}
+                        {value.extraText}
                       </li>
                     ),
                   )}
