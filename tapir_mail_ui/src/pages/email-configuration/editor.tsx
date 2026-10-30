@@ -1,5 +1,6 @@
 import {
   CheckCircleIcon,
+  EyeIcon,
   HomeIcon,
   PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
@@ -59,6 +60,9 @@ const EmailConfigurationEditor = () => {
   const [status, setStatus] = useState<StatusEnum>(StatusEnum.Draft);
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
+  const [layoutTemplateId, setLayoutTemplateId] = useState<string | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string>("");
+  const [previewOpen, setPreviewOpen] = useState<boolean>(false);
   const [tokens, setTokens] = useState<{
     [key: string]: { [key: string]: string };
   }>({});
@@ -126,6 +130,7 @@ const EmailConfigurationEditor = () => {
               ? data.triggers
               : EMPTY_TRIGGER,
           );
+          setLayoutTemplateId(data.layoutTemplateId ?? null);
         })
         .catch((err) => {
           console.error(err);
@@ -169,6 +174,8 @@ const EmailConfigurationEditor = () => {
         subject: subject,
         content: jsonToMjml(content),
         name: mailingName,
+        layoutTemplateId: layoutTemplateId ?? undefined,
+        layoutEnabled: true,
         releaseStatus: newStatus,
         triggers: cleanTriggers,
         segmentData: segmentData ?? {
@@ -315,6 +322,28 @@ const EmailConfigurationEditor = () => {
     (currentId !== undefined && content !== loadedContent);
   const releaseButtonDisabled =
     saveButtonDisabled || !subject || !segmentChoosen || missingTrigger;
+
+  const handlePreview = () => {
+    if (!content) return;
+    emailConfigurationVersionApi
+      .emailConfigurationVersionPreview({
+        previewRequest: {
+          content: jsonToMjml(content),
+          layoutTemplateId: layoutTemplateId ?? undefined,
+        },
+      })
+      .then((data) => {
+        setPreviewHtml(data.html ?? "");
+        setPreviewOpen(true);
+      })
+      .catch((err) => {
+        console.error(err);
+        showAlert(
+          "Beim Erstellen der Vorschau ist ein Fehler aufgetreten.",
+          "danger",
+        );
+      });
+  };
   return loading ? (
     <Loading />
   ) : (
@@ -365,18 +394,43 @@ const EmailConfigurationEditor = () => {
                 onChange={(event) => setSelectedTemplateId(event.target.value)}
               >
                 <option value={ID_NEW_TEMPLATE}>Keine Vorlage</option>
-                {templates.map((t: EmailTemplate) => (
-                  <option
-                    key={t.id}
-                    value={t.id}
-                  >
-                    {t.name}
-                  </option>
-                ))}
+                {templates
+                  .filter((t: EmailTemplate) => t.templateType !== "layout")
+                  .map((t: EmailTemplate) => (
+                    <option
+                      key={t.id}
+                      value={t.id}
+                    >
+                      {t.name}
+                    </option>
+                  ))}
               </Form.Control>
             </Form.Group>
             <br />
 
+            <Form.Group>
+              <Form.Label>Layout</Form.Label>
+              <Form.Control
+                as="select"
+                value={layoutTemplateId ?? ""}
+                onChange={(event) =>
+                  setLayoutTemplateId(event.target.value || null)
+                }
+              >
+                <option value="">Standard-Layout (globaler Standard)</option>
+                {templates
+                  .filter((t: EmailTemplate) => t.templateType === "layout")
+                  .map((t: EmailTemplate) => (
+                    <option
+                      key={t.id}
+                      value={t.id}
+                    >
+                      {t.name}
+                    </option>
+                  ))}
+              </Form.Control>
+            </Form.Group>
+            <br />
             <div
               style={{
                 backgroundColor: "var(--color-neutral-1)",
@@ -425,6 +479,14 @@ const EmailConfigurationEditor = () => {
               icon={PaperAirplaneIcon}
               onClick={() => setReleaseModalOpen(true)}
               text="Veröffentlichen & senden"
+            />
+
+            <TapirButton
+              variant="outline-primary"
+              style={{ width: "100%", marginTop: "1em" }}
+              icon={EyeIcon}
+              onClick={handlePreview}
+              text="Vorschau im Layout"
             />
 
             <hr />
@@ -490,6 +552,23 @@ const EmailConfigurationEditor = () => {
         onConfirm={onConfirmTemplateChange}
         onCancel={() => setShowTemplateConfirmModal(false)}
       />
+      <Modal
+        show={previewOpen}
+        onHide={() => setPreviewOpen(false)}
+        centered={true}
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Vorschau</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <iframe
+            title="E-Mail-Vorschau"
+            srcDoc={previewHtml}
+            style={{ width: "100%", height: "70vh", border: "0" }}
+          />
+        </Modal.Body>
+      </Modal>
     </>
   );
 };

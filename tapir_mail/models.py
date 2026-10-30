@@ -34,13 +34,37 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class EmailTemplateType(models.TextChoices):
+    START = "start", _("Start-Vorlage")
+    LAYOUT = "layout", _("Layout-Vorlage")
+
+
 class EmailTemplate(BaseModel):
     """
     This represents the email content that is referenced by the EmailConfiguration.
+
+    A template is either a "start" template (used to prefill the editor) or a "layout"
+    template (a reusable MJML frame around the email body containing a ``{{Body}}``
+    placeholder). One layout template can be marked as the global default.
     """
 
     name = models.CharField(max_length=255, unique=True)
     content = models.TextField()
+    template_type = models.CharField(
+        max_length=16,
+        choices=EmailTemplateType.choices,
+        default=EmailTemplateType.START,
+    )
+    is_default_layout = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["is_default_layout"],
+                condition=Q(is_default_layout=True),
+                name="unique_default_layout_template",
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -118,6 +142,18 @@ class EmailConfigurationVersion(BaseModel):
         StaticSegment, related_name="versions_with_subtractive"
     )
     mail_categories_additive = ManyToManyField(MailCategory)
+    # Layout handling. layout_enabled is False for versions that existed before the
+    # layout feature, so already existing emails keep their behaviour until they are
+    # saved again. When layout_enabled is True and layout_template is None, the global
+    # default layout is used at send time.
+    layout_template = models.ForeignKey(
+        EmailTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="versions_using_layout",
+    )
+    layout_enabled = models.BooleanField(default=False)
 
     @transaction.atomic
     def release(self):
