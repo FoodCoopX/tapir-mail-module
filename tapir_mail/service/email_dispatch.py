@@ -13,6 +13,7 @@ from django.utils import timezone
 from tapir_mail.config import BccProvider, ExternalConfig
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import build_email
+from tapir_mail.service.layout import render_email_mjml
 from tapir_mail.service.mjml import mjml2html
 from tapir_mail.service.recipient_list_provider import (
     RecipientListProvider,
@@ -96,13 +97,17 @@ class ResolveAndCreateEmailDispatches:
             )
         )
 
+        effective_content = render_email_mjml(
+            config_dispatch.email_configuration_version
+        )
+
         recipient_tokens = find_tokens(
-            config_dispatch.email_configuration_version.content,
+            effective_content,
             token_type=TOKEN_TYPE_RECIPIENT,
         )
 
         dynamic_tokens = find_tokens(
-            config_dispatch.email_configuration_version.content,
+            effective_content,
             token_type=TOKEN_TYPE_DYNAMIC,
         )
         cache = {}
@@ -328,7 +333,9 @@ class SendEmailBatch:
 
             try:
                 if version.id not in html_by_version_id:
-                    html_by_version_id[version.id] = mjml2html(version.content)
+                    html_by_version_id[version.id] = mjml2html(
+                        render_email_mjml(version)
+                    )
 
                 html = replace_tokens(
                     html_by_version_id[version.id],

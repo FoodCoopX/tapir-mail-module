@@ -1,6 +1,6 @@
 import { PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import React, { useEffect, useState } from "react";
-import { Card, Table } from "react-bootstrap";
+import { Badge, Card, Table } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import {
   EmailTemplate,
@@ -107,6 +107,7 @@ const TemplatesCard = () => {
               <thead>
                 <tr>
                   <th>Name</th>
+                  <th>Typ</th>
                   <th>Erzeugt am</th>
                   <th>Aktualisiert am</th>
                   <th></th>
@@ -127,6 +128,17 @@ const TemplatesCard = () => {
                     }
                   >
                     <td>{template.name}</td>
+                    <td>
+                      {template.templateType === "layout"
+                        ? "Layout-Vorlage"
+                        : "Start-Vorlage"}
+                      {template.isDefaultLayout && (
+                        <>
+                          {" "}
+                          <Badge bg="primary">Standard</Badge>
+                        </>
+                      )}
+                    </td>
                     <td>{formatDate(template.createdAt)}</td>
                     <td>{formatDate(template.updatedAt)}</td>
                     <td
