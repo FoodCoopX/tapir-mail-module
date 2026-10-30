@@ -13,6 +13,7 @@ from django.utils import timezone
 from tapir_mail.config import BccProvider, ExternalConfig
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import prepare_email
+from tapir_mail.service.layout import render_email_mjml
 from tapir_mail.service.recipient_list_provider import (
     RecipientListProvider,
 )
@@ -95,13 +96,17 @@ class ResolveAndCreateEmailDispatches:
             )
         )
 
+        effective_content = render_email_mjml(
+            config_dispatch.email_configuration_version
+        )
+
         recipient_tokens = find_tokens(
-            config_dispatch.email_configuration_version.content,
+            effective_content,
             token_type=TOKEN_TYPE_RECIPIENT,
         )
 
         dynamic_tokens = find_tokens(
-            config_dispatch.email_configuration_version.content,
+            effective_content,
             token_type=TOKEN_TYPE_DYNAMIC,
         )
         cache = {}
@@ -324,7 +329,7 @@ class SendEmailBatch:
 
             try:
                 mjml = replace_tokens(
-                    version.content,
+                    render_email_mjml(version),
                     email_dispatch.recipient_tokens,
                     email_dispatch.additional_tokens,
                 )
@@ -351,8 +356,7 @@ class SendEmailBatch:
     @classmethod
     def _get_bcc_provider(cls, email_dispatch: EmailDispatch) -> BccProvider | None:
         for trigger_data in (
-            email_dispatch.get_email_configuration_version().triggers
-            or []
+            email_dispatch.get_email_configuration_version().triggers or []
         ):
             trigger_class = trigger_registry.get(
                 trigger_data["trigger_id"],
@@ -371,8 +375,7 @@ class SendEmailBatch:
             try:
                 with transaction.atomic():
                     for trigger_data in (
-                        email_dispatch.get_email_configuration_version().triggers
-                        or []
+                        email_dispatch.get_email_configuration_version().triggers or []
                     ):
                         trigger_class = trigger_registry.get(
                             trigger_data["trigger_id"],
@@ -412,9 +415,7 @@ class RetryEmailDispatch:
     @staticmethod
     def is_temporary_failure(exception: Exception) -> bool:
         if isinstance(exception, smtplib.SMTPRecipientsRefused):
-            return all(
-                400 <= code < 500 for code, _ in exception.recipients.values()
-            )
+            return all(400 <= code < 500 for code, _ in exception.recipients.values())
         if isinstance(
             exception, (smtplib.SMTPConnectError, smtplib.SMTPServerDisconnected)
         ):

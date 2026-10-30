@@ -1154,6 +1154,33 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/email_configuration_version/preview/:
+    post:
+      operationId: email_configuration_version_preview
+      tags:
+      - email_configuration_version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PreviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PreviewRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreviewResponse'
+          description: ''
   /api/email_dispatch/:
     get:
       operationId: email_dispatch_list
@@ -2787,6 +2814,11 @@ components:
           nullable: true
         segment_data:
           $ref: '#/components/schemas/SegmentData'
+        layout_template_id:
+          type: string
+          nullable: true
+        layout_enabled:
+          type: boolean
       required:
       - content
       - name
@@ -2820,6 +2852,11 @@ components:
           nullable: true
         segment_data:
           $ref: '#/components/schemas/SegmentDataRequest'
+        layout_template_id:
+          type: string
+          nullable: true
+        layout_enabled:
+          type: boolean
       required:
       - content
       - name
@@ -3112,6 +3149,11 @@ components:
           items:
             type: string
             maxLength: 100
+        layout_enabled:
+          type: boolean
+        layout_template:
+          type: string
+          nullable: true
         static_segments_additive:
           type: array
           items:
@@ -3167,6 +3209,12 @@ components:
             type: string
             minLength: 1
             maxLength: 100
+        layout_enabled:
+          type: boolean
+        layout_template:
+          type: string
+          minLength: 1
+          nullable: true
         static_segments_additive:
           type: array
           items:
@@ -3409,6 +3457,8 @@ components:
         id:
           type: string
           maxLength: 10
+        is_default_layout:
+          type: boolean
         created_at:
           type: string
           format: date-time
@@ -3422,6 +3472,8 @@ components:
           maxLength: 255
         content:
           type: string
+        template_type:
+          $ref: '#/components/schemas/TemplateTypeEnum'
       required:
       - content
       - created_at
@@ -3434,6 +3486,8 @@ components:
           type: string
           minLength: 1
           maxLength: 10
+        is_default_layout:
+          type: boolean
         name:
           type: string
           minLength: 1
@@ -3441,6 +3495,8 @@ components:
         content:
           type: string
           minLength: 1
+        template_type:
+          $ref: '#/components/schemas/TemplateTypeEnum'
       required:
       - content
       - name
@@ -3751,6 +3807,11 @@ components:
           nullable: true
         segment_data:
           $ref: '#/components/schemas/SegmentDataRequest'
+        layout_template_id:
+          type: string
+          nullable: true
+        layout_enabled:
+          type: boolean
     PatchedDummyPickupLocationRequest:
       type: object
       properties:
@@ -3820,6 +3881,8 @@ components:
           type: string
           minLength: 1
           maxLength: 10
+        is_default_layout:
+          type: boolean
         name:
           type: string
           minLength: 1
@@ -3827,6 +3890,8 @@ components:
         content:
           type: string
           minLength: 1
+        template_type:
+          $ref: '#/components/schemas/TemplateTypeEnum'
     PatchedMailCategoryRequest:
       type: object
       properties:
@@ -3928,6 +3993,24 @@ components:
         uploaded_by:
           type: integer
           nullable: true
+    PreviewRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+        layout_template_id:
+          type: string
+          nullable: true
+      required:
+      - content
+    PreviewResponse:
+      type: object
+      properties:
+        html:
+          type: string
+      required:
+      - html
     RecipientRequest:
       type: object
       properties:
@@ -4184,6 +4267,14 @@ components:
       - file_name
       - upload_id
       - uploaded
+    TemplateTypeEnum:
+      enum:
+      - start
+      - layout
+      type: string
+      description: |-
+        * `start` - Start-Vorlage
+        * `layout` - Layout-Vorlage
     TemporaryUpload:
       type: object
       properties:

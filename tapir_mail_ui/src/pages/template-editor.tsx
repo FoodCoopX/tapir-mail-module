@@ -1,8 +1,8 @@
 import { IEmailTemplate } from "easy-email-editor";
 import React, { useEffect, useState } from "react";
-import { Button, Modal } from "react-bootstrap";
+import { Button, Form, Modal } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
-import { EmailTemplateApi } from "../api_client";
+import { EmailTemplateApi, TemplateTypeEnum } from "../api_client";
 import Editor, { EMPTY_PAGE } from "../components/editor";
 import Loading from "../components/loading";
 import { useAlert } from "../contexts/alerts";
@@ -18,6 +18,10 @@ const TemplateEditor = () => {
 
   const [id, setId] = useState(templateId);
   const [name, setName] = useState("");
+  const [templateType, setTemplateType] = useState<TemplateTypeEnum>(
+    TemplateTypeEnum.Start,
+  );
+  const [isDefaultLayout, setIsDefaultLayout] = useState(false);
   const [content, setContent] = useState<any>(EMPTY_PAGE);
   const [showSaveGateModal, setShowSaveGateModal] = useState(false);
   const [loading, setLoading] = useState(Boolean(id));
@@ -31,6 +35,8 @@ const TemplateEditor = () => {
       .then((data) => {
         setId(data.id);
         setName(data.name);
+        setTemplateType(data.templateType ?? TemplateTypeEnum.Start);
+        setIsDefaultLayout(data.isDefaultLayout ?? false);
         setContent(mjmlToJson(data.content));
         setLoading(false);
       })
@@ -50,10 +56,26 @@ const TemplateEditor = () => {
   };
 
   const handleSave = (values: IEmailTemplate) => {
+    const contentMjml = jsonToMjml(values.content);
+
+    if (
+      templateType === TemplateTypeEnum.Layout &&
+      !contentMjml.includes("{{Body}}")
+    ) {
+      showAlert(
+        "Eine Layout-Vorlage muss den Platzhalter {{Body}} enthalten.",
+        "danger",
+      );
+      return;
+    }
+
     const props = {
       emailTemplateRequest: {
         name: name,
-        content: jsonToMjml(values.content),
+        content: contentMjml,
+        templateType: templateType,
+        isDefaultLayout:
+          templateType === TemplateTypeEnum.Layout ? isDefaultLayout : false,
       },
     };
     if (templateId) {
@@ -87,6 +109,42 @@ const TemplateEditor = () => {
   const handleCloseModal = () => setShowSaveGateModal(false);
   return (
     <>
+      <div
+        style={{
+          display: "flex",
+          gap: "2em",
+          alignItems: "center",
+          padding: "0.5em 1em",
+        }}
+      >
+        <Form.Group>
+          <Form.Label>Vorlagen-Typ</Form.Label>
+          <Form.Control
+            as="select"
+            value={templateType}
+            onChange={(event) =>
+              setTemplateType(event.target.value as TemplateTypeEnum)
+            }
+          >
+            <option value={TemplateTypeEnum.Start}>Start-Vorlage</option>
+            <option value={TemplateTypeEnum.Layout}>Layout-Vorlage</option>
+          </Form.Control>
+        </Form.Group>
+        {templateType === TemplateTypeEnum.Layout && (
+          <>
+            <Form.Check
+              type="checkbox"
+              label="Als Standard-Layout verwenden"
+              checked={isDefaultLayout}
+              onChange={(event) => setIsDefaultLayout(event.target.checked)}
+            />
+            <span>
+              Füge den Platzhalter <code>{"{{Body}}"}</code> dort ein, wo der
+              E-Mail-Inhalt erscheinen soll.
+            </span>
+          </>
+        )}
+      </div>
       <Modal
         show={showSaveGateModal}
         onHide={handleCloseModal}
