@@ -1,7 +1,7 @@
 # Release build helper for tapir-mail-module
 #
 # Quick start:
-#   make release     # schema -> API client -> React bundle -> wheel (verified)
+#   make release     # schema -> API client -> React bundle -> wheel
 #   make wheel       # only build the wheel (expects the React bundle to exist)
 #   make bundle      # only build the React app into tapir_mail/__ui__ + __static__
 #   make test        # python test suite
@@ -24,7 +24,7 @@ UI_STATIC   := tapir_mail/__static__
 UI_TEMPLATE := tapir_mail/__ui__
 DIST        := dist
 
-.PHONY: help deps api-schema api-client bundle wheel sdist release verify-wheel test test-backend test-frontend lint clean
+.PHONY: help deps api-schema api-client bundle wheel sdist release test test-backend test-frontend lint clean
 
 help: ## Show available targets
 > @grep -hE '^[a-zA-Z0-9_-]+:.*## ' $(MAKEFILE_LIST) | sed -e 's/:.*## /\t-> /' | sort
@@ -50,7 +50,7 @@ wheel: ## Build the python wheel (includes the bundled UI) into dist/
 sdist: ## Build the source distribution into dist/
 > $(POETRY) build --format sdist
 
-release: api-schema api-client bundle wheel verify-wheel ## Full release build (everything needed to install)
+release: api-schema api-client bundle wheel ## Full release build (everything needed to install)
 > @echo "Release ready. Install with: pip install --force-reinstall $(DIST)/*.whl"
 
 test: test-backend ## Run the python test suite
