@@ -351,8 +351,7 @@ class SendEmailBatch:
     @classmethod
     def _get_bcc_provider(cls, email_dispatch: EmailDispatch) -> BccProvider | None:
         for trigger_data in (
-            email_dispatch.get_email_configuration_version().triggers
-            or []
+            email_dispatch.get_email_configuration_version().triggers or []
         ):
             trigger_class = trigger_registry.get(
                 trigger_data["trigger_id"],
@@ -371,8 +370,7 @@ class SendEmailBatch:
             try:
                 with transaction.atomic():
                     for trigger_data in (
-                        email_dispatch.get_email_configuration_version().triggers
-                        or []
+                        email_dispatch.get_email_configuration_version().triggers or []
                     ):
                         trigger_class = trigger_registry.get(
                             trigger_data["trigger_id"],
@@ -412,9 +410,7 @@ class RetryEmailDispatch:
     @staticmethod
     def is_temporary_failure(exception: Exception) -> bool:
         if isinstance(exception, smtplib.SMTPRecipientsRefused):
-            return all(
-                400 <= code < 500 for code, _ in exception.recipients.values()
-            )
+            return all(400 <= code < 500 for code, _ in exception.recipients.values())
         if isinstance(
             exception, (smtplib.SMTPConnectError, smtplib.SMTPServerDisconnected)
         ):
