@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Check if URL is provided
 if [[ -z $1 ]]; then
