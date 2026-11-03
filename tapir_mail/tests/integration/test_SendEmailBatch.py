@@ -8,6 +8,7 @@ from tapir_mail.config import ExternalConfig
 from tapir_mail.models import EmailDispatch, ReleaseStatus
 from tapir_mail.service.email import _get_dispatch_id_from_email_return_path
 from tapir_mail.service.email_dispatch import RetryEmailDispatch, SendEmailBatch
+from tapir_mail.service.mjml import mjml2html
 from tapir_mail.tests.factories import (
     EmailConfigurationDispatchFactory,
     EmailConfigurationVersionFactory,
@@ -49,6 +50,38 @@ class SendEmailBatchTest(TapirIntegrationTest):
                 _get_dispatch_id_from_email_return_path(email.from_email),
             )
 
+    def test_sendEmailDispatches_severalDispatchesOfSameVersion_rendersMjmlOnce(self):
+        TestUtils.create_email_dispatches(3, config_dispatch=self.config_dispatch)
+
+        with patch(
+            "tapir_mail.service.email_dispatch.mjml2html",
+            autospec=True,
+            side_effect=mjml2html,
+        ) as mock_mjml2html:
+            SendEmailBatch.send_email_dispatches()
+
+        mock_mjml2html.assert_called_once_with(self.email_config_version.content)
+        self.assertEqual(3, len(mail.outbox))
+
+    def test_sendEmailDispatches_contentHasTokens_tokensReplacedPerRecipient(self):
+        self.email_config_version.content = self.email_config_version.content.replace(
+            "This is a dummy email!", "Hello {{ greeting_name }}!"
+        )
+        self.email_config_version.save()
+        dispatches = TestUtils.create_email_dispatches(
+            2, config_dispatch=self.config_dispatch
+        )
+        for index, dispatch in enumerate(dispatches):
+            dispatch.additional_tokens = {"greeting_name": f"name{index}"}
+            dispatch.save()
+
+        SendEmailBatch.send_email_dispatches()
+
+        bodies_by_recipient = {email.to[0]: email.body for email in mail.outbox}
+        self.assertIn("Hello name0!", bodies_by_recipient["test0@example.com"])
+        self.assertIn("Hello name1!", bodies_by_recipient["test1@example.com"])
+        self.assertNotIn("{{", bodies_by_recipient["test0@example.com"])
+
     def test_sendEmailDispatches_noEmailDispatches_noEmailsSent(self):
         SendEmailBatch.send_email_dispatches()
         self.assertEqual(len(mail.outbox), 0)
@@ -58,7 +91,7 @@ class SendEmailBatchTest(TapirIntegrationTest):
     def test_sendEmailDispatches_errorSendingEmail_logsError(self):
         TestUtils.create_email_dispatches(1, config_dispatch=self.config_dispatch)
         with patch(
-            "tapir_mail.service.email_dispatch.prepare_email",
+            "tapir_mail.service.email_dispatch.build_email",
             side_effect=Exception("Test exception"),
         ):
             with patch(

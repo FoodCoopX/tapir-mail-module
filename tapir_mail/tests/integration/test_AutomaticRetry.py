@@ -67,7 +67,7 @@ class AutomaticRetryTest(TapirIntegrationTest):
     def test_sendEmailDispatches_failedDispatch_notPickedUpAgain(self):
         TestUtils.create_email_dispatches(1, config_dispatch=self.config_dispatch)
         with patch(
-            "tapir_mail.service.email_dispatch.prepare_email",
+            "tapir_mail.service.email_dispatch.build_email",
             side_effect=Exception("Template error"),
         ):
             SendEmailBatch.send_email_dispatches()
