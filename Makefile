@@ -7,7 +7,7 @@
 #   make test        # python test suite
 #
 # If you don't run poetry directly (e.g. you use docker compose), override RUN, e.g.:
-#   make release RUN="docker compose run --rm web" POETRY="docker compose run --rm web poetry"
+#   make release RUN="docker compose run --rm web poetry run" POETRY="docker compose run --rm web poetry"
 #
 # GNU make is required (uses .RECIPEPREFIX).
 
