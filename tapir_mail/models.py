@@ -160,6 +160,14 @@ class EmailConfigurationDispatch(BaseModel):
     override_recipients = models.JSONField(null=True)
     additional_tokens = models.JSONField(null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["is_sent", "scheduled_time"],
+                name="emailconfigdispatch_sched_idx",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.email_configuration_version} - {self.scheduled_time} - {self.is_sent}"
 
@@ -229,6 +237,21 @@ class EmailDispatch(BaseModel):
     )
     not_before = models.DateTimeField(null=True, blank=True)
     is_automatic_retry = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [
+            # Speeds up the batch query of SendEmailBatch.send_email_dispatches
+            models.Index(
+                fields=["created_at"],
+                condition=Q(sent_time=None, error_message=None),
+                name="emaildispatch_pending_idx",
+            ),
+            # Matches the ordering of EmailDispatchViewSet.list
+            models.Index(
+                fields=["-created_at", "-sent_time", "-opened_time", "recipient"],
+                name="emaildispatch_list_idx",
+            ),
+        ]
 
     def get_email_configuration_version(self):
         return (
