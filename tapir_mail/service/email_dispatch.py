@@ -12,7 +12,8 @@ from django.utils import timezone
 
 from tapir_mail.config import BccProvider, ExternalConfig
 from tapir_mail.models import EmailConfigurationDispatch, EmailDispatch, ReleaseStatus
-from tapir_mail.service.email import prepare_email
+from tapir_mail.service.email import build_email
+from tapir_mail.service.mjml import mjml2html
 from tapir_mail.service.recipient_list_provider import (
     RecipientListProvider,
 )
@@ -319,18 +320,24 @@ class SendEmailBatch:
     @classmethod
     def _prepare_emails(cls, email_dispatches):
         emails = []
+        # Rendering MJML starts a node process, so each version is rendered only once
+        # and the tokens are replaced in the resulting HTML.
+        html_by_version_id = {}
         for email_dispatch in email_dispatches:
             version = email_dispatch.get_email_configuration_version()
 
             try:
-                mjml = replace_tokens(
-                    version.content,
+                if version.id not in html_by_version_id:
+                    html_by_version_id[version.id] = mjml2html(version.content)
+
+                html = replace_tokens(
+                    html_by_version_id[version.id],
                     email_dispatch.recipient_tokens,
                     email_dispatch.additional_tokens,
                 )
 
-                email = prepare_email(
-                    mjml=mjml,
+                email = build_email(
+                    html=html,
                     subject=version.subject,
                     recipients=[email_dispatch.recipient],
                     tracking_url=get_tracking_url(email_dispatch),

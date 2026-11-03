@@ -18,16 +18,34 @@ def prepare_email(
     Sends an email using the configuration provided in the kwargs.
     """
 
-    if recipients is None:
-        recipients = []
-
     if not mjml:
         raise ValueError("mjml is required")
+
+    return build_email(
+        html=mjml2html(mjml),
+        subject=subject,
+        recipients=recipients,
+        tracking_url=tracking_url,
+        tracking_id=tracking_id,
+        bcc_provider=bcc_provider,
+    )
+
+
+def build_email(
+    html: str,
+    subject: str | None = None,
+    recipients=None,
+    tracking_url: str | None = None,
+    tracking_id: str | None = None,
+    bcc_provider: BccProvider | None = None,
+):
+    if recipients is None:
+        recipients = []
 
     if not recipients:
         raise ValueError("recipients is required")
 
-    email_body = mjml2html(mjml)
+    email_body = html
 
     if tracking_url:
         email_body = add_tracking_pixel(email_body, tracking_url)
