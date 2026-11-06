@@ -15,7 +15,10 @@ import { formatDate } from "../../utils/formatDate";
 import TapirButton from "../TapirButton";
 import ConfirmDeleteModal from "../ConfirmDeleteModal";
 import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
+import { getApiErrorMessage } from "../../utils/apiErrorMessage";
 import TapirPagination from "../TapirPagination";
+import LabelHelp from "../LabelHelp";
+import TapirTooltip from "../TapirTooltip";
 
 const TemplatesCard = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -42,9 +45,12 @@ const TemplatesCard = () => {
         setTemplates(paginatedData.results ?? []);
         setTemplateCount(paginatedData.count ?? 0);
       })
-      .catch((err) => {
+      .catch(async (err) => {
         console.error(err);
-        showAlert("Fehler beim Laden der Vorlagen", "danger");
+        showAlert(
+          await getApiErrorMessage(err, "Fehler beim Laden der Vorlagen"),
+          "danger",
+        );
       })
       .finally(() => {
         setLoading(false);
@@ -57,14 +63,17 @@ const TemplatesCard = () => {
     api
       .emailTemplatePaginatedDestroy({ id: templateToDelete.id! })
       .then(() => {
-        showAlert("Template gelöscht : " + templateToDelete.name, "success");
+        showAlert("Vorlage gelöscht: " + templateToDelete.name, "success");
         setTemplates(
           templates.filter((template) => template.id !== templateToDelete.id),
         );
       })
-      .catch((err) => {
+      .catch(async (err) => {
         console.error(err);
-        showAlert("Fehler beim löschen des Templates", "danger");
+        showAlert(
+          await getApiErrorMessage(err, "Fehler beim Löschen der Vorlage"),
+          "danger",
+        );
       })
       .finally(() => {
         setTemplateToDelete(undefined);
@@ -107,7 +116,21 @@ const TemplatesCard = () => {
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Typ</th>
+                  <th>
+                    Typ
+                    <LabelHelp
+                      label="Vorlagen-Typ"
+                      text={
+                        <>
+                          <strong>Start-Vorlage:</strong> füllt den
+                          E-Mail-Editor vor.
+                          <br />
+                          <strong>Layout-Vorlage:</strong> Einheitliches
+                          Aussehen wie Kopf- und Fußzeile.
+                        </>
+                      }
+                    />
+                  </th>
                   <th>Erzeugt am</th>
                   <th>Aktualisiert am</th>
                   <th></th>
@@ -135,7 +158,12 @@ const TemplatesCard = () => {
                       {template.isDefaultLayout && (
                         <>
                           {" "}
-                          <Badge bg="primary">Standard</Badge>
+                          <TapirTooltip
+                            id={`default-layout-${template.id}`}
+                            text="Neue E-Mails nutzen dieses Layout automatisch."
+                          >
+                            <Badge bg="primary">Standard</Badge>
+                          </TapirTooltip>
                         </>
                       )}
                     </td>
@@ -176,7 +204,7 @@ const TemplatesCard = () => {
       <ConfirmDeleteModal
         message={
           <>
-            Möchtest du das Template <strong>{templateToDelete?.name}</strong>{" "}
+            Möchtest du die Vorlage <strong>{templateToDelete?.name}</strong>{" "}
             wirklich löschen?
           </>
         }

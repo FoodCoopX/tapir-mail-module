@@ -4,6 +4,7 @@ import { Alert, Button, Form, Modal } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import { EmailTemplateApi, TemplateTypeEnum } from "../api_client";
 import Editor, { EMPTY_LAYOUT_PAGE, EMPTY_PAGE } from "../components/editor";
+import LabelHelp from "../components/LabelHelp";
 import Loading from "../components/loading";
 import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
@@ -13,6 +14,7 @@ import {
   markLayoutBodyBlocks,
   mjmlToJson,
 } from "../utils/mjml";
+import { getApiErrorMessage } from "../utils/apiErrorMessage";
 
 const TemplateEditor = () => {
   const showAlert = useAlert();
@@ -67,9 +69,12 @@ const TemplateEditor = () => {
         setSavedIsDefaultLayout(loadedIsDefaultLayout);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(async (err) => {
         console.error(err);
-        showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
+        showAlert(
+          await getApiErrorMessage(err, "Fehler beim Laden der Vorlage"),
+          "danger",
+        );
         navigate("/");
       });
   }, [id]);
@@ -95,7 +100,7 @@ const TemplateEditor = () => {
       !containsLayoutBodySection(values.content)
     ) {
       showAlert(
-        "Eine Layout-Vorlage muss einen E-Mail-Inhalt-Block enthalten.",
+        "Der E-Mail-Inhalt-Block fehlt. Layout-Vorlagen brauchen genau einen.",
         "danger",
       );
       return;
@@ -124,20 +129,32 @@ const TemplateEditor = () => {
           setSavedTemplateType(templateType);
           setSavedIsDefaultLayout(isDefaultLayout);
         })
-        .catch((err) => {
-          showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, "danger");
+        .catch(async (err) => {
+          showAlert(
+            await getApiErrorMessage(
+              err,
+              "Beim Speichern ist ein Fehler aufgetreten.",
+            ),
+            "danger",
+          );
         });
     } else {
       api
         .emailTemplateCreate(props)
         .then((data) => {
-          showAlert("Dein Vorlage wurde gespeichert!", "success");
+          showAlert("Deine Vorlage wurde gespeichert!", "success");
           if (data.id) {
             navigate("/editor/" + data.id);
           }
         })
-        .catch((err) => {
-          showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, "danger");
+        .catch(async (err) => {
+          showAlert(
+            await getApiErrorMessage(
+              err,
+              "Beim Speichern ist ein Fehler aufgetreten.",
+            ),
+            "danger",
+          );
         });
     }
   };
@@ -224,6 +241,11 @@ const TemplateEditor = () => {
             <option value={TemplateTypeEnum.Start}>Start-Vorlage</option>
             <option value={TemplateTypeEnum.Layout}>Layout-Vorlage</option>
           </Form.Control>
+          <Form.Text className="text-muted">
+            {templateType === TemplateTypeEnum.Layout
+              ? "Einheitliches Aussehen wie Kopf- und Fußzeile, wird beim Versand angewendet."
+              : "Kopiert den Inhalt in neue E-Mails."}
+          </Form.Text>
         </Form.Group>
         {templateType === TemplateTypeEnum.Layout && (
           <>
@@ -244,12 +266,16 @@ const TemplateEditor = () => {
                   }}
                 >
                   Als Standard-Layout verwenden
+                  <LabelHelp
+                    label="Standard-Layout"
+                    text="Wird automatisch für neue E-Mails verwendet. Nur ein Standard-Layout möglich."
+                  />
                 </Form.Check.Label>
               </Form.Check>
             </Form.Group>
             <span>
-              Ziehe den Block <strong>E-Mail-Inhalt</strong> an die gewünschte
-              Stelle. Er enthält den Platzhalter <code>{"{{Body}}"}</code>.
+              Block <strong>E-Mail-Inhalt</strong> an die gewünschte Stelle
+              ziehen. Er ist nur einmal erlaubt.
             </span>
           </>
         )}
@@ -284,7 +310,7 @@ const TemplateEditor = () => {
         <Modal.Body>
           <p className="text-muted">
             Beim Übernehmen wird der Inhalt des Editors vollständig durch den
-            Quelltext ersetzt. Layout-Vorlagen benötigen einen
+            Quelltext ersetzt. Layout-Vorlagen benötigen genau einen
             E-Mail-Inhalt-Block.
           </p>
           <Form.Control

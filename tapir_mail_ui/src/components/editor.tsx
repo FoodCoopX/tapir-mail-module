@@ -349,7 +349,7 @@ const CustomEmailEditor: FC<CustomEmailEditorProps> = ({
       {onTemplateNameChange && templateName.length === 0 && (
         <Alert variant="warning">
           <ExclamationTriangleIcon width={24} />
-          &nbsp;&nbsp;&nbsp;Bitte gib oben einen Namen für das Template ein!
+          &nbsp;&nbsp;&nbsp;Bitte gib oben einen Namen für die Vorlage ein!
         </Alert>
       )}
       {(onGoBack || onSave) && (
@@ -376,7 +376,7 @@ const CustomEmailEditor: FC<CustomEmailEditorProps> = ({
               variant={saveDisabled ? "disabled" : "success"}
               onClick={() => onSave(values)}
             >
-              Template Speichern
+              Vorlage speichern
             </Button>
           ) : (
             <div />
