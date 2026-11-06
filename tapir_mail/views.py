@@ -362,12 +362,17 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             )
         )
 
-        new_version.layout_template_id = serializer.validated_data.get(
-            "layout_template_id", None
-        )
+        layout_template_id = serializer.validated_data.get("layout_template_id", None)
+        has_default_layout = EmailTemplate.objects.filter(
+            template_type=EmailTemplateType.LAYOUT, is_default_layout=True
+        ).exists()
+        new_version.layout_template_id = layout_template_id
         new_version.layout_enabled = serializer.validated_data.get(
-            "layout_enabled", True
+            "layout_enabled",
+            layout_template_id is not None or has_default_layout,
         )
+        if not new_version.layout_enabled:
+            new_version.layout_template_id = None
         new_version.save()
 
         if release_status == ReleaseStatus.RELEASED:
@@ -445,8 +450,10 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 "layout_template_id"
             ]
         updated_version.layout_enabled = serializer.validated_data.get(
-            "layout_enabled", True
+            "layout_enabled", updated_version.layout_enabled
         )
+        if not updated_version.layout_enabled:
+            updated_version.layout_template_id = None
         updated_version.save()
 
         if release_status == ReleaseStatus.RELEASED:
@@ -1084,7 +1091,10 @@ class CreateMissingTriggerMailView(APIView):
                     "trigger_field_values": {"key": trigger_key},
                 }
             ],
-            layout_enabled=True,
+            layout_enabled=EmailTemplate.objects.filter(
+                template_type=EmailTemplateType.LAYOUT,
+                is_default_layout=True,
+            ).exists(),
         )
 
         return Response("OK", status=status.HTTP_200_OK)
