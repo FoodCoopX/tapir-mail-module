@@ -74,8 +74,13 @@ const TemplateEditor = () => {
       });
   }, [id]);
 
+  const hasMetadataChanges =
+    name !== savedName ||
+    templateType !== savedTemplateType ||
+    isDefaultLayout !== savedIsDefaultLayout;
+
   const handleBack = (values: IEmailTemplate) => {
-    if (values.content === savedContent) {
+    if (values.content === savedContent && !hasMetadataChanges) {
       navigate("/");
     } else {
       setShowSaveGateModal(true);
@@ -114,6 +119,10 @@ const TemplateEditor = () => {
         .then((data) => {
           showAlert("Deine Änderungen wurden gespeichert!", "success");
           setContent(values.content);
+          setSavedContent(values.content);
+          setSavedName(name);
+          setSavedTemplateType(templateType);
+          setSavedIsDefaultLayout(isDefaultLayout);
         })
         .catch((err) => {
           showAlert(`Beim Speichern ist ein Fehler aufgetreten.`, "danger");
@@ -220,6 +229,7 @@ const TemplateEditor = () => {
           content={content}
           showLayoutBodyBlock={templateType === TemplateTypeEnum.Layout}
           layoutBodyBlockExists={hasLayoutBodyBlock}
+          hasUnsavedChanges={hasMetadataChanges}
           onContentChange={(values) => {
             latestEditorContent.current = values.content;
             setHasLayoutBodyBlock(containsLayoutBodySection(values.content));
