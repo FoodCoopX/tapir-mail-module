@@ -9,6 +9,17 @@ MJ_BODY_RE = re.compile(r"<mj-body[^>]*>(.*)</mj-body>", re.DOTALL)
 BODY_TOKEN_RE = re.compile(r"\{\{\s*Body\s*\}\}")
 
 
+# The visual editor cannot keep a bare {{Body}} text node at the top level of
+# <mj-body>. Layout templates therefore place the placeholder in a normal section
+# that carries this CSS class. At render time the whole section is replaced by the
+# email body, so no invalid nested sections end up in the result.
+BODY_PLACEHOLDER_CSS_CLASS = "tapir-layout-body"
+BODY_PLACEHOLDER_SECTION_RE = re.compile(
+    r'<mj-section\b(?=[^>]*css-class="[^"]*tapir-layout-body[^"]*")[^>]*>'
+    r".*?</mj-section>",
+    re.DOTALL,
+)
+
 def extract_mj_body_inner(mjml: str) -> str:
     """
     Return the inner content of the <mj-body> element of a full MJML document.

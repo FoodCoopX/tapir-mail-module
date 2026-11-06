@@ -1,7 +1,6 @@
 import datetime
 
 from django.conf import settings
-from django.db import transaction
 from django.urls import reverse
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -24,9 +23,6 @@ from tapir_mail.service.mail_category_recipients_resolver import (
 )
 from tapir_mail.service.segment import BASE_QUERYSET
 from tapir_mail.service.triggers import Trigger, trigger_registry
-
-from tapir_mail.service.layout import BODY_TOKEN_RE, layout_contains_body_token
-from tapir_mail.service.mail_content_validator import MailContentValidator
 
 
 class TriggerDataSerializer(serializers.Serializer):
@@ -77,60 +73,13 @@ class TriggersSerializationMixin(metaclass=serializers.SerializerMetaclass):
 class EmailTemplateSerializer(serializers.ModelSerializer):
     # Declared explicitly so DRF does not attach an auto-generated UniqueValidator
     # for the partial "single default layout" UniqueConstraint. That rule is enforced
-    # in create()/update() below, where the previous default layout is unset.
+    # in EmailTemplateViewSet.
     is_default_layout = serializers.BooleanField(required=False)
 
     class Meta:
         model = EmailTemplate
         fields = "__all__"
         validators = []
-
-    def validate(self, attrs):
-        template_type = attrs.get(
-            "template_type",
-            getattr(self.instance, "template_type", EmailTemplateType.START),
-        )
-        content = attrs.get("content", getattr(self.instance, "content", ""))
-        is_default_layout = attrs.get(
-            "is_default_layout",
-            getattr(self.instance, "is_default_layout", False),
-        )
-
-        if template_type == EmailTemplateType.LAYOUT:
-            if not layout_contains_body_token(content):
-                raise serializers.ValidationError(
-                    {
-                        "content": "Eine Layout-Vorlage muss den Platzhalter {{Body}} enthalten."
-                    }
-                )
-            MailContentValidator.validate_tokens(
-                mail_content=BODY_TOKEN_RE.sub("", content),
-                trigger_datas=[],
-            )
-        elif is_default_layout:
-            raise serializers.ValidationError(
-                {
-                    "is_default_layout": "Nur Layout-Vorlagen können als Standard markiert werden."
-                }
-            )
-
-        return attrs
-
-    def create(self, validated_data):
-        with transaction.atomic():
-            if validated_data.get("is_default_layout"):
-                EmailTemplate.objects.filter(is_default_layout=True).update(
-                    is_default_layout=False
-                )
-            return super().create(validated_data)
-
-    def update(self, instance, validated_data):
-        with transaction.atomic():
-            if validated_data.get("is_default_layout"):
-                EmailTemplate.objects.filter(is_default_layout=True).exclude(
-                    id=instance.id
-                ).update(is_default_layout=False)
-            return super().update(instance, validated_data)
 
 
 class EmailConfigurationSerializer(serializers.ModelSerializer):
