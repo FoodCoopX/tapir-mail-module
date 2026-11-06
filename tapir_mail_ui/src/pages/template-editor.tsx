@@ -176,12 +176,26 @@ const TemplateEditor = () => {
         </Form.Group>
         {templateType === TemplateTypeEnum.Layout && (
           <>
-            <Form.Check
-              type="checkbox"
-              label="Als Standard-Layout verwenden"
-              checked={isDefaultLayout}
-              onChange={(event) => setIsDefaultLayout(event.target.checked)}
-            />
+            <Form.Group
+              controlId="is-default-layout"
+              className="mb-0"
+            >
+              <Form.Check type="checkbox">
+                <Form.Check.Input
+                  type="checkbox"
+                  checked={isDefaultLayout}
+                  onChange={(event) => setIsDefaultLayout(event.target.checked)}
+                />
+                <Form.Check.Label
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setIsDefaultLayout((value) => !value);
+                  }}
+                >
+                  Als Standard-Layout verwenden
+                </Form.Check.Label>
+              </Form.Check>
+            </Form.Group>
             <span>
               Ziehe den Block <strong>E-Mail-Inhalt</strong> an die gewünschte
               Stelle. Er enthält den Platzhalter <code>{"{{Body}}"}</code>.
