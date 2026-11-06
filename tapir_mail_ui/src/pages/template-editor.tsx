@@ -1,13 +1,18 @@
 import { IEmailTemplate } from "easy-email-editor";
-import React, { useEffect, useState } from "react";
-import { Button, Form, Modal } from "react-bootstrap";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, Button, Form, Modal } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import { EmailTemplateApi, TemplateTypeEnum } from "../api_client";
-import Editor, { EMPTY_PAGE } from "../components/editor";
+import Editor, { EMPTY_LAYOUT_PAGE, EMPTY_PAGE } from "../components/editor";
 import Loading from "../components/loading";
 import { useAlert } from "../contexts/alerts";
 import { useApi } from "../hooks/useApi";
-import { jsonToMjml, mjmlToJson } from "../utils/mjml";
+import {
+  containsLayoutBodySection,
+  jsonToMjml,
+  markLayoutBodyBlocks,
+  mjmlToJson,
+} from "../utils/mjml";
 
 const TemplateEditor = () => {
   const showAlert = useAlert();
@@ -23,8 +28,19 @@ const TemplateEditor = () => {
   );
   const [isDefaultLayout, setIsDefaultLayout] = useState(false);
   const [content, setContent] = useState<any>(EMPTY_PAGE);
+  const [savedContent, setSavedContent] = useState<any>(EMPTY_PAGE);
+  const [savedName, setSavedName] = useState("");
+  const [savedTemplateType, setSavedTemplateType] = useState<TemplateTypeEnum>(
+    TemplateTypeEnum.Start,
+  );
+  const [savedIsDefaultLayout, setSavedIsDefaultLayout] = useState(false);
+  const [hasLayoutBodyBlock, setHasLayoutBodyBlock] = useState(false);
+  const latestEditorContent = useRef<any>(EMPTY_PAGE);
   const [showSaveGateModal, setShowSaveGateModal] = useState(false);
   const [loading, setLoading] = useState(Boolean(id));
+  const [sourceMode, setSourceMode] = useState<"mjml" | "json" | null>(null);
+  const [sourceText, setSourceText] = useState("");
+  const [sourceError, setSourceError] = useState("");
 
   useEffect(() => {
     if (!id || !api || !showAlert || !navigate) return;
@@ -33,11 +49,22 @@ const TemplateEditor = () => {
     api
       .emailTemplateRetrieve({ id: id })
       .then((data) => {
+        const loadedTemplateType = data.templateType ?? TemplateTypeEnum.Start;
+        const loadedContent =
+          loadedTemplateType === TemplateTypeEnum.Layout
+            ? markLayoutBodyBlocks(mjmlToJson(data.content))
+            : mjmlToJson(data.content);
+        setContent(loadedContent);
+        setSavedContent(loadedContent);
+        setHasLayoutBodyBlock(containsLayoutBodySection(loadedContent));
         setId(data.id);
         setName(data.name);
-        setTemplateType(data.templateType ?? TemplateTypeEnum.Start);
-        setIsDefaultLayout(data.isDefaultLayout ?? false);
-        setContent(mjmlToJson(data.content));
+        setSavedName(data.name);
+        setTemplateType(loadedTemplateType);
+        setSavedTemplateType(loadedTemplateType);
+        const loadedIsDefaultLayout = data.isDefaultLayout ?? false;
+        setIsDefaultLayout(loadedIsDefaultLayout);
+        setSavedIsDefaultLayout(loadedIsDefaultLayout);
         setLoading(false);
       })
       .catch((err) => {
@@ -48,7 +75,7 @@ const TemplateEditor = () => {
   }, [id]);
 
   const handleBack = (values: IEmailTemplate) => {
-    if (values.content === content) {
+    if (values.content === savedContent) {
       navigate("/");
     } else {
       setShowSaveGateModal(true);
@@ -60,10 +87,10 @@ const TemplateEditor = () => {
 
     if (
       templateType === TemplateTypeEnum.Layout &&
-      !contentMjml.includes("{{Body}}")
+      !containsLayoutBodySection(values.content)
     ) {
       showAlert(
-        "Eine Layout-Vorlage muss den Platzhalter {{Body}} enthalten.",
+        "Eine Layout-Vorlage muss einen E-Mail-Inhalt-Block enthalten.",
         "danger",
       );
       return;
@@ -122,9 +149,17 @@ const TemplateEditor = () => {
           <Form.Control
             as="select"
             value={templateType}
-            onChange={(event) =>
-              setTemplateType(event.target.value as TemplateTypeEnum)
-            }
+            onChange={(event) => {
+              const newType = event.target.value as TemplateTypeEnum;
+              setTemplateType(newType);
+              if (
+                newType === TemplateTypeEnum.Layout &&
+                (latestEditorContent.current?.children?.length ?? 0) === 0
+              ) {
+                setContent(EMPTY_LAYOUT_PAGE);
+                setHasLayoutBodyBlock(true);
+              }
+            }}
           >
             <option value={TemplateTypeEnum.Start}>Start-Vorlage</option>
             <option value={TemplateTypeEnum.Layout}>Layout-Vorlage</option>
@@ -139,8 +174,8 @@ const TemplateEditor = () => {
               onChange={(event) => setIsDefaultLayout(event.target.checked)}
             />
             <span>
-              Füge den Platzhalter <code>{"{{Body}}"}</code> dort ein, wo der
-              E-Mail-Inhalt erscheinen soll.
+              Ziehe den Block <strong>E-Mail-Inhalt</strong> an die gewünschte
+              Stelle. Er enthält den Platzhalter <code>{"{{Body}}"}</code>.
             </span>
           </>
         )}
@@ -183,6 +218,12 @@ const TemplateEditor = () => {
           onTemplateNameChange={(name) => setName(name)}
           templateName={name}
           content={content}
+          showLayoutBodyBlock={templateType === TemplateTypeEnum.Layout}
+          layoutBodyBlockExists={hasLayoutBodyBlock}
+          onContentChange={(values) => {
+            latestEditorContent.current = values.content;
+            setHasLayoutBodyBlock(containsLayoutBodySection(values.content));
+          }}
         />
       )}
     </>

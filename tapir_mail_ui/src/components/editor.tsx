@@ -16,11 +16,16 @@ import "easy-email-extensions/lib/style.css";
 import { Alert, Button, Form } from "react-bootstrap";
 import { useWindowSize } from "react-use";
 import { useAlert } from "../contexts/alerts";
+import { BODY_BLOCK_TYPE } from "../constants/layout";
 import env from "../env";
 import { getMediaLibraryFileUrl } from "../utils/getMediaLibraryFileUrl";
-import { mjmlToJson } from "../utils/mjml";
+import {
+  LAYOUT_BODY_CSS_CLASS,
+  markLayoutBodyBlocks,
+  mjmlToJson,
+} from "../utils/mjml";
 import { addCsrfToken } from "../utils/requests";
-//import './CustomBlocks';
+import "./CustomBlocks";
 
 const customFontList = [
   {
@@ -55,11 +60,28 @@ const fontList = [
   { name: "Lato" },
 ].map(({ name }) => ({ value: name, label: name }));
 
-const categories: ExtensionProps["categories"] = [
+const DISABLED_BODY_BLOCK_TYPE = "TAPIR_MAIL_BODY_EXISTS";
+
+const getCategories = (
+  showLayoutBodyBlock: boolean,
+  layoutBodyBlockExists: boolean,
+): ExtensionProps["categories"] => [
   {
     label: "Content",
     active: true,
     blocks: [
+      ...(showLayoutBodyBlock
+        ? [
+            {
+              type: layoutBodyBlockExists
+                ? DISABLED_BODY_BLOCK_TYPE
+                : BODY_BLOCK_TYPE,
+              title: layoutBodyBlockExists
+                ? "E-Mail-Inhalt (bereits vorhanden)"
+                : "E-Mail-Inhalt",
+            },
+          ]
+        : []),
       {
         type: AdvancedType.TEXT,
       },
@@ -134,7 +156,18 @@ const createEmptyPage = () => {
   return mjmlToJson(createEmptyMjml());
 };
 
+const createEmptyLayoutPage = () => {
+  const layoutBodySection = `<mj-section css-class="${LAYOUT_BODY_CSS_CLASS}"><mj-column><mj-text>{{Body}}</mj-text></mj-column></mj-section>`;
+
+  return markLayoutBodyBlocks(
+    mjmlToJson(
+      createEmptyMjml().replace("</mj-body>", `${layoutBodySection}</mj-body>`),
+    ),
+  );
+};
+
 export const EMPTY_PAGE = createEmptyPage();
+export const EMPTY_LAYOUT_PAGE = createEmptyLayoutPage();
 
 type EditorProps = {
   onGoBack?: (values: IEmailTemplate) => void;
@@ -144,6 +177,9 @@ type EditorProps = {
   mergeTags?: any;
   content?: any;
   onContentChange?: (values: IEmailTemplate) => void;
+  showLayoutBodyBlock?: boolean;
+  layoutBodyBlockExists?: boolean;
+  hasUnsavedChanges?: boolean;
 };
 
 const Editor: React.FC<EditorProps> = ({
@@ -154,6 +190,9 @@ const Editor: React.FC<EditorProps> = ({
   templateName = "",
   mergeTags = {},
   content = EMPTY_PAGE,
+  showLayoutBodyBlock = false,
+  layoutBodyBlockExists = false,
+  hasUnsavedChanges = false,
 }) => {
   const showAlert = useAlert();
 
@@ -233,6 +272,9 @@ const Editor: React.FC<EditorProps> = ({
             onGoBack={onGoBack}
             onSave={onSave}
             content={content}
+            showLayoutBodyBlock={showLayoutBodyBlock}
+            layoutBodyBlockExists={layoutBodyBlockExists}
+            hasUnsavedChanges={hasUnsavedChanges}
           />
         )}
       </EmailEditorProvider>
@@ -249,6 +291,9 @@ type CustomEmailEditorProps = {
   onTemplateNameChange?: (name: string) => void;
   onGoBack?: (values: IEmailTemplate) => void;
   onSave?: (values: IEmailTemplate) => void;
+  showLayoutBodyBlock?: boolean;
+  layoutBodyBlockExists?: boolean;
+  hasUnsavedChanges?: boolean;
 };
 const CustomEmailEditor: FC<CustomEmailEditorProps> = ({
   onContentChange,
@@ -258,6 +303,9 @@ const CustomEmailEditor: FC<CustomEmailEditorProps> = ({
   onTemplateNameChange,
   onGoBack,
   onSave,
+  showLayoutBodyBlock = false,
+  layoutBodyBlockExists = false,
+  hasUnsavedChanges = false,
 }) => {
   const { width } = useWindowSize();
 
@@ -269,11 +317,13 @@ const CustomEmailEditor: FC<CustomEmailEditorProps> = ({
     }
   }, [values, onContentChange]);
 
-  const saveDisabled = templateName.length === 0 || content === values.content;
+  const saveDisabled =
+    templateName.length === 0 ||
+    (content === values.content && !hasUnsavedChanges);
   return (
     <StandardLayout
       compact={!smallScene}
-      categories={categories}
+      categories={getCategories(showLayoutBodyBlock, layoutBodyBlockExists)}
       // showSourceCode=true is needed to have a back button to see the block selection...
       showSourceCode
       jsonReadOnly

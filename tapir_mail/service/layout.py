@@ -8,7 +8,6 @@ MJ_BODY_RE = re.compile(r"<mj-body[^>]*>(.*)</mj-body>", re.DOTALL)
 # Matches the {{Body}} placeholder, tolerating whitespace: {{ Body }}.
 BODY_TOKEN_RE = re.compile(r"\{\{\s*Body\s*\}\}")
 
-
 # The visual editor cannot keep a bare {{Body}} text node at the top level of
 # <mj-body>. Layout templates therefore place the placeholder in a normal section
 # that carries this CSS class. At render time the whole section is replaced by the
@@ -19,6 +18,7 @@ BODY_PLACEHOLDER_SECTION_RE = re.compile(
     r".*?</mj-section>",
     re.DOTALL,
 )
+
 
 def extract_mj_body_inner(mjml: str) -> str:
     """
@@ -31,20 +31,20 @@ def extract_mj_body_inner(mjml: str) -> str:
     return match.group(1)
 
 
-def layout_contains_body_token(content: str) -> bool:
-    return BODY_TOKEN_RE.search(content or "") is not None
-
-
 def apply_layout(body_mjml: str, layout_mjml: str) -> str:
     """
-    Wrap an email body into a layout template by replacing the {{Body}} placeholder
-    of the layout with the inner content of the body's <mj-body> element.
-    """
-    if not layout_contains_body_token(layout_mjml):
-        raise TapirMailException("Layout-Vorlage enthält keinen {{Body}}-Platzhalter.")
+    Wrap an email body into a layout template.
 
+    Layout templates must contain a section marked with
+    BODY_PLACEHOLDER_CSS_CLASS. That whole section is replaced by the inner
+    content of the body's <mj-body> element.
+    """
     body_inner = extract_mj_body_inner(body_mjml)
-    return BODY_TOKEN_RE.sub(lambda _: body_inner, layout_mjml)
+
+    if not BODY_PLACEHOLDER_SECTION_RE.search(layout_mjml or ""):
+        raise TapirMailException("Layout-Vorlage enthält keinen E-Mail-Inhalt-Block.")
+
+    return BODY_PLACEHOLDER_SECTION_RE.sub(lambda _: body_inner, layout_mjml, count=1)
 
 
 def get_effective_layout(version):

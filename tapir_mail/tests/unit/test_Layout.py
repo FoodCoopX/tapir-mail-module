@@ -1,8 +1,8 @@
 from tapir_mail.exceptions import TapirMailException
 from tapir_mail.service.layout import (
+    BODY_PLACEHOLDER_CSS_CLASS,
     apply_layout,
     extract_mj_body_inner,
-    layout_contains_body_token,
 )
 from tapir_mail.tests.test_utils import TapirUnitTest
 
@@ -13,9 +13,17 @@ class LayoutTest(TapirUnitTest):
         "<mj-text>Hello</mj-text>"
         "</mj-body></mjml>"
     )
-    LAYOUT = (
+    LAYOUT_WITH_TOKEN = (
         "<mjml><mj-head></mj-head><mj-body>"
         "<mj-text>HEAD</mj-text>{{Body}}<mj-text>FOOT</mj-text>"
+        "</mj-body></mjml>"
+    )
+    LAYOUT_WITH_MARKER = (
+        "<mjml><mj-body>"
+        "<mj-section><mj-column><mj-text>HEAD</mj-text></mj-column></mj-section>"
+        f'<mj-section css-class="{BODY_PLACEHOLDER_CSS_CLASS}">'
+        "<mj-column><mj-text>{{Body}}</mj-text></mj-column></mj-section>"
+        "<mj-section><mj-column><mj-text>FOOT</mj-text></mj-column></mj-section>"
         "</mj-body></mjml>"
     )
 
@@ -28,27 +36,22 @@ class LayoutTest(TapirUnitTest):
             extract_mj_body_inner("<mj-text>Hello</mj-text>"),
         )
 
-    def test_applyLayout_layoutWithBareBodyToken_replacesToken(self):
-        self.assertEqual(
-            "<mjml><mj-head></mj-head><mj-body>"
-            "<mj-text>HEAD</mj-text><mj-text>Hello</mj-text><mj-text>FOOT</mj-text>"
-            "</mj-body></mjml>",
-            apply_layout(self.BODY, self.LAYOUT),
-        )
+    def test_applyLayout_layoutWithMarkerSection_replacesWholeSectionWithBody(self):
+        result = apply_layout(self.BODY, self.LAYOUT_WITH_MARKER)
 
-    def test_applyLayout_bodyWithoutMjBodyWrapper_insertsBodyAsIs(self):
-        result = apply_layout("<mj-text>Hello</mj-text>", self.LAYOUT)
         self.assertIn("<mj-text>HEAD</mj-text>", result)
         self.assertIn("<mj-text>Hello</mj-text>", result)
         self.assertIn("<mj-text>FOOT</mj-text>", result)
+        self.assertNotIn("{{Body}}", result)
+        self.assertNotIn(BODY_PLACEHOLDER_CSS_CLASS, result)
 
-    def test_applyLayout_layoutWithoutBodyToken_raisesException(self):
+    def test_applyLayout_layoutWithoutMarkerSection_raisesException(self):
         with self.assertRaises(TapirMailException):
-            apply_layout(self.BODY, "<mjml><mj-body></mj-body></mjml>")
+            apply_layout(self.BODY, self.LAYOUT_WITH_TOKEN)
 
-    def test_layoutContainsBodyToken_toleratesWhitespace(self):
-        self.assertTrue(layout_contains_body_token("{{Body}}"))
-        self.assertTrue(layout_contains_body_token("{{ Body }}"))
-        self.assertTrue(layout_contains_body_token("{{Body }}"))
-        self.assertFalse(layout_contains_body_token("<mjml></mjml>"))
-        self.assertFalse(layout_contains_body_token(""))
+    def test_applyLayout_bodyWithoutMjBodyWrapper_insertsBodyAsIs(self):
+        result = apply_layout("<mj-text>Hello</mj-text>", self.LAYOUT_WITH_MARKER)
+
+        self.assertIn("<mj-text>HEAD</mj-text>", result)
+        self.assertIn("<mj-text>Hello</mj-text>", result)
+        self.assertIn("<mj-text>FOOT</mj-text>", result)

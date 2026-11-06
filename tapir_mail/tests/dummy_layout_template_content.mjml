@@ -13,7 +13,11 @@
         <mj-text>LAYOUT HEADER</mj-text>
       </mj-column>
     </mj-section>
-    {{ Body }}
+    <mj-section css-class="tapir-layout-body">
+      <mj-column>
+        <mj-text>{{ Body }}</mj-text>
+      </mj-column>
+    </mj-section>
     <mj-section>
       <mj-column>
         <mj-text>LAYOUT FOOTER</mj-text>

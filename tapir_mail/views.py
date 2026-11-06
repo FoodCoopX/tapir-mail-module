@@ -65,7 +65,6 @@ from tapir_mail.service.layout import (
     BODY_PLACEHOLDER_SECTION_RE,
     BODY_TOKEN_RE,
     apply_layout,
-    layout_contains_body_token,
     render_email_mjml,
 )
 from tapir_mail.service.mjml import mjml2html
@@ -113,16 +112,11 @@ class EmailTemplateViewSet(viewsets.ModelViewSet):
         )
 
         if template_type == EmailTemplateType.LAYOUT:
-            if not layout_contains_body_token(content):
+            body_section_count = len(BODY_PLACEHOLDER_SECTION_RE.findall(content))
+            if body_section_count != 1:
                 raise ValidationError(
                     {
-                        "content": "Eine Layout-Vorlage muss den Platzhalter {{Body}} enthalten."
-                    }
-                )
-            if len(BODY_PLACEHOLDER_SECTION_RE.findall(content)) > 1:
-                raise ValidationError(
-                    {
-                        "content": "Eine Layout-Vorlage darf nur einen E-Mail-Inhalt-Block enthalten."
+                        "content": "Eine Layout-Vorlage muss genau einen E-Mail-Inhalt-Block enthalten."
                     }
                 )
             MailContentValidator.validate_tokens(

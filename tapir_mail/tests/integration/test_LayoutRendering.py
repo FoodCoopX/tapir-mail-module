@@ -1,7 +1,11 @@
 from django.core import mail
 
-from tapir_mail.models import EmailTemplateType, ReleaseStatus
+from tapir_mail.models import EmailTemplate, EmailTemplateType, ReleaseStatus
 from tapir_mail.service.email_dispatch import SendEmailBatch
+from tapir_mail.service.layout import (
+    BODY_PLACEHOLDER_CSS_CLASS,
+    get_effective_layout,
+)
 from tapir_mail.tests.factories import (
     EmailConfigurationDispatchFactory,
     EmailConfigurationVersionFactory,
@@ -14,9 +18,13 @@ from tapir_mail.tests.test_utils import TapirIntegrationTest
 class LayoutRenderingTest(TapirIntegrationTest):
     def setUp(self):
         super().setUp()
+        EmailTemplate.objects.all().delete()
+        self.layout_content = open(
+            "tapir_mail/tests/dummy_layout_template_content.mjml"
+        ).read()
         self.layout = EmailTemplateFactory.create(
             template_type=EmailTemplateType.LAYOUT,
-            content=open("tapir_mail/tests/dummy_layout_template_content.mjml").read(),
+            content=self.layout_content,
         )
         self.version = EmailConfigurationVersionFactory.create(
             status=ReleaseStatus.RELEASED,
@@ -43,6 +51,31 @@ class LayoutRenderingTest(TapirIntegrationTest):
         self.assertIn("LAYOUT HEADER", body)
         self.assertIn("This is a dummy email!", body)
         self.assertIn("LAYOUT FOOTER", body)
+
+    def test_getEffectiveLayout_layoutEnabledWithoutDefault_returnsNone(self):
+        self.version.layout_template = None
+
+        self.assertIsNone(get_effective_layout(self.version))
+
+    def test_sendEmailBatch_layoutEnabledExplicitLayoutAndDefaultLayout_usesExplicitLayout(
+        self,
+    ):
+        default_content = self.layout_content.replace(
+            "LAYOUT HEADER", "DEFAULT HEADER"
+        ).replace("LAYOUT FOOTER", "DEFAULT FOOTER")
+        EmailTemplateFactory.create(
+            template_type=EmailTemplateType.LAYOUT,
+            content=default_content,
+            is_default_layout=True,
+        )
+
+        self._send_one()
+
+        body = mail.outbox[0].body
+        self.assertIn("LAYOUT HEADER", body)
+        self.assertIn("LAYOUT FOOTER", body)
+        self.assertNotIn("DEFAULT HEADER", body)
+        self.assertNotIn("DEFAULT FOOTER", body)
 
     def test_sendEmailBatch_layoutEnabledWithoutExplicitLayout_usesGlobalDefault(self):
         self.layout.is_default_layout = True
@@ -77,4 +110,13 @@ class LayoutRenderingTest(TapirIntegrationTest):
         self.assertEqual(1, len(mail.outbox))
         body = mail.outbox[0].body
         self.assertNotIn("LAYOUT HEADER", body)
+        self.assertIn("This is a dummy email!", body)
+
+    def test_sendEmailBatch_layoutContentWithMarkerSection_replacesMarkerWithBody(self):
+        self.assertIn(BODY_PLACEHOLDER_CSS_CLASS, self.layout_content)
+
+        self._send_one()
+
+        body = mail.outbox[0].body
+        self.assertNotRegex(body, r"\{\{\s*Body\s*\}\}")
         self.assertIn("This is a dummy email!", body)
