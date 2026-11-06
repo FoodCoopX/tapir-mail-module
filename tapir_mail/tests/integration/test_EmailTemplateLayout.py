@@ -7,7 +7,7 @@ class EmailTemplateLayoutTest(TapirIntegrationTest):
     BODY_TOKEN = "{{Body}}"
     CONTENT = f"<mjml><mj-body>{BODY_TOKEN}</mj-body></mjml>"
 
-    def test_createLayoutTemplateWithBodyToken_isSaved(self):
+    def test_createEmailTemplate_layoutWithBodyToken_returns201(self):
         response = self._create(
             {
                 "name": "My layout",
@@ -20,7 +20,7 @@ class EmailTemplateLayoutTest(TapirIntegrationTest):
         template = EmailTemplate.objects.get()
         self.assertEqual(EmailTemplateType.LAYOUT, template.template_type)
 
-    def test_createLayoutTemplateWithoutBodyToken_returns400(self):
+    def test_createEmailTemplate_layoutWithoutBodyToken_returns400(self):
         response = self._create(
             {
                 "name": "My layout",
@@ -32,7 +32,7 @@ class EmailTemplateLayoutTest(TapirIntegrationTest):
         self.assertStatusCode(response, 400)
         self.assertEqual(0, EmailTemplate.objects.count())
 
-    def test_createStartTemplateWithDefaultLayout_returns400(self):
+    def test_createEmailTemplate_startTemplateAsDefaultLayout_returns400(self):
         response = self._create(
             {
                 "name": "My template",
@@ -45,7 +45,7 @@ class EmailTemplateLayoutTest(TapirIntegrationTest):
         self.assertStatusCode(response, 400)
         self.assertEqual(0, EmailTemplate.objects.count())
 
-    def test_markingSecondLayoutAsDefault_unsetsTheFirst(self):
+    def test_createEmailTemplate_secondLayoutAsDefault_unsetsTheFirst(self):
         first = EmailTemplateFactory.create(
             template_type=EmailTemplateType.LAYOUT,
             content=self.CONTENT,

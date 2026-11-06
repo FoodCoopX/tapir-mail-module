@@ -35,7 +35,7 @@ class LayoutRenderingTest(TapirIntegrationTest):
         )
         SendEmailBatch.send_email_dispatches()
 
-    def test_layoutEnabled_explicitLayout_wrapsBody(self):
+    def test_sendEmailBatch_layoutEnabledExplicitLayout_wrapsBodyWithLayout(self):
         self._send_one()
 
         self.assertEqual(1, len(mail.outbox))
@@ -44,7 +44,7 @@ class LayoutRenderingTest(TapirIntegrationTest):
         self.assertIn("This is a dummy email!", body)
         self.assertIn("LAYOUT FOOTER", body)
 
-    def test_layoutEnabled_noExplicitLayout_usesGlobalDefault(self):
+    def test_sendEmailBatch_layoutEnabledWithoutExplicitLayout_usesGlobalDefault(self):
         self.layout.is_default_layout = True
         self.layout.save()
         self.version.layout_template = None
@@ -57,7 +57,7 @@ class LayoutRenderingTest(TapirIntegrationTest):
         self.assertIn("LAYOUT HEADER", body)
         self.assertIn("This is a dummy email!", body)
 
-    def test_layoutDisabled_existingVersion_unchanged(self):
+    def test_sendEmailBatch_layoutDisabled_doesNotWrapBodyWithLayout(self):
         self.version.layout_enabled = False
         self.version.save()
 
@@ -68,7 +68,7 @@ class LayoutRenderingTest(TapirIntegrationTest):
         self.assertNotIn("LAYOUT HEADER", body)
         self.assertIn("This is a dummy email!", body)
 
-    def test_layoutEnabled_noLayoutAvailable_noLayoutApplied(self):
+    def test_sendEmailBatch_layoutEnabledWithoutAvailableLayout_doesNotWrapBody(self):
         self.version.layout_template = None
         self.version.save()
 
