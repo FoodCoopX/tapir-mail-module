@@ -605,8 +605,11 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
 
         content = serializer.validated_data["content"]
         layout_template_id = serializer.validated_data.get("layout_template_id", None)
+        layout_enabled = serializer.validated_data.get("layout_enabled", True)
 
-        if layout_template_id:
+        if not layout_enabled:
+            effective_mjml = content
+        elif layout_template_id:
             layout_template = EmailTemplate.objects.filter(
                 id=layout_template_id, template_type=EmailTemplateType.LAYOUT
             ).first()

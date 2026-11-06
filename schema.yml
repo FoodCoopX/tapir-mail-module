@@ -4002,6 +4002,8 @@ components:
         layout_template_id:
           type: string
           nullable: true
+        layout_enabled:
+          type: boolean
       required:
       - content
     PreviewResponse:

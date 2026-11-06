@@ -244,6 +244,7 @@ class PreviewSerializer(serializers.Serializer):
     layout_template_id = serializers.CharField(
         allow_null=True, allow_blank=True, required=False
     )
+    layout_enabled = serializers.BooleanField(required=False)
 
 
 class PreviewResponseSerializer(serializers.Serializer):

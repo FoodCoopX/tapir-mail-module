@@ -60,7 +60,7 @@ const EmailConfigurationEditor = () => {
   const [status, setStatus] = useState<StatusEnum>(StatusEnum.Draft);
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
-  const [layoutTemplateId, setLayoutTemplateId] = useState<string | null>(null);
+  const [layoutSelection, setLayoutSelection] = useState<string>("default");
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState<boolean>(false);
   const [tokens, setTokens] = useState<{
@@ -91,7 +91,16 @@ const EmailConfigurationEditor = () => {
   const fetchTemplates = () =>
     templateApi
       .emailTemplateList()
-      .then(setTemplates)
+      .then((templates) => {
+        setTemplates(templates);
+        const hasDefaultLayout = templates.some(
+          (template) =>
+            template.templateType === "layout" && template.isDefaultLayout,
+        );
+        if (!currentId && !hasDefaultLayout) {
+          setLayoutSelection("none");
+        }
+      })
       .catch((err) => {
         console.error(err);
         showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
@@ -130,7 +139,9 @@ const EmailConfigurationEditor = () => {
               ? data.triggers
               : EMPTY_TRIGGER,
           );
-          setLayoutTemplateId(data.layoutTemplateId ?? null);
+          setLayoutSelection(
+            data.layoutEnabled ? (data.layoutTemplateId ?? "default") : "none",
+          );
         })
         .catch((err) => {
           console.error(err);
@@ -174,8 +185,11 @@ const EmailConfigurationEditor = () => {
         subject: subject,
         content: jsonToMjml(content),
         name: mailingName,
-        layoutTemplateId: layoutTemplateId ?? undefined,
-        layoutEnabled: true,
+        layoutTemplateId:
+          layoutSelection === "none" || layoutSelection === "default"
+            ? null
+            : layoutSelection,
+        layoutEnabled: layoutSelection !== "none",
         releaseStatus: newStatus,
         triggers: cleanTriggers,
         segmentData: segmentData ?? {
@@ -320,6 +334,25 @@ const EmailConfigurationEditor = () => {
         segmentData.mailCategoryIdsAdditive.length >
         0) ||
     (currentId !== undefined && content !== loadedContent);
+  const defaultLayout = templates.find(
+    (template) =>
+      template.templateType === "layout" && template.isDefaultLayout,
+  );
+
+  useEffect(() => {
+    if (
+      templates.length > 0 &&
+      !defaultLayout &&
+      layoutSelection === "default"
+    ) {
+      setLayoutSelection("none");
+    }
+  }, [templates, defaultLayout, layoutSelection]);
+  const layoutEnabled = layoutSelection !== "none";
+  const layoutTemplateId =
+    layoutSelection === "none" || layoutSelection === "default"
+      ? null
+      : layoutSelection;
   const releaseButtonDisabled =
     saveButtonDisabled || !subject || !segmentChoosen || missingTrigger;
 
@@ -329,7 +362,8 @@ const EmailConfigurationEditor = () => {
       .emailConfigurationVersionPreview({
         previewRequest: {
           content: jsonToMjml(content),
-          layoutTemplateId: layoutTemplateId ?? undefined,
+          layoutTemplateId: layoutTemplateId,
+          layoutEnabled: layoutEnabled,
         },
       })
       .then((data) => {
@@ -412,12 +446,18 @@ const EmailConfigurationEditor = () => {
               <Form.Label>Layout</Form.Label>
               <Form.Control
                 as="select"
-                value={layoutTemplateId ?? ""}
-                onChange={(event) =>
-                  setLayoutTemplateId(event.target.value || null)
-                }
+                value={layoutSelection}
+                onChange={(event) => setLayoutSelection(event.target.value)}
               >
-                <option value="">Standard-Layout (globaler Standard)</option>
+                <option
+                  value="default"
+                  disabled={!defaultLayout}
+                >
+                  {defaultLayout
+                    ? `Standard-Layout: ${defaultLayout.name}`
+                    : "Standard-Layout (nicht gesetzt)"}
+                </option>
+                <option value="none">Kein Layout (nur Inhalt)</option>
                 {templates
                   .filter((t: EmailTemplate) => t.templateType === "layout")
                   .map((t: EmailTemplate) => (
@@ -429,6 +469,11 @@ const EmailConfigurationEditor = () => {
                     </option>
                   ))}
               </Form.Control>
+              <Form.Text className="text-muted">
+                Das Layout legt Kopf- und Fußzeile sowie das Grunddesign fest.
+                Mit „Kein Layout“ wird nur der E-Mail-Inhalt versendet. Ein
+                Standard-Layout muss zuerst in den Vorlagen aktiviert werden.
+              </Form.Text>
             </Form.Group>
             <br />
             <div
