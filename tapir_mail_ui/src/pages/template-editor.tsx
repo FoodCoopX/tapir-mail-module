@@ -143,6 +143,57 @@ const TemplateEditor = () => {
   };
 
   const handleCloseModal = () => setShowSaveGateModal(false);
+  const openSourceEditor = (mode: "mjml" | "json") => {
+    setSourceMode(mode);
+    setSourceError("");
+    setSourceText(
+      mode === "mjml"
+        ? jsonToMjml(latestEditorContent.current)
+        : JSON.stringify(latestEditorContent.current, null, 2),
+    );
+  };
+
+  const closeSourceEditor = () => {
+    setSourceMode(null);
+    setSourceError("");
+  };
+
+  const applySource = () => {
+    try {
+      const parsed =
+        sourceMode === "mjml" ? mjmlToJson(sourceText) : JSON.parse(sourceText);
+      if (
+        !parsed ||
+        parsed.type !== "page" ||
+        !Array.isArray(parsed.children)
+      ) {
+        throw new Error("Der Quelltext enthält keine gültige Vorlage.");
+      }
+
+      const nextContent =
+        templateType === TemplateTypeEnum.Layout
+          ? markLayoutBodyBlocks(parsed)
+          : parsed;
+
+      if (
+        templateType === TemplateTypeEnum.Layout &&
+        !containsLayoutBodySection(nextContent)
+      ) {
+        throw new Error(
+          "Eine Layout-Vorlage muss genau einen E-Mail-Inhalt-Block enthalten.",
+        );
+      }
+      setContent(nextContent);
+      setHasLayoutBodyBlock(containsLayoutBodySection(nextContent));
+      closeSourceEditor();
+    } catch (error) {
+      setSourceError(
+        error instanceof Error
+          ? error.message
+          : "Der Quelltext konnte nicht gelesen werden.",
+      );
+    }
+  };
   return (
     <>
       <div
@@ -202,7 +253,72 @@ const TemplateEditor = () => {
             </span>
           </>
         )}
+        <Button
+          size="sm"
+          variant="outline-secondary"
+          onClick={() => openSourceEditor("mjml")}
+        >
+          MJML-Quelltext
+        </Button>
+        <Button
+          size="sm"
+          variant="outline-secondary"
+          onClick={() => openSourceEditor("json")}
+        >
+          JSON-Quelltext
+        </Button>
       </div>
+      <Modal
+        show={sourceMode !== null}
+        onHide={closeSourceEditor}
+        centered={true}
+        size="xl"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {sourceMode === "mjml"
+              ? "MJML-Quelltext bearbeiten"
+              : "JSON-Quelltext bearbeiten"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="text-muted">
+            Beim Übernehmen wird der Inhalt des Editors vollständig durch den
+            Quelltext ersetzt. Layout-Vorlagen benötigen einen
+            E-Mail-Inhalt-Block.
+          </p>
+          <Form.Control
+            as="textarea"
+            rows={22}
+            value={sourceText}
+            onChange={(event) => setSourceText(event.target.value)}
+            spellCheck={false}
+            style={{ fontFamily: "monospace", fontSize: "0.85rem" }}
+          />
+          {sourceError && (
+            <Alert
+              variant="danger"
+              className="mt-3 mb-0"
+            >
+              {sourceError}
+            </Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={closeSourceEditor}
+          >
+            Abbrechen
+          </Button>
+          <Button
+            variant="primary"
+            onClick={applySource}
+          >
+            Übernehmen
+          </Button>
+        </Modal.Footer>
+      </Modal>
       <Modal
         show={showSaveGateModal}
         onHide={handleCloseModal}
