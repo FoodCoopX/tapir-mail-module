@@ -15,6 +15,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -28,6 +29,7 @@ from tapir_mail.models import (
     EmailConfigurationVersion,
     EmailDispatch,
     EmailTemplate,
+    EmailTemplateType,
     ReleaseStatus,
     StaticSegment,
     StaticSegmentRecipient,
@@ -55,8 +57,17 @@ from tapir_mail.serializers import (
     MailCategorySerializer,
     AvailableSegmentsResponseSerializer,
     SegmentOptionSerializer,
+    PreviewSerializer,
+    PreviewResponseSerializer,
 )
 from tapir_mail.service.email import prepare_email
+from tapir_mail.service.layout import (
+    BODY_PLACEHOLDER_SECTION_RE,
+    BODY_TOKEN_RE,
+    apply_layout,
+    render_email_mjml,
+)
+from tapir_mail.service.mjml import mjml2html
 from tapir_mail.service.email_dispatch import RetryEmailDispatch
 from tapir_mail.service.external_recipient_manager import ExternalRecipientManager
 from tapir_mail.service.mail_content_validator import MailContentValidator
@@ -77,6 +88,56 @@ LOG = logging.getLogger(__name__)
 class EmailTemplateViewSet(viewsets.ModelViewSet):
     queryset = EmailTemplate.objects.all()
     serializer_class = EmailTemplateSerializer
+
+    def perform_create(self, serializer):
+        self.validate_layout(serializer)
+        self.save_with_single_default_layout(serializer)
+
+    def perform_update(self, serializer):
+        self.validate_layout(serializer)
+        self.save_with_single_default_layout(serializer)
+
+    @staticmethod
+    def validate_layout(serializer):
+        template_type = serializer.validated_data.get(
+            "template_type",
+            getattr(serializer.instance, "template_type", EmailTemplateType.START),
+        )
+        content = serializer.validated_data.get(
+            "content", getattr(serializer.instance, "content", "")
+        )
+        is_default_layout = serializer.validated_data.get(
+            "is_default_layout",
+            getattr(serializer.instance, "is_default_layout", False),
+        )
+
+        if template_type == EmailTemplateType.LAYOUT:
+            body_section_count = len(BODY_PLACEHOLDER_SECTION_RE.findall(content))
+            if body_section_count != 1:
+                raise ValidationError(
+                    {
+                        "content": "Eine Layout-Vorlage muss genau einen E-Mail-Inhalt-Block enthalten."
+                    }
+                )
+            MailContentValidator.validate_tokens(
+                mail_content=BODY_TOKEN_RE.sub("", content),
+                trigger_datas=[],
+            )
+        elif is_default_layout:
+            raise ValidationError(
+                {
+                    "is_default_layout": "Nur Layout-Vorlagen können als Standard markiert werden."
+                }
+            )
+
+    @staticmethod
+    def save_with_single_default_layout(serializer):
+        with transaction.atomic():
+            if serializer.validated_data.get("is_default_layout"):
+                EmailTemplate.objects.filter(is_default_layout=True).exclude(
+                    id=getattr(serializer.instance, "id", None)
+                ).update(is_default_layout=False)
+            serializer.save()
 
 
 class PaginatedEmailTemplateViewSet(EmailTemplateViewSet):
@@ -154,6 +215,8 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
             "triggers",
             "dynamic_segments_additive",
             "dynamic_segments_subtractive",
+            "layout_template",
+            "layout_enabled",
         ]
         version_copy_destination = EmailConfigurationVersion.objects.create(
             **{
@@ -299,6 +362,19 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
             )
         )
 
+        layout_template_id = serializer.validated_data.get("layout_template_id", None)
+        has_default_layout = EmailTemplate.objects.filter(
+            template_type=EmailTemplateType.LAYOUT, is_default_layout=True
+        ).exists()
+        new_version.layout_template_id = layout_template_id
+        new_version.layout_enabled = serializer.validated_data.get(
+            "layout_enabled",
+            layout_template_id is not None or has_default_layout,
+        )
+        if not new_version.layout_enabled:
+            new_version.layout_template_id = None
+        new_version.save()
+
         if release_status == ReleaseStatus.RELEASED:
             new_version.release()
 
@@ -368,6 +444,16 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                 id__in=segment_data.get("mail_category_ids_additive", [])
             )
         )
+
+        if "layout_template_id" in serializer.validated_data:
+            updated_version.layout_template_id = serializer.validated_data[
+                "layout_template_id"
+            ]
+        updated_version.layout_enabled = serializer.validated_data.get(
+            "layout_enabled", updated_version.layout_enabled
+        )
+        if not updated_version.layout_enabled:
+            updated_version.layout_template_id = None
         updated_version.save()
 
         if release_status == ReleaseStatus.RELEASED:
@@ -404,6 +490,8 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
                         "id", flat=True
                     ),
                 },
+                "layout_template_id": version.layout_template_id,
+                "layout_enabled": version.layout_enabled,
                 "triggers": version.triggers,
             }
         )
@@ -487,7 +575,7 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
 
         for email in recipients_list:
             mjml = replace_tokens(
-                email_version_configuration.content,
+                render_email_mjml(email_version_configuration),
                 {"email": email},
                 strict_token_validation=False,
             )
@@ -503,6 +591,54 @@ class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
         return Response(
             status=status.HTTP_200_OK,
             data={"message": f"Test email sent to: {', '.join(recipients_list)}"},
+        )
+
+    @extend_schema(
+        request=PreviewSerializer,
+        responses={200: PreviewResponseSerializer},
+        operation_id="email_configuration_version_preview",
+    )
+    @action(detail=False, methods=["post"])
+    def preview(self, request):
+        serializer = PreviewSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        content = serializer.validated_data["content"]
+        layout_template_id = serializer.validated_data.get("layout_template_id", None)
+        layout_enabled = serializer.validated_data.get("layout_enabled", True)
+
+        if not layout_enabled:
+            effective_mjml = content
+        elif layout_template_id:
+            layout_template = EmailTemplate.objects.filter(
+                id=layout_template_id, template_type=EmailTemplateType.LAYOUT
+            ).first()
+            if layout_template is None:
+                return Response(
+                    {"message": f"Unknown layout template: {layout_template_id}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            effective_mjml = apply_layout(content, layout_template.content)
+        else:
+            default_layout = EmailTemplate.objects.filter(
+                template_type=EmailTemplateType.LAYOUT, is_default_layout=True
+            ).first()
+            effective_mjml = (
+                apply_layout(content, default_layout.content)
+                if default_layout is not None
+                else content
+            )
+
+        try:
+            mjml = replace_tokens(effective_mjml, strict_token_validation=False)
+            html = mjml2html(mjml)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            PreviewResponseSerializer({"html": html}).data,
+            status=status.HTTP_200_OK,
         )
 
 
@@ -955,6 +1091,10 @@ class CreateMissingTriggerMailView(APIView):
                     "trigger_field_values": {"key": trigger_key},
                 }
             ],
+            layout_enabled=EmailTemplate.objects.filter(
+                template_type=EmailTemplateType.LAYOUT,
+                is_default_layout=True,
+            ).exists(),
         )
 
         return Response("OK", status=status.HTTP_200_OK)

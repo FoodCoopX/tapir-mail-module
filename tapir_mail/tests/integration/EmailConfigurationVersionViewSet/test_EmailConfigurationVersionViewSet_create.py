@@ -3,12 +3,14 @@ import json
 
 from tapir_mail.models import (
     EmailConfigurationVersion,
+    EmailTemplateType,
     ReleaseStatus,
     EmailConfiguration,
     EmailConfigurationDispatch,
 )
 from tapir_mail.registries import mail_segment_providers
 from tapir_mail.tests.factories import (
+    EmailTemplateFactory,
     MailSegmentFactory,
     EmailConfigurationFactory,
     EmailConfigurationVersionFactory,
@@ -152,6 +154,24 @@ class TestEmailConfigurationVersionViewSetCreate(TapirIntegrationTest):
             older_release.updated_at,
             "The updated_at field should not get updated on archive",
         )
+
+    def test_createEmailConfigurationVersion_layoutDisabled_savesVersionWithoutLayout(
+        self,
+    ):
+        layout = EmailTemplateFactory.create(
+            template_type=EmailTemplateType.LAYOUT,
+            content="<mjml><mj-body><mj-text>{{Body}}</mj-text></mj-body></mjml>",
+        )
+        post_data = self.get_minimal_post_data()
+        post_data["layout_template_id"] = layout.id
+        post_data["layout_enabled"] = False
+
+        response = self._send_request(post_data)
+
+        self.assertStatusCode(response, 201)
+        version = EmailConfigurationVersion.objects.get()
+        self.assertFalse(version.layout_enabled)
+        self.assertIsNone(version.layout_template_id)
 
     def get_minimal_post_data(self):
         return {

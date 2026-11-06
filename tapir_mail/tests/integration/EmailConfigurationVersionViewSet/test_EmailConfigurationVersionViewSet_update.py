@@ -1,11 +1,13 @@
 from tapir_mail.models import (
     EmailConfigurationVersion,
+    EmailTemplateType,
     ReleaseStatus,
     EmailConfigurationDispatch,
 )
 from tapir_mail.registries import mail_segment_providers
 
 from tapir_mail.tests.factories import (
+    EmailTemplateFactory,
     MailSegmentFactory,
     EmailConfigurationVersionFactory,
     EmailConfigurationDispatchFactory,
@@ -132,6 +134,38 @@ class TestEmailConfigurationVersionViewSetUpdate(TapirIntegrationTest):
         self.assertEqual(
             sent_dispatch.id, EmailConfigurationDispatch.objects.first().id
         )
+
+    def test_updateEmailConfigurationVersion_layoutDisabled_clearsLayout(self):
+        layout = EmailTemplateFactory.create(
+            template_type=EmailTemplateType.LAYOUT,
+            content="<mjml><mj-body><mj-text>{{Body}}</mj-text></mj-body></mjml>",
+        )
+        version = EmailConfigurationVersionFactory.create(
+            layout_enabled=True,
+            layout_template=layout,
+        )
+        put_data = {
+            "name": "Name after",
+            "content": "Content after",
+            "subject": "Subject after",
+            "release_status": ReleaseStatus.DRAFT,
+            "triggers": [],
+            "segment_data": {
+                "dynamic_segment_names_additive": [],
+                "dynamic_segment_names_subtractive": [],
+                "static_segment_ids_additive": [],
+                "static_segment_ids_subtractive": [],
+                "mail_category_ids_additive": [],
+            },
+            "layout_enabled": False,
+        }
+
+        response = self._send_request(version.id, put_data)
+
+        self.assertStatusCode(response, 200)
+        version.refresh_from_db()
+        self.assertFalse(version.layout_enabled)
+        self.assertIsNone(version.layout_template_id)
 
     def _send_request(self, email_configuration_version_id: str, put_data: dict | None):
         return self.apiClient.put(

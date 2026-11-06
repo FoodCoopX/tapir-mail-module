@@ -6,8 +6,9 @@ import Tooltip from "react-bootstrap/Tooltip";
 interface TapirTooltipProps {
   id: string;
   children: ReactNode;
-  text: string;
+  text: ReactNode;
   enabled?: boolean;
+  placement?: "auto" | "top" | "bottom" | "left" | "right";
 }
 
 const TapirTooltip: React.FC<TapirTooltipProps> = ({
@@ -15,10 +16,14 @@ const TapirTooltip: React.FC<TapirTooltipProps> = ({
   children,
   text,
   enabled = true,
+  placement,
 }) => {
   const overlay = enabled ? <Tooltip id={id}>{text}</Tooltip> : <></>;
   return (
-    <OverlayTrigger overlay={overlay}>
+    <OverlayTrigger
+      overlay={overlay}
+      placement={placement}
+    >
       <span>{children}</span>
     </OverlayTrigger>
   );

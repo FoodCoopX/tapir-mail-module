@@ -12,6 +12,7 @@ from tapir_mail.models import (
     EmailDispatch,
     EmailTemplate,
     ReleaseStatus,
+    EmailTemplateType,
     StaticSegment,
     StaticSegmentRecipient,
     MailCategory,
@@ -70,9 +71,15 @@ class TriggersSerializationMixin(metaclass=serializers.SerializerMetaclass):
 
 
 class EmailTemplateSerializer(serializers.ModelSerializer):
+    # Declared explicitly so DRF does not attach an auto-generated UniqueValidator
+    # for the partial "single default layout" UniqueConstraint. That rule is enforced
+    # in EmailTemplateViewSet.
+    is_default_layout = serializers.BooleanField(required=False)
+
     class Meta:
         model = EmailTemplate
         fields = "__all__"
+        validators = []
 
 
 class EmailConfigurationSerializer(serializers.ModelSerializer):
@@ -217,6 +224,31 @@ class BundledEmailConfigurationSerializer(
     release_status = serializers.CharField()
     updated_at = serializers.DateTimeField(allow_null=True, required=False)
     segment_data = SegmentDataSerializer()
+    layout_template_id = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False
+    )
+    layout_enabled = serializers.BooleanField(required=False)
+
+    def validate_layout_template_id(self, value):
+        if value in (None, ""):
+            return None
+        if not EmailTemplate.objects.filter(
+            id=value, template_type=EmailTemplateType.LAYOUT
+        ).exists():
+            raise serializers.ValidationError("Unbekannte Layout-Vorlage.")
+        return value
+
+
+class PreviewSerializer(serializers.Serializer):
+    content = serializers.CharField()
+    layout_template_id = serializers.CharField(
+        allow_null=True, allow_blank=True, required=False
+    )
+    layout_enabled = serializers.BooleanField(required=False)
+
+
+class PreviewResponseSerializer(serializers.Serializer):
+    html = serializers.CharField()
 
 
 class EmailConfigurationDispatchSerializer(serializers.Serializer):
