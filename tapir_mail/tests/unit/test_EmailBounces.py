@@ -1,14 +1,24 @@
 from email.message import Message
 from unittest.mock import patch, Mock, call
 
+from django.conf import settings
 from django.test import override_settings
 
 from tapir_mail.models import EmailDispatch
 from tapir_mail.service.email_bounces import EmailBounces
 from tapir_mail.tests.test_utils import TapirUnitTest
-from tapir_mail_server import settings
+
+BOUNCE_DOMAIN = "mail.net"
+BOUNCE_ADDRESS = f"bounce@{BOUNCE_DOMAIN}"
+BOUNCE_USER = "Test bounce user"
+BOUNCE_PASSWORD = "Email bounce password"
 
 
+@override_settings(
+    EMAIL_BOUNCE_ADDRESS=BOUNCE_ADDRESS,
+    EMAIL_BOUNCE_USER=BOUNCE_USER,
+    EMAIL_BOUNCE_PASSWORD=BOUNCE_PASSWORD,
+)
 class TestEmailBounces(TapirUnitTest):
     @patch("tapir_mail.service.email_bounces.IMAP4_SSL")
     def test_checkForBounces_loginFails_raisesException(
@@ -28,6 +38,15 @@ class TestEmailBounces(TapirUnitTest):
             settings.EMAIL_BOUNCE_USER, settings.EMAIL_BOUNCE_PASSWORD
         )
         mock_mail_client.search.assert_not_called()
+
+    @override_settings(EMAIL_BOUNCE_USER=None, EMAIL_BOUNCE_PASSWORD=None)
+    @patch("tapir_mail.service.email_bounces.IMAP4_SSL")
+    def test_checkForBounces_missingCredentials_doesNothing(
+        self, mock_mail_client_constructor: Mock
+    ):
+        EmailBounces.check_for_bounces()
+
+        mock_mail_client_constructor.assert_not_called()
 
     @patch("tapir_mail.service.email_bounces.IMAP4_SSL")
     def test_checkForBounces_searchFails_raisesExceptionAndLogsOut(
@@ -49,7 +68,7 @@ class TestEmailBounces(TapirUnitTest):
         )
         mock_mail_client.select.assert_called_once()
         mock_mail_client.search.assert_called_once_with(
-            None, '(UNSEEN HEADER X-Original-To "@mail.net")'
+            None, f'(UNSEEN HEADER X-Original-To "@{BOUNCE_DOMAIN}")'
         )
         mock_mail_client.logout.assert_called_once_with()
 
@@ -73,7 +92,7 @@ class TestEmailBounces(TapirUnitTest):
         )
         mock_mail_client.select.assert_called_once()
         mock_mail_client.search.assert_called_once_with(
-            None, '(UNSEEN HEADER X-Original-To "@mail.net")'
+            None, f'(UNSEEN HEADER X-Original-To "@{BOUNCE_DOMAIN}")'
         )
         self.assertEqual(6, mock_process_message.call_count)
         mock_process_message.assert_has_calls(
@@ -283,7 +302,7 @@ class TestEmailBounces(TapirUnitTest):
         message = Message()
         message["Message-Id"] = message_uid
         message["Return-Path"] = "<>"
-        message["To"] = "bounce+dispatch_id@mail.net"
+        message["To"] = f"bounce+dispatch_id@{BOUNCE_DOMAIN}"
         mock_message_from_bytes.return_value = message
         mock_filter.return_value = Mock()
         mock_dispatch = Mock()
@@ -303,20 +322,20 @@ class TestEmailBounces(TapirUnitTest):
 
     def test_belongsToThisInstance_ownAddressWithVerpExtension_returnsTrue(self):
         message = Message()
-        message["X-Original-To"] = "bounce+dispatch_id@mail.net"
+        message["X-Original-To"] = f"bounce+dispatch_id@{BOUNCE_DOMAIN}"
 
         self.assertTrue(EmailBounces.belongs_to_this_instance(message))
 
     def test_belongsToThisInstance_ownAddressWithoutVerpExtension_returnsTrue(self):
         # Keycloak sends with the plain bounce address, without a dispatch id
         message = Message()
-        message["X-Original-To"] = "bounce@mail.net"
+        message["X-Original-To"] = BOUNCE_ADDRESS
 
         self.assertTrue(EmailBounces.belongs_to_this_instance(message))
 
     def test_belongsToThisInstance_sameDomainButOtherLocalPart_returnsFalse(self):
         message = Message()
-        message["X-Original-To"] = "other-bounce+dispatch_id@mail.net"
+        message["X-Original-To"] = f"other-bounce+dispatch_id@{BOUNCE_DOMAIN}"
 
         self.assertFalse(EmailBounces.belongs_to_this_instance(message))
 
