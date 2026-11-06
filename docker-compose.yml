@@ -1,3 +1,17 @@
+x-tapir-environment: &tapir-environment
+  VIRTUAL_HOST: localhost
+  DEBUG: 1
+  EMAIL_ENV: prod
+  EMAIL_HOST: mailpit
+  EMAIL_PORT: 1025
+  EMAIL_USE_TLS: False
+  EMAIL_USE_SSL: False
+  EMAIL_HOST_SENDER: tapir@example.com
+  EMAIL_HOST_SENDER_NAME: Test Tapir
+  EMAIL_HOST_USER: test
+  EMAIL_HOST_PASSWORD: test
+  EMAIL_BOUNCE_ADDRESS: tapir@example.com
+
 services:
   web:
     build:
@@ -8,9 +22,7 @@ services:
       - .:/app
     ports:
       - "8000:8000"
-    environment:
-      VIRTUAL_HOST: localhost
-      DEBUG: 1
+    environment: *tapir-environment
     depends_on:
       - redis
       - db
@@ -36,8 +48,7 @@ services:
     image: *django-image
     command: bash -c "poetry run celery -A tapir_mail_server worker -l info"
     volumes: *volumes-django
-    environment:
-      DEBUG: 1
+    environment: *tapir-environment
     depends_on:
       - redis
 
@@ -45,8 +56,7 @@ services:
     image: *django-image
     command: bash -c "poetry run celery -A tapir_mail_server beat -l info --schedule /tmp/celerybeat-schedule"
     volumes: *volumes-django
-    environment:
-      DEBUG: 1
+    environment: *tapir-environment
     depends_on:
       - redis
 
@@ -54,8 +64,7 @@ services:
     image: *django-image
     command: bash -c "poetry run celery -A tapir_mail_server flower"
     volumes: *volumes-django
-    environment:
-      DEBUG: 1
+    environment: *tapir-environment
     ports:
       - "5555:5555"
     depends_on:
@@ -69,3 +78,13 @@ services:
       - POSTGRES_USER=tapir
     ports:
       - "5432:5432"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      - MP_SMTP_AUTH_ALLOW_INSECURE=true
+      - MP_SMTP_AUTH_ACCEPT_ANY=true
+    ports:
+      - "8025:8025"
+      - "1025:1025"

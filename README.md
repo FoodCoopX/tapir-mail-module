@@ -43,6 +43,14 @@ you want to access everything from the Django server, run
 docker compose exec react bash ./scripts/bundle.sh
 ```
 
+### Testing mail integration
+
+To make testing mail integration convenient, all outgoing mailis forwarded to a
+[Mailpit](https://mailpit.axllent.org/) instance. This prevents leaking test emails to any real inboxes.
+
+- Web UI: [http://localhost:8025](http://localhost:8025)
+- SMTP: `mailpit:1025` inside the compose network, `localhost:1025` from the host
+
 ### Locally without docker or during deployment
 
 If you want to run the server without Docker, or if you want to know what you need to install on your production
