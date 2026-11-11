@@ -44,6 +44,8 @@ describe("StoredUploadsCard", () => {
         itemCount={storedUploads.length}
         currentPage={0}
         goToPage={() => null}
+        searchTerm=""
+        onSearchTermChange={() => null}
       />,
     );
 
@@ -78,6 +80,8 @@ describe("StoredUploadsCard", () => {
         itemCount={storedUploads.length}
         currentPage={0}
         goToPage={() => null}
+        searchTerm=""
+        onSearchTermChange={() => null}
       />,
     );
 
@@ -88,6 +92,12 @@ describe("StoredUploadsCard", () => {
 
     expect(image).toHaveAttribute(
       "src",
+      expect.stringContaining(
+        "api/media_library/get_file/" + uploadImage.uploadId,
+      ),
+    );
+    expect(image.closest("a")).toHaveAttribute(
+      "href",
       expect.stringContaining(
         "api/media_library/get_file/" + uploadImage.uploadId,
       ),
@@ -112,6 +122,8 @@ describe("StoredUploadsCard", () => {
         itemCount={storedUploads.length}
         currentPage={0}
         goToPage={() => null}
+        searchTerm=""
+        onSearchTermChange={() => null}
       />,
     );
 
@@ -142,6 +154,8 @@ describe("StoredUploadsCard", () => {
         itemCount={25}
         currentPage={1}
         goToPage={goToPage}
+        searchTerm=""
+        onSearchTermChange={() => null}
       />,
     );
 
@@ -161,6 +175,8 @@ describe("StoredUploadsCard", () => {
         itemCount={1}
         currentPage={0}
         goToPage={() => null}
+        searchTerm=""
+        onSearchTermChange={() => null}
       />,
     );
 
@@ -172,5 +188,43 @@ describe("StoredUploadsCard", () => {
     );
 
     expect(mock_api_client.storeduploadsDestroy).not.toHaveBeenCalled();
+  });
+
+  test("Typing in the search field reports the search term", async () => {
+    const onSearchTermChange = jest.fn();
+
+    render(
+      <StoredUploadsCard
+        storedUploads={[upload1]}
+        updateStoredUploadsList={() => null}
+        apiClient={new MediaLibraryApi()}
+        itemCount={1}
+        currentPage={0}
+        goToPage={() => null}
+        searchTerm=""
+        onSearchTermChange={onSearchTermChange}
+      />,
+    );
+
+    await userEvent.type(screen.getByLabelText("Dateiname suchen"), "a");
+
+    expect(onSearchTermChange).toHaveBeenCalledWith("a");
+  });
+
+  test("Empty search result shows a message", () => {
+    render(
+      <StoredUploadsCard
+        storedUploads={[]}
+        updateStoredUploadsList={() => null}
+        apiClient={new MediaLibraryApi()}
+        itemCount={0}
+        currentPage={0}
+        goToPage={() => null}
+        searchTerm="unbekannt"
+        onSearchTermChange={() => null}
+      />,
+    );
+
+    expect(screen.getByText("Keine Dateien gefunden")).toBeInTheDocument();
   });
 });

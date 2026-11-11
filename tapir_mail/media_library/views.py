@@ -27,7 +27,9 @@ from django.views.generic import View
 from django_drf_filepond.api import store_upload, delete_stored_upload
 from django_drf_filepond.models import TemporaryUpload, StoredUpload
 from drf_spectacular.utils import extend_schema_view, extend_schema
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.filters import SearchFilter
 from rest_framework.pagination import LimitOffsetPagination
 
 from tapir_mail.media_library.serializers import (
@@ -138,6 +140,8 @@ class StoredUploadViewSet(viewsets.ModelViewSet):
     serializer_class = StoredUploadSerializer
     queryset = StoredUpload.objects.order_by("-stored")
     pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ["file"]
 
 
 def get_file_view(request, upload_id: str):

@@ -2,7 +2,7 @@ import React, { ReactNode, useState } from "react";
 import { DocumentDuplicateIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 import "filepond/dist/filepond.min.css";
-import { Badge, Card, Table } from "react-bootstrap";
+import { Badge, Card, Form, Table } from "react-bootstrap";
 import { MediaLibraryApi, StoredUpload } from "../../api_client";
 import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
 import TapirPagination from "../TapirPagination";
@@ -14,6 +14,8 @@ import TapirHelpButton from "../TapirHelpButton";
 import ConfirmDeleteModal from "../ConfirmDeleteModal";
 
 interface StoredUploadsCardProps {
+  searchTerm: string;
+  onSearchTermChange: (searchTerm: string) => void;
   uploader?: ReactNode;
   storedUploads: StoredUpload[];
   apiClient: MediaLibraryApi;
@@ -51,11 +53,13 @@ export default function StoredUploadsCard(props: StoredUploadsCardProps) {
       : undefined;
     if (fileExtension && ["png", "jpg", "jpeg"].includes(fileExtension)) {
       return (
-        <img
-          src={getMediaLibraryFileUrl(storedUpload.uploadId)}
-          style={{ maxHeight: "100px", maxWidth: "100px" }}
-          alt="Bildvorschau"
-        ></img>
+        <a href={getMediaLibraryFileUrl(storedUpload.uploadId)}>
+          <img
+            src={getMediaLibraryFileUrl(storedUpload.uploadId)}
+            style={{ maxHeight: "100px", maxWidth: "100px" }}
+            alt="Bildvorschau"
+          ></img>
+        </a>
       );
     }
     return (
@@ -71,28 +75,39 @@ export default function StoredUploadsCard(props: StoredUploadsCardProps) {
           className="d-flex justify-content-between align-items-center"
         >
           <span>Dateien</span>
-          <TapirHelpButton
-            title="Dateien hochladen"
-            text={
-              <div className="text-start">
-                <p>
-                  Hochgeladene Dateien werden jetzt sofort gespeichert und sind
-                  direkt verwendbar.
-                </p>
-                <p>
-                  <strong>Bisher:</strong> Dateien landeten nach dem Hochladen
-                  zuerst unter „Noch nicht gespeicherte Dateien“. Erst ein Klick
-                  auf „Dateien speichern“ hat sie in die Medienbibliothek
-                  übernommen.
-                </p>
-                <p>
-                  <strong>Jetzt:</strong> Dateien erscheinen nach dem Hochladen
-                  sofort oben in der Liste. Ein Speichern-Schritt ist nicht mehr
-                  nötig.
-                </p>
-              </div>
-            }
-          />
+          <div className="d-flex gap-2 align-items-center">
+            <Form.Control
+              type="search"
+              size="sm"
+              placeholder="Dateiname suchen"
+              aria-label="Dateiname suchen"
+              value={props.searchTerm}
+              onChange={(event) => props.onSearchTermChange(event.target.value)}
+              style={{ width: "15rem" }}
+            />
+            <TapirHelpButton
+              title="Dateien hochladen"
+              text={
+                <div className="text-start">
+                  <p>
+                    Hochgeladene Dateien werden jetzt sofort gespeichert und
+                    sind direkt verwendbar.
+                  </p>
+                  <p>
+                    <strong>Bisher:</strong> Dateien landeten nach dem Hochladen
+                    zuerst unter „Noch nicht gespeicherte Dateien“. Erst ein
+                    Klick auf „Dateien speichern“ hat sie in die
+                    Medienbibliothek übernommen.
+                  </p>
+                  <p>
+                    <strong>Jetzt:</strong> Dateien erscheinen nach dem
+                    Hochladen sofort oben in der Liste. Ein Speichern-Schritt
+                    ist nicht mehr nötig.
+                  </p>
+                </div>
+              }
+            />
+          </div>
         </Card.Header>
         <Card.Body>
           {props.uploader}
@@ -112,6 +127,16 @@ export default function StoredUploadsCard(props: StoredUploadsCardProps) {
               </tr>
             </thead>
             <tbody>
+              {props.storedUploads.length === 0 && props.searchTerm && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="text-muted"
+                  >
+                    Keine Dateien gefunden
+                  </td>
+                </tr>
+              )}
               {props.storedUploads.map((storedUpload) => (
                 <tr key={storedUpload.uploadId}>
                   <td>{getFilePreview(storedUpload)}</td>
@@ -133,6 +158,7 @@ export default function StoredUploadsCard(props: StoredUploadsCardProps) {
                       <TapirButton
                         size="sm"
                         variant="outline-danger"
+                        style={{ whiteSpace: "nowrap" }}
                         text="Löschen"
                         icon={TrashIcon}
                         onClick={() => setUploadToDelete(storedUpload)}

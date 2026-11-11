@@ -27,6 +27,9 @@ export default function MediaLibrary() {
   const [storedUploads, setStoredUploads] = useState<StoredUpload[]>([]);
   const [storedUploadsPage, setStoredUploadsPage] = useState(0);
   const [storedUploadsCount, setStoredUploadsCount] = useState(0);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [reloadCounter, setReloadCounter] = useState(0);
 
   const apiClient = useApi(MediaLibraryApi);
   const showAlert = useAlert();
@@ -77,6 +80,7 @@ export default function MediaLibrary() {
       .storeduploadsList({
         limit: DEFAULT_PAGE_SIZE,
         offset: storedUploadsPage * DEFAULT_PAGE_SIZE,
+        search: search || undefined,
       })
       .then((result) => {
         if (result.results.length === 0 && storedUploadsPage > 0) {
@@ -88,7 +92,19 @@ export default function MediaLibrary() {
       });
   }
 
-  useEffect(updateStoredUploadsList, [storedUploadsPage]);
+  useEffect(updateStoredUploadsList, [
+    storedUploadsPage,
+    search,
+    reloadCounter,
+  ]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setSearch(searchInput);
+      setStoredUploadsPage(0);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
 
   function onFileUploaded(
     error: FilePondErrorDescription | null,
@@ -112,11 +128,10 @@ export default function MediaLibrary() {
         return;
       }
       pond.current?.removeFile(file.id);
-      if (storedUploadsPage === 0) {
-        updateStoredUploadsList();
-      } else {
-        setStoredUploadsPage(0);
-      }
+      setSearchInput("");
+      setSearch("");
+      setStoredUploadsPage(0);
+      setReloadCounter((counter) => counter + 1);
     });
   }
 
@@ -145,6 +160,8 @@ export default function MediaLibrary() {
           />
         }
         storedUploads={storedUploads}
+        searchTerm={searchInput}
+        onSearchTermChange={setSearchInput}
         itemCount={storedUploadsCount}
         currentPage={storedUploadsPage}
         goToPage={setStoredUploadsPage}
