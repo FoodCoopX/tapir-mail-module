@@ -12,6 +12,7 @@ import json
 import logging
 import os
 
+from django.http import Http404
 from django.http.response import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -124,9 +125,10 @@ class StoredUploadViewSet(viewsets.ModelViewSet):
 
 
 def get_file_view(request, upload_id: str):
+    stored_upload = get_object_or_404(StoredUpload, upload_id=upload_id)
     try:
-        stored_upload = get_object_or_404(StoredUpload, upload_id=upload_id)
-    except StoredUpload.DoesNotExist as e:
-        LOG.error(f"Trying to fetch file that doesn't exist: {upload_id}")
-        raise e
-    return FileResponse(stored_upload.file.open("rb"), filename=stored_upload.file.name)
+        file = stored_upload.file.open("rb")
+    except FileNotFoundError:
+        LOG.warning(f"File missing from storage for upload {upload_id}")
+        raise Http404
+    return FileResponse(file, filename=stored_upload.file.name)
