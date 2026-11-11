@@ -8,6 +8,7 @@ for demonstrating the handling of file storage and deletion using the
 django-drf-filepond API.
 """
 
+import datetime
 import json
 import logging
 import os
@@ -21,6 +22,7 @@ from django.http.response import (
     FileResponse,
 )
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.views.generic import View
 from django_drf_filepond.api import store_upload, delete_stored_upload
 from django_drf_filepond.models import TemporaryUpload, StoredUpload
@@ -65,6 +67,8 @@ class ConfirmUploadView(View):
             store_upload(upload_id, os.path.join(upload_id, tu.upload_name))
             stored_uploads.append(upload_id)
 
+        delete_abandoned_temporary_uploads()
+
         # Return the list of uploads that were stored.
         return HttpResponse(
             json.dumps({"status": "OK", "uploads": stored_uploads}),
@@ -97,6 +101,15 @@ class ConfirmUploadView(View):
             json.dumps({"status": "OK", "deleted": upload_id}),
             content_type=CONTENT_TYPE_JSON,
         )
+
+
+TEMPORARY_UPLOAD_MAX_AGE = datetime.timedelta(hours=24)
+
+
+def delete_abandoned_temporary_uploads():
+    TemporaryUpload.objects.filter(
+        uploaded__lt=timezone.now() - TEMPORARY_UPLOAD_MAX_AGE
+    ).delete()
 
 
 @extend_schema_view(

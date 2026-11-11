@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
 import { DocumentDuplicateIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 import "filepond/dist/filepond.min.css";
@@ -10,9 +10,11 @@ import { getMediaLibraryFileUrl } from "../../utils/getMediaLibraryFileUrl";
 import { formatDate } from "../../utils/formatDate";
 import { useAlert } from "../../contexts/alerts";
 import TapirButton from "../TapirButton";
+import TapirHelpButton from "../TapirHelpButton";
 import ConfirmDeleteModal from "../ConfirmDeleteModal";
 
 interface StoredUploadsCardProps {
+  uploader?: ReactNode;
   storedUploads: StoredUpload[];
   apiClient: MediaLibraryApi;
   updateStoredUploadsList: () => void;
@@ -64,8 +66,36 @@ export default function StoredUploadsCard(props: StoredUploadsCardProps) {
   return (
     <>
       <Card className="mb-2">
-        <Card.Header as="h5">Gespeicherte Dateien</Card.Header>
+        <Card.Header
+          as="h5"
+          className="d-flex justify-content-between align-items-center"
+        >
+          <span>Dateien</span>
+          <TapirHelpButton
+            title="Dateien hochladen"
+            text={
+              <div className="text-start">
+                <p>
+                  Hochgeladene Dateien werden jetzt sofort gespeichert und sind
+                  direkt verwendbar.
+                </p>
+                <p>
+                  <strong>Bisher:</strong> Dateien landeten nach dem Hochladen
+                  zuerst unter „Noch nicht gespeicherte Dateien“. Erst ein Klick
+                  auf „Dateien speichern“ hat sie in die Medienbibliothek
+                  übernommen.
+                </p>
+                <p>
+                  <strong>Jetzt:</strong> Dateien erscheinen nach dem Hochladen
+                  sofort oben in der Liste. Ein Speichern-Schritt ist nicht mehr
+                  nötig.
+                </p>
+              </div>
+            }
+          />
+        </Card.Header>
         <Card.Body>
+          {props.uploader}
           <Table
             striped
             hover

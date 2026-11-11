@@ -1,17 +1,21 @@
 import * as FilePondJs from "filepond";
-import { registerPlugin } from "filepond";
-import React, { useEffect, useState } from "react";
+import {
+  FilePondFile,
+  FilePondErrorDescription,
+  registerPlugin,
+} from "filepond";
+import React, { useEffect, useRef, useState } from "react";
 import { FilePond } from "react-filepond";
 
 import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 import "filepond/dist/filepond.min.css";
-import { Button, Card, Col, Form, Row } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { MediaLibraryApi, StoredUpload, TemporaryUpload } from "../api_client";
+import { MediaLibraryApi, StoredUpload } from "../api_client";
 import StoredUploadsCard from "../components/media_library/StoredUploadsCard";
-import TemporaryUploadsCard from "../components/media_library/TemporaryUploadsCard";
+import { useAlert } from "../contexts/alerts";
 import env from "../env";
 import { useApi } from "../hooks/useApi";
 import { DEFAULT_PAGE_SIZE } from "../utils/pagination";
@@ -20,18 +24,13 @@ import { addCsrfToken } from "../utils/requests";
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
 export default function MediaLibrary() {
-  const [temporaryUploads, setTemporaryUploads] = useState<TemporaryUpload[]>(
-    [],
-  );
-  const [temporaryUploadsPage, setTemporaryUploadsPage] = useState(0);
-  const [temporaryUploadsCount, setTemporaryUploadsCount] = useState(0);
   const [storedUploads, setStoredUploads] = useState<StoredUpload[]>([]);
   const [storedUploadsPage, setStoredUploadsPage] = useState(0);
   const [storedUploadsCount, setStoredUploadsCount] = useState(0);
 
   const apiClient = useApi(MediaLibraryApi);
-
-  let pond: FilePond | null = null;
+  const showAlert = useAlert();
+  const pond = useRef<FilePond>(null);
 
   function onFilePondInit() {
     FilePondJs.setOptions({
@@ -73,22 +72,6 @@ export default function MediaLibrary() {
     });
   }
 
-  function updateTemporaryUploadsList() {
-    apiClient
-      .temporaryuploadsList({
-        limit: DEFAULT_PAGE_SIZE,
-        offset: temporaryUploadsPage * DEFAULT_PAGE_SIZE,
-      })
-      .then((result) => {
-        if (result.results.length === 0 && temporaryUploadsPage > 0) {
-          setTemporaryUploadsPage(temporaryUploadsPage - 1);
-          return;
-        }
-        setTemporaryUploads(result.results);
-        setTemporaryUploadsCount(result.count);
-      });
-  }
-
   function updateStoredUploadsList() {
     apiClient
       .storeduploadsList({
@@ -105,13 +88,16 @@ export default function MediaLibrary() {
       });
   }
 
-  useEffect(updateTemporaryUploadsList, [temporaryUploadsPage]);
-
   useEffect(updateStoredUploadsList, [storedUploadsPage]);
 
-  function onConfirmUpload(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+  function onFileUploaded(
+    error: FilePondErrorDescription | null,
+    file: FilePondFile,
+  ) {
+    if (error) return;
+
+    const formData = new FormData();
+    formData.append("filepond", file.serverId);
     addCsrfToken(formData);
     fetch(
       (env.REACT_APP_API_ROOT as string) + "/api/media_library/confirm_upload/",
@@ -120,74 +106,51 @@ export default function MediaLibrary() {
         body: formData,
       },
     ).then((response) => {
-      if (response.ok) {
-        pond?.removeFiles();
-      } else {
-        alert("Speichern der Dateien fehlgeschlagen, siehe Konsole");
-        console.error(response.text());
+      if (!response.ok) {
+        showAlert(`Speichern von ${file.filename} fehlgeschlagen`, "danger");
+        response.text().then(console.error);
+        return;
       }
-      updateTemporaryUploadsList();
-      updateStoredUploadsList();
+      pond.current?.removeFile(file.id);
+      if (storedUploadsPage === 0) {
+        updateStoredUploadsList();
+      } else {
+        setStoredUploadsPage(0);
+      }
     });
   }
 
   return (
-    <>
-      <div
-        className="container"
-        style={{ margin: "auto", marginTop: "2em" }}
-      >
-        <Link to="/">
-          <Button
-            size="sm"
-            variant="secondary"
-          >
-            &lt;&lt;&nbsp;&nbsp;&nbsp;Zurück zur Übersicht
-          </Button>
-        </Link>
-        <h1>Medienbibliothek</h1>
-        <Row>
-          <Col md={4}>
-            <Card className="mb-2">
-              <Card.Header as="h5">Dateien hochladen</Card.Header>
-              <Card.Body>
-                <Form onSubmit={onConfirmUpload}>
-                  <FilePond
-                    ref={(ref) => {
-                      pond = ref;
-                    }}
-                    allowMultiple={true}
-                    oninit={() => onFilePondInit()}
-                    onprocessfiles={updateTemporaryUploadsList}
-                  />
-                  <Button type="submit">Dateien speichern</Button>
-                </Form>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col
-            md={8}
-            style={{ minWidth: 0 }}
-          >
-            <TemporaryUploadsCard
-              temporaryUploads={temporaryUploads}
-              itemCount={temporaryUploadsCount}
-              currentPage={temporaryUploadsPage}
-              goToPage={setTemporaryUploadsPage}
-              apiClient={apiClient}
-              updateTemporaryUploadsList={updateTemporaryUploadsList}
-            />
-          </Col>
-        </Row>
-        <StoredUploadsCard
-          storedUploads={storedUploads}
-          itemCount={storedUploadsCount}
-          currentPage={storedUploadsPage}
-          goToPage={setStoredUploadsPage}
-          apiClient={apiClient}
-          updateStoredUploadsList={updateStoredUploadsList}
-        />
-      </div>
-    </>
+    <div
+      className="container"
+      style={{ margin: "auto", marginTop: "2em" }}
+    >
+      <Link to="/">
+        <Button
+          size="sm"
+          variant="secondary"
+        >
+          &lt;&lt;&nbsp;&nbsp;&nbsp;Zurück zur Übersicht
+        </Button>
+      </Link>
+      <h1>Medienbibliothek</h1>
+      <StoredUploadsCard
+        uploader={
+          <FilePond
+            ref={pond}
+            allowMultiple={true}
+            allowRevert={false}
+            oninit={() => onFilePondInit()}
+            onprocessfile={onFileUploaded}
+          />
+        }
+        storedUploads={storedUploads}
+        itemCount={storedUploadsCount}
+        currentPage={storedUploadsPage}
+        goToPage={setStoredUploadsPage}
+        apiClient={apiClient}
+        updateStoredUploadsList={updateStoredUploadsList}
+      />
+    </div>
   );
 }
