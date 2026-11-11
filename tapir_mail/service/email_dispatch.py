@@ -471,11 +471,12 @@ class RetryEmailDispatch:
             most_recent_dispatch = most_recent_dispatch.next_retry
 
         if (
-            most_recent_dispatch.error_message is None
+            most_recent_dispatch.sent_time is None
+            and most_recent_dispatch.error_message is None
             and most_recent_dispatch.bounce_message is None
         ):
             raise ValueError(
-                f"EmailDispatch#{email_dispatch.id} is not in an error state. Cannot retry."
+                f"EmailDispatch#{email_dispatch.id} has not been sent yet. Cannot retry."
                 if most_recent_dispatch.id == email_dispatch.id
                 else f"EmailDispatch#{email_dispatch.id} already has a pending retry: EmailDispatch#{most_recent_dispatch.id}"
             )

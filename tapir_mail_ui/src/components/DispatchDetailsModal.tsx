@@ -272,9 +272,7 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
                       {renderDetails(dispatch)}
                     </td>
                     <td style={{ background: "inherit" }}>
-                      {(dispatch.dispatchStatus === DispatchStatusEnum.Error ||
-                        dispatch.dispatchStatus ===
-                          DispatchStatusEnum.Bounced) &&
+                      {dispatch.dispatchStatus !== DispatchStatusEnum.Sending &&
                         (dispatch.nextRetry ? (
                           <span>Dies ist schon erneut versendet worden.</span>
                         ) : (
@@ -283,7 +281,14 @@ const DispatchDetailsModal: React.FC<DispatchDetailsModalProps> = ({
                             text="Erneut senden"
                           >
                             <TapirButton
-                              variant={"outline-primary"}
+                              variant={
+                                dispatch.dispatchStatus ===
+                                  DispatchStatusEnum.Error ||
+                                dispatch.dispatchStatus ===
+                                  DispatchStatusEnum.Bounced
+                                  ? "outline-primary"
+                                  : "outline-secondary"
+                              }
                               size="sm"
                               icon={ArrowPathIcon}
                               onClick={() => retrySingleDispatch(dispatch)}

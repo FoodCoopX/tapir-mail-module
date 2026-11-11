@@ -217,12 +217,39 @@ class SendEmailBatchTest(TapirIntegrationTest):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, "Newer subject")
 
-    def test_retrySingleEmailDispatch_originalNotInErrorState_raisesError(self):
+    def test_retrySingleEmailDispatch_originalNotSentYet_raisesError(self):
+        dispatch = TestUtils.create_email_dispatches(
+            1,
+            config_dispatch=self.config_dispatch,
+        )[0]
+
+        with self.assertRaises(ValueError):
+            RetryEmailDispatch.retry(dispatch)
+
+    def test_retrySingleEmailDispatch_originalSentWithoutError_createsRetryDispatch(
+        self,
+    ):
         dispatch = TestUtils.create_email_dispatches(
             1,
             config_dispatch=self.config_dispatch,
             sent_time=self.NOW,
         )[0]
+
+        RetryEmailDispatch.retry(dispatch)
+        dispatch.refresh_from_db()
+
+        self.assertIsNotNone(dispatch.next_retry)
+        SendEmailBatch.send_email_dispatches()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [dispatch.recipient])
+
+    def test_retrySingleEmailDispatch_retryStillPending_raisesError(self):
+        dispatch = TestUtils.create_email_dispatches(
+            1,
+            config_dispatch=self.config_dispatch,
+            sent_time=self.NOW,
+        )[0]
+        RetryEmailDispatch.retry(dispatch)
 
         with self.assertRaises(ValueError):
             RetryEmailDispatch.retry(dispatch)
