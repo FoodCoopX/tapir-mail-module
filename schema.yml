@@ -881,22 +881,6 @@ paths:
                 $ref: '#/components/schemas/PaginatedEmailConfigurationDispatchList'
           description: ''
   /api/email_configuration_version/:
-    get:
-      operationId: email_configuration_version_list
-      tags:
-      - email_configuration_version
-      security:
-      - tokenAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/BundledEmailConfiguration'
-          description: ''
     post:
       operationId: email_configuration_version_create
       tags:
@@ -925,27 +909,6 @@ paths:
                 additionalProperties: {}
           description: ''
   /api/email_configuration_version/{id}/:
-    get:
-      operationId: email_configuration_version_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        description: A unique value identifying this email configuration version.
-        required: true
-      tags:
-      - email_configuration_version
-      security:
-      - tokenAuth: []
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BundledEmailConfiguration'
-          description: ''
     put:
       operationId: email_configuration_version_update
       parameters:

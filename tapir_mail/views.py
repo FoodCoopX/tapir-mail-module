@@ -13,7 +13,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import FormView, TemplateView
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
@@ -240,7 +240,12 @@ class EmailConfigurationViewSet(viewsets.ModelViewSet):
         },
     ),
 )
-class EmailConfigurationVersionViewSet(viewsets.ModelViewSet):
+class EmailConfigurationVersionViewSet(
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = EmailConfigurationVersion.objects.all()
     serializer_class = BundledEmailConfigurationSerializer
 
