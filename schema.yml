@@ -1871,6 +1871,19 @@ paths:
   /api/media_library/stored_upload/:
     get:
       operationId: storeduploads_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
       tags:
       - media_library
       security:
@@ -1881,9 +1894,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StoredUpload'
+                $ref: '#/components/schemas/PaginatedStoredUploadList'
           description: ''
     post:
       operationId: storeduploads_create
@@ -2018,6 +2029,19 @@ paths:
   /api/media_library/temporary_upload/:
     get:
       operationId: temporaryuploads_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
       tags:
       - media_library
       security:
@@ -2028,9 +2052,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TemporaryUpload'
+                $ref: '#/components/schemas/PaginatedTemporaryUploadList'
           description: ''
     post:
       operationId: temporaryuploads_create
@@ -3723,6 +3745,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GroupedEmailDispatch'
+    PaginatedStoredUploadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoredUpload'
+    PaginatedTemporaryUploadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemporaryUpload'
     PatchedBundledEmailConfigurationRequest:
       type: object
       properties:

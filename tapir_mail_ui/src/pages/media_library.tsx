@@ -14,6 +14,7 @@ import StoredUploadsCard from "../components/media_library/StoredUploadsCard";
 import TemporaryUploadsCard from "../components/media_library/TemporaryUploadsCard";
 import env from "../env";
 import { useApi } from "../hooks/useApi";
+import { DEFAULT_PAGE_SIZE } from "../utils/pagination";
 import { addCsrfToken } from "../utils/requests";
 
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
@@ -22,7 +23,11 @@ export default function MediaLibrary() {
   const [temporaryUploads, setTemporaryUploads] = useState<TemporaryUpload[]>(
     [],
   );
+  const [temporaryUploadsPage, setTemporaryUploadsPage] = useState(0);
+  const [temporaryUploadsCount, setTemporaryUploadsCount] = useState(0);
   const [storedUploads, setStoredUploads] = useState<StoredUpload[]>([]);
+  const [storedUploadsPage, setStoredUploadsPage] = useState(0);
+  const [storedUploadsCount, setStoredUploadsCount] = useState(0);
 
   const apiClient = useApi(MediaLibraryApi);
 
@@ -42,25 +47,67 @@ export default function MediaLibrary() {
         load: "/load/?target=",
         fetch: "/fetch/?target=",
       },
+      labelIdle:
+        'Dateien hierher ziehen oder <span class="filepond--label-action">durchsuchen</span>',
+      labelInvalidField: "Das Feld enthält ungültige Dateien",
+      labelFileWaitingForSize: "Dateigröße wird ermittelt",
+      labelFileSizeNotAvailable: "Dateigröße nicht verfügbar",
+      labelFileLoading: "Wird geladen",
+      labelFileLoadError: "Fehler beim Laden",
+      labelFileProcessing: "Wird hochgeladen",
+      labelFileProcessingComplete: "Hochgeladen",
+      labelFileProcessingAborted: "Hochladen abgebrochen",
+      labelFileProcessingError: "Fehler beim Hochladen",
+      labelFileProcessingRevertError: "Fehler beim Zurücksetzen",
+      labelFileRemoveError: "Fehler beim Entfernen",
+      labelTapToCancel: "Klicken zum Abbrechen",
+      labelTapToRetry: "Klicken zum Wiederholen",
+      labelTapToUndo: "Klicken zum Rückgängigmachen",
+      labelButtonRemoveItem: "Entfernen",
+      labelButtonAbortItemLoad: "Abbrechen",
+      labelButtonRetryItemLoad: "Wiederholen",
+      labelButtonAbortItemProcessing: "Abbrechen",
+      labelButtonUndoItemProcessing: "Rückgängig",
+      labelButtonRetryItemProcessing: "Wiederholen",
+      labelButtonProcessItem: "Hochladen",
     });
   }
 
   function updateTemporaryUploadsList() {
-    apiClient.temporaryuploadsList().then((result) => {
-      setTemporaryUploads(result);
-    });
+    apiClient
+      .temporaryuploadsList({
+        limit: DEFAULT_PAGE_SIZE,
+        offset: temporaryUploadsPage * DEFAULT_PAGE_SIZE,
+      })
+      .then((result) => {
+        if (result.results.length === 0 && temporaryUploadsPage > 0) {
+          setTemporaryUploadsPage(temporaryUploadsPage - 1);
+          return;
+        }
+        setTemporaryUploads(result.results);
+        setTemporaryUploadsCount(result.count);
+      });
   }
 
   function updateStoredUploadsList() {
-    apiClient.storeduploadsList().then((result) => {
-      setStoredUploads(result);
-    });
+    apiClient
+      .storeduploadsList({
+        limit: DEFAULT_PAGE_SIZE,
+        offset: storedUploadsPage * DEFAULT_PAGE_SIZE,
+      })
+      .then((result) => {
+        if (result.results.length === 0 && storedUploadsPage > 0) {
+          setStoredUploadsPage(storedUploadsPage - 1);
+          return;
+        }
+        setStoredUploads(result.results);
+        setStoredUploadsCount(result.count);
+      });
   }
 
-  useEffect(() => {
-    updateTemporaryUploadsList();
-    updateStoredUploadsList();
-  }, []);
+  useEffect(updateTemporaryUploadsList, [temporaryUploadsPage]);
+
+  useEffect(updateStoredUploadsList, [storedUploadsPage]);
 
   function onConfirmUpload(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,7 +123,7 @@ export default function MediaLibrary() {
       if (response.ok) {
         pond?.removeFiles();
       } else {
-        alert("Upload confirmation failed, see console");
+        alert("Speichern der Dateien fehlgeschlagen, siehe Konsole");
         console.error(response.text());
       }
       updateTemporaryUploadsList();
@@ -98,11 +145,11 @@ export default function MediaLibrary() {
             &lt;&lt;&nbsp;&nbsp;&nbsp;Zurück zur Übersicht
           </Button>
         </Link>
-        <h1>Prototype media library</h1>
+        <h1>Medienbibliothek</h1>
         <Row>
-          <Col>
+          <Col md={4}>
             <Card className="mb-2">
-              <Card.Header as="h5">Uploader</Card.Header>
+              <Card.Header as="h5">Dateien hochladen</Card.Header>
               <Card.Body>
                 <Form onSubmit={onConfirmUpload}>
                   <FilePond
@@ -113,26 +160,33 @@ export default function MediaLibrary() {
                     oninit={() => onFilePondInit()}
                     onprocessfiles={updateTemporaryUploadsList}
                   />
-                  <Button type="submit">Confirm upload</Button>
+                  <Button type="submit">Dateien speichern</Button>
                 </Form>
               </Card.Body>
             </Card>
           </Col>
-          <Col>
-            <StoredUploadsCard
-              storedUploads={storedUploads}
-              apiClient={apiClient}
-              updateStoredUploadsList={updateStoredUploadsList}
-            />
-          </Col>
-          <Col>
+          <Col
+            md={8}
+            style={{ minWidth: 0 }}
+          >
             <TemporaryUploadsCard
               temporaryUploads={temporaryUploads}
+              itemCount={temporaryUploadsCount}
+              currentPage={temporaryUploadsPage}
+              goToPage={setTemporaryUploadsPage}
               apiClient={apiClient}
               updateTemporaryUploadsList={updateTemporaryUploadsList}
             />
           </Col>
         </Row>
+        <StoredUploadsCard
+          storedUploads={storedUploads}
+          itemCount={storedUploadsCount}
+          currentPage={storedUploadsPage}
+          goToPage={setStoredUploadsPage}
+          apiClient={apiClient}
+          updateStoredUploadsList={updateStoredUploadsList}
+        />
       </div>
     </>
   );

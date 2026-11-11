@@ -41,6 +41,9 @@ describe("StoredUploadsCard", () => {
         storedUploads={storedUploads}
         updateStoredUploadsList={() => null}
         apiClient={new MediaLibraryApi()}
+        itemCount={storedUploads.length}
+        currentPage={0}
+        goToPage={() => null}
       />,
     );
 
@@ -48,30 +51,20 @@ describe("StoredUploadsCard", () => {
     expect(rows).toHaveLength(3);
 
     const cells_of_first_row = rows[1].getElementsByTagName("td");
-    expect(cells_of_first_row[0]).toHaveTextContent("#1");
-    expect(cells_of_first_row[1]).toHaveTextContent("No preview available");
-    expect(cells_of_first_row[2]).toHaveTextContent(upload1.fileName);
-    expect(cells_of_first_row[3]).toHaveTextContent(
-      "api/media_library/get_file/" + upload1.uploadId,
+    expect(cells_of_first_row[0]).toHaveTextContent("DATEI");
+    expect(within(cells_of_first_row[1]).getByRole("link")).toHaveAttribute(
+      "href",
+      expect.stringContaining("api/media_library/get_file/" + upload1.uploadId),
     );
-    expect(cells_of_first_row[4]).toHaveTextContent(upload1.uploadId);
-    expect(cells_of_first_row[5]).toHaveTextContent("Thu Nov 09 2023 03:24:00");
-    expect(cells_of_first_row[6]).toHaveTextContent("Sat Dec 09 2023 03:24:00");
+    expect(cells_of_first_row[1]).toHaveTextContent(upload1.fileName);
+    expect(cells_of_first_row[3]).toHaveTextContent("09.12.23, 03:24");
+    expect(cells_of_first_row[4]).toHaveTextContent("10");
 
     const cells_of_second_row = rows[2].getElementsByTagName("td");
-    expect(cells_of_second_row[0]).toHaveTextContent("#2");
-    expect(cells_of_second_row[1]).toHaveTextContent("No preview available");
-    expect(cells_of_second_row[2]).toHaveTextContent(upload2.fileName);
-    expect(cells_of_second_row[3]).toHaveTextContent(
-      "api/media_library/get_file/" + upload2.uploadId,
-    );
-    expect(cells_of_second_row[4]).toHaveTextContent(upload2.uploadId);
-    expect(cells_of_second_row[5]).toHaveTextContent(
-      "Wed Nov 09 2022 03:24:00",
-    );
-    expect(cells_of_second_row[6]).toHaveTextContent(
-      "Fri Dec 09 2022 03:24:00",
-    );
+    expect(cells_of_second_row[0]).toHaveTextContent("DATEI");
+    expect(cells_of_second_row[1]).toHaveTextContent(upload2.fileName);
+    expect(cells_of_second_row[3]).toHaveTextContent("09.12.22, 03:24");
+    expect(cells_of_second_row[4]).toHaveTextContent("20");
   });
 
   test("Image files get previewed", () => {
@@ -82,6 +75,9 @@ describe("StoredUploadsCard", () => {
         storedUploads={storedUploads}
         updateStoredUploadsList={() => null}
         apiClient={new MediaLibraryApi()}
+        itemCount={storedUploads.length}
+        currentPage={0}
+        goToPage={() => null}
       />,
     );
 
@@ -98,7 +94,7 @@ describe("StoredUploadsCard", () => {
     );
   });
 
-  test("Delete button calls API", async () => {
+  test("Delete button calls API after confirmation", async () => {
     let storedUploads: StoredUpload[] = [upload1];
 
     const mock_api_client = new MediaLibraryApi();
@@ -113,15 +109,68 @@ describe("StoredUploadsCard", () => {
         storedUploads={storedUploads}
         updateStoredUploadsList={mock_update_list}
         apiClient={mock_api_client}
+        itemCount={storedUploads.length}
+        currentPage={0}
+        goToPage={() => null}
       />,
     );
 
-    await userEvent.click(screen.getByRole("button"));
+    await userEvent.click(screen.getByRole("button", { name: "Löschen" }));
+    expect(mock_api_client.storeduploadsDestroy).not.toHaveBeenCalled();
+
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Löschen",
+      }),
+    );
 
     expect(mock_api_client.storeduploadsDestroy).toHaveBeenCalledTimes(1);
     expect(mock_api_client.storeduploadsDestroy).toHaveBeenCalledWith({
       uploadId: upload1.uploadId,
     });
     expect(mock_update_list).toHaveBeenCalledTimes(1);
+  });
+
+  test("Pagination navigates to the clicked page", async () => {
+    const goToPage = jest.fn();
+
+    render(
+      <StoredUploadsCard
+        storedUploads={[upload1]}
+        updateStoredUploadsList={() => null}
+        apiClient={new MediaLibraryApi()}
+        itemCount={25}
+        currentPage={1}
+        goToPage={goToPage}
+      />,
+    );
+
+    await userEvent.click(screen.getByText("3"));
+    expect(goToPage).toHaveBeenCalledWith(2);
+  });
+
+  test("Cancelling the delete confirmation does not call API", async () => {
+    const mock_api_client = new MediaLibraryApi();
+    mock_api_client.storeduploadsDestroy = jest.fn();
+
+    render(
+      <StoredUploadsCard
+        storedUploads={[upload1]}
+        updateStoredUploadsList={() => null}
+        apiClient={mock_api_client}
+        itemCount={1}
+        currentPage={0}
+        goToPage={() => null}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Löschen" }));
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Abbrechen",
+      }),
+    );
+
+    expect(mock_api_client.storeduploadsDestroy).not.toHaveBeenCalled();
   });
 });

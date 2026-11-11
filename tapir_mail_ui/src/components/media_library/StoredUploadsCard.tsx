@@ -1,87 +1,151 @@
-import React from "react";
+import React, { useState } from "react";
+import { DocumentDuplicateIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 import "filepond/dist/filepond.min.css";
-import { Button, Card, Table } from "react-bootstrap";
+import { Badge, Card, Table } from "react-bootstrap";
 import { MediaLibraryApi, StoredUpload } from "../../api_client";
+import { DEFAULT_PAGE_SIZE } from "../../utils/pagination";
+import TapirPagination from "../TapirPagination";
 import { getMediaLibraryFileUrl } from "../../utils/getMediaLibraryFileUrl";
+import { formatDate } from "../../utils/formatDate";
+import { useAlert } from "../../contexts/alerts";
+import TapirButton from "../TapirButton";
+import ConfirmDeleteModal from "../ConfirmDeleteModal";
 
 interface StoredUploadsCardProps {
   storedUploads: StoredUpload[];
   apiClient: MediaLibraryApi;
   updateStoredUploadsList: () => void;
+  itemCount: number;
+  currentPage: number;
+  goToPage: (pageIndex: number) => void;
 }
 
 export default function StoredUploadsCard(props: StoredUploadsCardProps) {
-  function onDelete(uploadId: string) {
-    props.apiClient.storeduploadsDestroy({ uploadId: uploadId }).then(() => {
-      props.updateStoredUploadsList();
-    });
+  const showAlert = useAlert();
+  const [uploadToDelete, setUploadToDelete] = useState<StoredUpload>();
+
+  function onDeleteConfirmed() {
+    if (!uploadToDelete) return;
+    props.apiClient
+      .storeduploadsDestroy({ uploadId: uploadToDelete.uploadId })
+      .then(() => {
+        props.updateStoredUploadsList();
+      })
+      .finally(() => {
+        setUploadToDelete(undefined);
+      });
+  }
+
+  function onCopyUrl(uploadId: string) {
+    navigator.clipboard.writeText(getMediaLibraryFileUrl(uploadId));
+    showAlert("URL kopiert", "primary");
   }
 
   function getFilePreview(storedUpload: StoredUpload) {
-    const fileExtension = storedUpload.fileName.split(".").pop();
+    const fileName = getDisplayName(storedUpload);
+    const fileExtension = fileName.includes(".")
+      ? fileName.split(".").pop()!.toLowerCase()
+      : undefined;
     if (fileExtension && ["png", "jpg", "jpeg"].includes(fileExtension)) {
       return (
         <img
           src={getMediaLibraryFileUrl(storedUpload.uploadId)}
           style={{ maxHeight: "100px", maxWidth: "100px" }}
-          alt="Image preview"
+          alt="Bildvorschau"
         ></img>
       );
     }
-    return <>No preview available for file extension: {fileExtension}</>;
+    return (
+      <Badge bg="secondary">{fileExtension?.toUpperCase() ?? "DATEI"}</Badge>
+    );
   }
 
   return (
-    <Card className="mb-2">
-      <Card.Header as="h5">Stored uploads</Card.Header>
-      <Card.Body>
-        {props.storedUploads && (
+    <>
+      <Card className="mb-2">
+        <Card.Header as="h5">Gespeicherte Dateien</Card.Header>
+        <Card.Body>
           <Table
             striped
             hover
+            responsive
+            className="align-middle mb-0"
           >
             <thead>
               <tr>
-                <th>Index</th>
-                <th>Preview</th>
-                <th>File name</th>
-                <th>URL</th>
-                <th>Upload ID</th>
-                <th>Uploaded at</th>
-                <th>Stored at</th>
-                <th>Uploaded by</th>
-                <th>Delete</th>
+                <th>Vorschau</th>
+                <th>Dateiname</th>
+                <th></th>
+                <th>Gespeichert am</th>
+                <th>Hochgeladen von</th>
               </tr>
             </thead>
             <tbody>
-              {props.storedUploads.map((storedUpload, index) => {
-                return (
-                  <tr key={storedUpload.uploadId}>
-                    <td>#{index + 1}</td>
-                    <td>{getFilePreview(storedUpload)}</td>
-                    <td>{storedUpload.fileName.split("/").slice(-1)}</td>
-                    <td>
-                      <a href={getMediaLibraryFileUrl(storedUpload.uploadId)}>
-                        {getMediaLibraryFileUrl(storedUpload.uploadId)}
-                      </a>
-                    </td>
-                    <td>{storedUpload.uploadId}</td>
-                    <td>{storedUpload.uploaded.toString()}</td>
-                    <td>{storedUpload.stored.toString()}</td>
-                    <td>{storedUpload.uploadedBy}</td>
-                    <td>
-                      <Button onClick={() => onDelete(storedUpload.uploadId)}>
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {props.storedUploads.map((storedUpload) => (
+                <tr key={storedUpload.uploadId}>
+                  <td>{getFilePreview(storedUpload)}</td>
+                  <td>
+                    <a href={getMediaLibraryFileUrl(storedUpload.uploadId)}>
+                      {getDisplayName(storedUpload)}
+                    </a>
+                  </td>
+                  <td>
+                    <div className="d-flex gap-2">
+                      <TapirButton
+                        size="sm"
+                        variant="outline-primary"
+                        style={{ whiteSpace: "nowrap" }}
+                        text="URL kopieren"
+                        icon={DocumentDuplicateIcon}
+                        onClick={() => onCopyUrl(storedUpload.uploadId)}
+                      />
+                      <TapirButton
+                        size="sm"
+                        variant="outline-danger"
+                        text="Löschen"
+                        icon={TrashIcon}
+                        onClick={() => setUploadToDelete(storedUpload)}
+                      />
+                    </div>
+                  </td>
+                  <td className="text-nowrap">
+                    {formatDate(storedUpload.stored)}
+                  </td>
+                  <td>{storedUpload.uploadedBy}</td>
+                </tr>
+              ))}
             </tbody>
           </Table>
+        </Card.Body>
+        {props.itemCount > DEFAULT_PAGE_SIZE && (
+          <Card.Footer className="d-flex justify-content-center align-items-center">
+            <TapirPagination
+              pageSize={DEFAULT_PAGE_SIZE}
+              itemCount={props.itemCount}
+              currentPage={props.currentPage}
+              goToPage={props.goToPage}
+            />
+          </Card.Footer>
         )}
-      </Card.Body>
-    </Card>
+      </Card>
+      <ConfirmDeleteModal
+        message={
+          <>
+            Möchtest du die Datei{" "}
+            <strong>{uploadToDelete && getDisplayName(uploadToDelete)}</strong>{" "}
+            wirklich löschen? E-Mails, die diese Datei verwenden, können sie
+            danach nicht mehr anzeigen.
+          </>
+        }
+        open={!!uploadToDelete}
+        onConfirm={onDeleteConfirmed}
+        onCancel={() => setUploadToDelete(undefined)}
+      />
+    </>
   );
+}
+
+function getDisplayName(storedUpload: StoredUpload) {
+  return storedUpload.fileName.split("/").pop()!;
 }

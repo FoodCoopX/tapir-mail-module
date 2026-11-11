@@ -26,6 +26,7 @@ from django_drf_filepond.api import store_upload, delete_stored_upload
 from django_drf_filepond.models import TemporaryUpload, StoredUpload
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import viewsets
+from rest_framework.pagination import LimitOffsetPagination
 
 from tapir_mail.media_library.serializers import (
     TemporaryUploadSerializer,
@@ -108,7 +109,8 @@ class ConfirmUploadView(View):
 )
 class TemporaryUploadViewSet(viewsets.ModelViewSet):
     serializer_class = TemporaryUploadSerializer
-    queryset = TemporaryUpload.objects.all()
+    queryset = TemporaryUpload.objects.order_by("-uploaded")
+    pagination_class = LimitOffsetPagination
 
 
 @extend_schema_view(
@@ -121,7 +123,8 @@ class TemporaryUploadViewSet(viewsets.ModelViewSet):
 )
 class StoredUploadViewSet(viewsets.ModelViewSet):
     serializer_class = StoredUploadSerializer
-    queryset = StoredUpload.objects.all()
+    queryset = StoredUpload.objects.order_by("-stored")
+    pagination_class = LimitOffsetPagination
 
 
 def get_file_view(request, upload_id: str):
