@@ -91,18 +91,26 @@ Layout“ nicht unterscheidbar. `layout_enabled=False` ist die klare Aussage
 
 ## 5. Bestehende E-Mails und Default-Tapir
 
-**Entscheidung:** Das Seed-Layout heißt **Default-Tapir** und wird **nicht**
-automatisch als Standard markiert. Die Migration setzt alle bestehenden
-E-Mail-Versionen auf „kein Layout“.
+**Entscheidung:** Die Migration legt keine Vorlagen an. Instanzen starten ohne
+Layout-Vorlage und ohne Standard; **Default-Tapir** existiert nur als
+Test-Fixture unter `tapir_mail/tests/default_layout_template_content.mjml`.
+Bestehende E-Mail-Versionen bleiben durch die Feld-Defaults
+(`layout_enabled=False`, `layout_template=NULL`) ohne Layout.
 
 **Begründung:**
 
 - Bestehende E-Mails sollen sich durch das Deployment nicht verändern.
 - Ein globaler Standard ist eine bewusste Admin-Entscheidung.
+- Eine mitgelieferte Vorlage würde auf jeder Instanz ungefragt im
+  Vorlagen-Bestand auftauchen und könnte mit eigenen Layouts kollidieren.
 - Bestehende E-Mails werden bei Bedarf einzeln manuell umgestellt.
 
 **Neue E-Mails** erhalten das Standard-Layout nur, wenn eines aktiv markiert
 ist oder explizit eines gewählt wurde. Sonst bleiben sie ohne Layout.
+
+**Nachtrag 2026-11-11:** Die ursprüngliche Entscheidung, Default-Tapir per
+Datenmigration auf allen Instanzen anzulegen, wurde revidiert. Die Vorlage
+dient nur noch Tests, die Layout-Merge-Logik und das Beispiel-Layout prüfen.
 
 ---
 
