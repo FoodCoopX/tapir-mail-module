@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import factory
 
 from tapir_mail.models import (
@@ -7,6 +9,7 @@ from tapir_mail.models import (
     EmailConfigurationVersion,
     EmailDispatch,
     EmailTemplate,
+    EmailTemplateType,
     StaticSegment,
     StaticSegmentRecipient,
     MailCategory,
@@ -25,6 +28,21 @@ class EmailTemplateFactory(factory.django.DjangoModelFactory[EmailTemplate]):
         lambda self: open(
             "tapir_mail/tests/dummy_email_template_content.mjml", "r"
         ).read()
+    )
+
+
+DEFAULT_TAPIR_LAYOUT_NAME = "Default-Tapir"
+DEFAULT_TAPIR_LAYOUT_CONTENT_PATH = (
+    "tapir_mail/tests/default_layout_template_content.mjml"
+)
+
+
+def create_default_tapir_layout() -> EmailTemplate:
+    return EmailTemplateFactory.create(
+        name=DEFAULT_TAPIR_LAYOUT_NAME,
+        content=Path(DEFAULT_TAPIR_LAYOUT_CONTENT_PATH).read_text(encoding="utf-8"),
+        template_type=EmailTemplateType.LAYOUT,
+        is_default_layout=False,
     )
 
 

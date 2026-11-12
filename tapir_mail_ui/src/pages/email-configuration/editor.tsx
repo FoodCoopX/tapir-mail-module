@@ -1,5 +1,6 @@
 import {
   CheckCircleIcon,
+  EyeIcon,
   HomeIcon,
   PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
@@ -18,6 +19,7 @@ import {
   TriggerTokensApi,
 } from "../../api_client";
 import TapirButton from "../../components/TapirButton";
+import LabelHelp from "../../components/LabelHelp";
 import Editor, { EMPTY_PAGE } from "../../components/editor";
 import EmailConfigurationVersionStatusBadge from "../../components/emailConfigurationVersionStatusBadge";
 import Loading from "../../components/loading";
@@ -28,6 +30,7 @@ import { useApi } from "../../hooks/useApi";
 import Paths from "../../routing";
 import { formatDate } from "../../utils/formatDate";
 import { jsonToMjml, mjmlToJson } from "../../utils/mjml";
+import { getApiErrorMessage } from "../../utils/apiErrorMessage";
 import ConfirmModal from "../../components/ConfirmModal";
 import { CheckIcon } from "@heroicons/react/16/solid";
 
@@ -59,6 +62,9 @@ const EmailConfigurationEditor = () => {
   const [status, setStatus] = useState<StatusEnum>(StatusEnum.Draft);
   const [releaseModalOpen, setReleaseModalOpen] = useState<boolean>(false);
   const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined);
+  const [layoutSelection, setLayoutSelection] = useState<string>("default");
+  const [previewHtml, setPreviewHtml] = useState<string>("");
+  const [previewOpen, setPreviewOpen] = useState<boolean>(false);
   const [tokens, setTokens] = useState<{
     [key: string]: { [key: string]: string };
   }>({});
@@ -87,10 +93,22 @@ const EmailConfigurationEditor = () => {
   const fetchTemplates = () =>
     templateApi
       .emailTemplateList()
-      .then(setTemplates)
-      .catch((err) => {
+      .then((templates) => {
+        setTemplates(templates);
+        const hasDefaultLayout = templates.some(
+          (template) =>
+            template.templateType === "layout" && template.isDefaultLayout,
+        );
+        if (!currentId && !hasDefaultLayout) {
+          setLayoutSelection("none");
+        }
+      })
+      .catch(async (err) => {
         console.error(err);
-        showAlert("Beim Laden ist ein Fehler aufgetreten.", "danger");
+        showAlert(
+          await getApiErrorMessage(err, "Fehler beim Laden der Vorlagen"),
+          "danger",
+        );
       });
 
   const remapTokens = (tokens: any) => {
@@ -125,6 +143,9 @@ const EmailConfigurationEditor = () => {
             data.triggers && data.triggers.length > 0
               ? data.triggers
               : EMPTY_TRIGGER,
+          );
+          setLayoutSelection(
+            data.layoutEnabled ? (data.layoutTemplateId ?? "default") : "none",
           );
         })
         .catch((err) => {
@@ -169,6 +190,11 @@ const EmailConfigurationEditor = () => {
         subject: subject,
         content: jsonToMjml(content),
         name: mailingName,
+        layoutTemplateId:
+          layoutSelection === "none" || layoutSelection === "default"
+            ? null
+            : layoutSelection,
+        layoutEnabled: layoutSelection !== "none",
         releaseStatus: newStatus,
         triggers: cleanTriggers,
         segmentData: segmentData ?? {
@@ -237,10 +263,7 @@ const EmailConfigurationEditor = () => {
 
     const template = templates.find((t) => t.id === selectedTemplateId);
     if (!template) {
-      showAlert(
-        "Beim Laden der Vorlagen ist ein Fehler aufgetreten.",
-        "danger",
-      );
+      showAlert("Fehler beim Laden der Vorlagen", "danger");
       return;
     }
 
@@ -255,9 +278,11 @@ const EmailConfigurationEditor = () => {
         navigate(Paths.dashboard);
       })
       .catch(async (error) => {
-        const message = await error.response.text();
         showAlert(
-          "Beim Veröffentlichen ist ein Fehler aufgetreten: " + message,
+          await getApiErrorMessage(
+            error,
+            "Beim Veröffentlichen ist ein Fehler aufgetreten.",
+          ),
           "danger",
         );
       });
@@ -269,9 +294,11 @@ const EmailConfigurationEditor = () => {
         navigate(Paths.dashboard);
       })
       .catch(async (error) => {
-        const message = await error.response.text();
         showAlert(
-          "Beim Speichern ist ein Fehler aufgetreten: " + message,
+          await getApiErrorMessage(
+            error,
+            "Beim Speichern ist ein Fehler aufgetreten.",
+          ),
           "danger",
         );
       });
@@ -313,8 +340,68 @@ const EmailConfigurationEditor = () => {
         segmentData.mailCategoryIdsAdditive.length >
         0) ||
     (currentId !== undefined && content !== loadedContent);
+  const defaultLayout = templates.find(
+    (template) =>
+      template.templateType === "layout" && template.isDefaultLayout,
+  );
+
+  useEffect(() => {
+    if (
+      templates.length > 0 &&
+      !defaultLayout &&
+      layoutSelection === "default"
+    ) {
+      setLayoutSelection("none");
+    }
+  }, [templates, defaultLayout, layoutSelection]);
+  const layoutEnabled = layoutSelection !== "none";
+  const layoutTemplateId =
+    layoutSelection === "none" || layoutSelection === "default"
+      ? null
+      : layoutSelection;
+  const selectedLayout = templates.find(
+    (template) => template.id === layoutSelection,
+  );
+  const previewLayoutName =
+    layoutSelection === "none"
+      ? undefined
+      : layoutSelection === "default"
+        ? defaultLayout?.name
+        : selectedLayout?.name;
+  const previewTitle =
+    previewLayoutName === undefined
+      ? "Vorschau ohne Layout"
+      : layoutSelection === "default"
+        ? `Vorschau: Standard-Layout (${previewLayoutName})`
+        : `Vorschau: ${previewLayoutName}`;
   const releaseButtonDisabled =
     saveButtonDisabled || !subject || !segmentChoosen || missingTrigger;
+
+  const handlePreview = () => {
+    if (!content) return;
+    emailConfigurationVersionApi
+      .emailConfigurationVersionPreview({
+        previewRequest: {
+          content: jsonToMjml(content),
+          layoutTemplateId: layoutTemplateId,
+          layoutEnabled: layoutEnabled,
+        },
+      })
+      .then((data) => {
+        setPreviewHtml(data.html ?? "");
+        setPreviewOpen(true);
+      })
+      .catch(async (err) => {
+        console.error(err);
+        showAlert(
+          await getApiErrorMessage(
+            err,
+            "Beim Erstellen der Vorschau ist ein Fehler aufgetreten.",
+          ),
+          "danger",
+        );
+      });
+  };
   return loading ? (
     <Loading />
   ) : (
@@ -358,25 +445,74 @@ const EmailConfigurationEditor = () => {
             <br />
 
             <Form.Group>
-              <Form.Label>Template auswählen</Form.Label>
+              <Form.Label>
+                Startinhalt übernehmen (optional)
+                <LabelHelp
+                  label="Startinhalt"
+                  text="Kopiert den Startinhalt einmalig. Spätere Änderungen an der Vorlage wirken nicht auf diese E-Mail."
+                />
+              </Form.Label>
               <Form.Control
                 as="select"
                 value={selectedTemplateId || ID_NEW_TEMPLATE}
                 onChange={(event) => setSelectedTemplateId(event.target.value)}
               >
                 <option value={ID_NEW_TEMPLATE}>Keine Vorlage</option>
-                {templates.map((t: EmailTemplate) => (
-                  <option
-                    key={t.id}
-                    value={t.id}
-                  >
-                    {t.name}
-                  </option>
-                ))}
+                {templates
+                  .filter((t: EmailTemplate) => t.templateType !== "layout")
+                  .map((t: EmailTemplate) => (
+                    <option
+                      key={t.id}
+                      value={t.id}
+                    >
+                      {t.name}
+                    </option>
+                  ))}
               </Form.Control>
             </Form.Group>
             <br />
 
+            <Form.Group>
+              <Form.Label>
+                Layout
+                {!defaultLayout && (
+                  <LabelHelp
+                    label="Standard-Layout"
+                    text="In den Vorlagen eine Layout-Vorlage als Standard markieren."
+                  />
+                )}
+              </Form.Label>
+              <Form.Control
+                as="select"
+                value={layoutSelection}
+                onChange={(event) => setLayoutSelection(event.target.value)}
+              >
+                <option
+                  value="default"
+                  disabled={!defaultLayout}
+                >
+                  {defaultLayout
+                    ? `Standard-Layout: ${defaultLayout.name}`
+                    : "Standard-Layout (nicht gesetzt)"}
+                </option>
+                <option value="none">Kein Layout (nur Inhalt)</option>
+                {templates
+                  .filter((t: EmailTemplate) => t.templateType === "layout")
+                  .map((t: EmailTemplate) => (
+                    <option
+                      key={t.id}
+                      value={t.id}
+                    >
+                      {t.name}
+                    </option>
+                  ))}
+              </Form.Control>
+              <Form.Text className="text-muted">
+                Einheitliches Aussehen wie Kopf- und Fußzeile. „Kein Layout“
+                sendet nur den Inhalt.
+              </Form.Text>
+            </Form.Group>
+            <br />
             <div
               style={{
                 backgroundColor: "var(--color-neutral-1)",
@@ -425,6 +561,14 @@ const EmailConfigurationEditor = () => {
               icon={PaperAirplaneIcon}
               onClick={() => setReleaseModalOpen(true)}
               text="Veröffentlichen & senden"
+            />
+
+            <TapirButton
+              variant="outline-primary"
+              style={{ width: "100%", marginTop: "1em" }}
+              icon={EyeIcon}
+              onClick={handlePreview}
+              text="Vorschau"
             />
 
             <hr />
@@ -479,9 +623,7 @@ const EmailConfigurationEditor = () => {
         </Modal.Footer>
       </Modal>
       <ConfirmModal
-        message={
-          "Bist du sicher das du diese Vorlage übernehmen will? Alle aktuelle Inhalte werden gelöscht und durch die Vorlage ersetzt"
-        }
+        message={"Der aktuelle Inhalt wird durch die Vorlage ersetzt."}
         title={templates.find((t) => t.id === selectedTemplateId)?.name ?? ""}
         open={showTemplateConfirmModal}
         confirmButtonText={"Übernehmen"}
@@ -490,6 +632,23 @@ const EmailConfigurationEditor = () => {
         onConfirm={onConfirmTemplateChange}
         onCancel={() => setShowTemplateConfirmModal(false)}
       />
+      <Modal
+        show={previewOpen}
+        onHide={() => setPreviewOpen(false)}
+        centered={true}
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{previewTitle}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <iframe
+            title="E-Mail-Vorschau"
+            srcDoc={previewHtml}
+            style={{ width: "100%", height: "70vh", border: "0" }}
+          />
+        </Modal.Body>
+      </Modal>
     </>
   );
 };
