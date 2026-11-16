@@ -72,7 +72,7 @@ export const jsonToMjml = (content: IPage) => {
     context: content,
     beautify: false,
   })
-    .replaceAll("\n", "")
+    .replaceAll("\n", " ")
     .replaceAll("<br>", "<br/>");
 };
 
