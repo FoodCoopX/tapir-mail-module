@@ -328,6 +328,7 @@ class SendEmailBatch:
         # Rendering MJML starts a node process, so each version is rendered only once
         # and the tokens are replaced in the resulting HTML.
         html_by_version_id = {}
+        cache = {}
         for email_dispatch in email_dispatches:
             version = email_dispatch.get_email_configuration_version()
 
@@ -341,6 +342,7 @@ class SendEmailBatch:
                     html_by_version_id[version.id],
                     email_dispatch.recipient_tokens,
                     email_dispatch.additional_tokens,
+                    cache=cache,
                 )
 
                 email = build_email(

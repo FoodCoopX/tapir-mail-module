@@ -118,7 +118,10 @@ def replace_tokens(
     recipient_tokens=None,
     transactional_tokens=None,
     strict_token_validation=None,
+    cache: dict | None = None,
 ):
+    if cache is None:
+        cache = {}
     if recipient_tokens is None:
         recipient_tokens = {}
     if transactional_tokens is None:
@@ -150,7 +153,9 @@ def replace_tokens(
         elif token_type == TOKEN_TYPE_GENERAL:
             for key, value in tokens.items():
                 mjml = _do_replace(
-                    mjml, f"{token_type}.{key}", value() if callable(value) else value
+                    mjml,
+                    f"{token_type}.{key}",
+                    value(cache) if callable(value) else value,
                 )
         elif token_type == TOKEN_TYPE_DYNAMIC:
             for key, _ in tokens.items():

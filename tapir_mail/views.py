@@ -578,11 +578,13 @@ class EmailConfigurationVersionViewSet(
                 data={"message": f"Invalid recipients parameter: {str(e)}"},
             )
 
+        cache = {}
         for email in recipients_list:
             mjml = replace_tokens(
                 render_email_mjml(email_version_configuration),
                 {"email": email},
                 strict_token_validation=False,
+                cache=cache,
             )
             email = prepare_email(
                 mjml=mjml,

@@ -25,7 +25,7 @@ def register_base_segment_and_tokens():
             "Ernteanteilsgröße": "subscription_type",
         },
         general_tokens={
-            "WirGarten Standort": lambda: "WirGarten Lüneburg eG",
+            "WirGarten Standort": lambda cache: "WirGarten Lüneburg eG",
             "Admin Name": "Max Mustermann",
             "Admin Email": "max.mustermann@example.com",
         },
