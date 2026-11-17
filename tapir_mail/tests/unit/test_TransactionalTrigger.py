@@ -281,3 +281,28 @@ class TransactionalTriggerTest(TapirUnitTest):
         TransactionalTrigger.fire_action(trigger_data=data)
 
         mock_fire_all_released_configs.assert_called_once_with(data)
+
+    def test_isTriggerRequired_requiredIsCallable_callsItWithGivenCache(self):
+        received_caches = []
+
+        def required(cache: dict):
+            received_caches.append(cache)
+            return True
+
+        TransactionalTrigger.required_triggers = {"test_key": required}
+        given_cache = {}
+
+        result = TransactionalTrigger.is_trigger_required(
+            key="test_key", cache=given_cache
+        )
+
+        self.assertTrue(result)
+        self.assertEqual(1, len(received_caches))
+        self.assertIs(given_cache, received_caches[0])
+
+    def test_isTriggerRequired_requiredIsBool_returnsIt(self):
+        TransactionalTrigger.required_triggers = {"test_key": False}
+
+        self.assertFalse(
+            TransactionalTrigger.is_trigger_required(key="test_key", cache={})
+        )

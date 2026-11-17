@@ -184,7 +184,7 @@ class ResolveAndCreateEmailDispatches:
         recipient_tokens_override: dict,
     ):
         resolved_recipient_tokens = resolve_recipient_tokens(
-            recipient_tokens, recipient
+            tokens_to_resolve=recipient_tokens, recipient=recipient, cache=cache
         )
         for token, value in recipient_tokens_override.items():
             if value is not None and token in resolved_recipient_tokens:

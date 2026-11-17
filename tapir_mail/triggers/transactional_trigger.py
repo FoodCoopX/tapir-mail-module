@@ -60,10 +60,10 @@ class TransactionalTrigger(Trigger[TransactionalTriggerData]):
             )
 
     @classmethod
-    def is_trigger_required(cls, key: str) -> bool:
+    def is_trigger_required(cls, key: str, cache: dict) -> bool:
         required = cls.required_triggers[key]
         if callable(required):
-            required = required()
+            required = required(cache)
         return required
 
     @classmethod

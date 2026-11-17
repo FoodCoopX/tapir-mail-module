@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Any
+from typing import Any, Callable
 
 from django.conf import settings
 
@@ -27,6 +27,12 @@ def _register_user_tokens(user_tokens: dict):
     from tapir_mail.service.segment import BASE_QUERYSET
 
     for label, value in user_tokens.items():
+        if callable(value):
+            continue
+        if not isinstance(value, str):
+            raise ValueError(
+                f"User token {label} is not a string or callable! Check your token registration."
+            )
         if not hasattr(BASE_QUERYSET.model, value):
             raise ValueError(
                 f"Model {BASE_QUERYSET.model} does not have attribute {value}! Check your token registration for {label}."
@@ -59,6 +65,10 @@ def _register_dynamic_tokens(dynamic_tokens: dict):
     token_registry[TOKEN_TYPE_DYNAMIC].update(dynamic_tokens)
 
 
+def get_recipient_token_storage_key(label: str, value: str | Callable) -> str:
+    return label if callable(value) else value
+
+
 def register_tokens(user_tokens: dict, general_tokens: dict, dynamic_tokens: dict):
     _register_user_tokens(user_tokens)
     _register_general_tokens(general_tokens)
@@ -82,23 +92,37 @@ def find_tokens(mjml: str, token_type: str = TOKEN_TYPE_RECIPIENT) -> list[Any]:
     for token in unique_tokens:
         t_type, key = token.split(".")
         if t_type == token_type and key in token_registry[t_type]:
-            internal_key = token_registry[t_type][key]
             result_tokens.append(
-                internal_key if token_type == TOKEN_TYPE_RECIPIENT else key
+                get_recipient_token_storage_key(
+                    label=key, value=token_registry[t_type][key]
+                )
+                if token_type == TOKEN_TYPE_RECIPIENT
+                else key
             )
 
     return result_tokens
 
 
-def resolve_recipient_tokens(tokens_to_resolve: list[str], recipient: object) -> dict:
+def resolve_recipient_tokens(
+    tokens_to_resolve: list[str], recipient: object, cache: dict
+) -> dict:
     """
     Resolve all tokens that are registered as recipient tokens and return them as a dict.
 
     :return: A dict containing the resolved tokens.
     """
+    callables_by_storage_key = {
+        label: value
+        for label, value in token_registry[TOKEN_TYPE_RECIPIENT].items()
+        if callable(value)
+    }
     recipient_tokens = {}
     for token_key in tokens_to_resolve:
-        recipient_tokens[token_key] = str(getattr(recipient, token_key, "") or "")
+        if token_key in callables_by_storage_key:
+            value = callables_by_storage_key[token_key](recipient, cache)
+        else:
+            value = getattr(recipient, token_key, "")
+        recipient_tokens[token_key] = str(value or "")
     return recipient_tokens
 
 
@@ -148,7 +172,9 @@ def replace_tokens(
                 mjml = _do_replace(
                     mjml,
                     f"{token_type}.{key}",
-                    recipient_tokens.get(value, ""),
+                    recipient_tokens.get(
+                        get_recipient_token_storage_key(label=key, value=value), ""
+                    ),
                 )
         elif token_type == TOKEN_TYPE_GENERAL:
             for key, value in tokens.items():
